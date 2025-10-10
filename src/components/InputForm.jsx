@@ -11,7 +11,7 @@ export default function InputForm({ departments, setDepartments, labs, setLabs, 
     const [feedback, setFeedback] = useState('');
     const [currentDept, setCurrentDept] = useState('');
     
-    // States for Department, Lab, Faculty forms...
+    // States for all form sections
     const [startTime, setStartTime] = useState('09:15');
     const [endTime, setEndTime] = useState('17:20');
     const [lectureDuration, setLectureDuration] = useState('60');
@@ -24,90 +24,41 @@ export default function InputForm({ departments, setDepartments, labs, setLabs, 
     const [facultyName, setFacultyName] = useState('');
     const [facultyYears, setFacultyYears] = useState({ 2: false, 3: false, 4: false });
     const [facultySubjects, setFacultySubjects] = useState({});
-
-    // States for updated Subject form
     const [subjectName, setSubjectName] = useState('');
     const [subjectShortForm, setSubjectShortForm] = useState('');
     const [subjectYear, setSubjectYear] = useState('2');
     const [classType, setClassType] = useState('both'); 
     const [lecturesPerWeek, setLecturesPerWeek] = useState(4);
     const [practicalsPerWeek, setPracticalsPerWeek] = useState(1);
-    const [noLabPractical, setNoLabPractical] = useState(false);
-    const [labRequired, setLabRequired] = useState(true);
+    
+    // --- NEW State for the 3 practical options ---
+    const [practicalType, setPracticalType] = useState('specific_lab'); // 'specific_lab', 'classroom_only', 'no_room_last_slots'
     const [specificLab, setSpecificLab] = useState('');
 
-    // States for Constraints form
     const [constraintYear, setConstraintYear] = useState('2');
     const [constraintSubject, setConstraintSubject] = useState('');
     const [constraintType, setConstraintType] = useState('lecture');
     const [constraintFaculty, setConstraintFaculty] = useState([]);
     const [constraintNotes, setConstraintNotes] = useState('');
 
-    // --- Handlers ---
-    const handleSetDeptTimings = () => {
-        if (!currentDept) return;
-        const breakInfo = { name: breakName, startTime: breakStartTime, duration: breakDuration };
-        const timeSlots = generateTimeSlots(startTime, endTime, lectureDuration, breakInfo);
-        const existingDeptIndex = departments.findIndex(d => d.name === currentDept);
-        let updatedDepts;
-        if (existingDeptIndex > -1) {
-            updatedDepts = [...departments];
-            updatedDepts[existingDeptIndex] = { ...updatedDepts[existingDeptIndex], startTime, endTime, lectureDuration, breakInfo, timeSlots };
-        } else {
-            updatedDepts = [...departments, { name: currentDept, startTime, endTime, lectureDuration, breakInfo, timeSlots }];
-        }
-        setDepartments(updatedDepts);
-        setFeedback(`Timings for ${currentDept} set.`);
-        setTimeout(() => setFeedback(''), 4000);
-    };
-
-    const handleAddLab = () => {
-        if (!labName || !labShortForm) return;
-        setLabs([...labs, { id: Date.now(), name: labName, shortForm: labShortForm.toUpperCase() }]);
-        setLabName(''); setLabShortForm('');
-    };
-
     const handleAddSubject = () => {
         if (!subjectName || !subjectShortForm) return alert("Please provide both a full name and a short form.");
-        setSubjects([...subjects, {
+        const newSubject = {
             id: Date.now(), department: currentDept, name: subjectName, shortForm: subjectShortForm.toUpperCase(), year: subjectYear, classType,
             workload: { lectures: classType === 'practical' ? 0 : lecturesPerWeek, practicals: classType === 'theory' ? 0 : practicalsPerWeek },
-            practicalDetails: classType !== 'theory' ? { lab: labRequired ? specificLab : "None", noLabRequired: noLabPractical } : null
-        }]);
+            practicalDetails: classType !== 'theory' ? { type: practicalType, lab: practicalType === 'specific_lab' ? specificLab : "None" } : null
+        };
+        setSubjects([...subjects, newSubject]);
         setSubjectName(''); setSubjectShortForm('');
     };
-    
-    const handleAddFaculty = () => {
-        if (!facultyName) return;
-        setFaculties([...faculties, { id: Date.now(), department: currentDept, title: facultyTitle, name: facultyName, subjectsByYear: facultySubjects }]);
-        setFacultyName(''); setFacultySubjects({}); setFacultyYears({ 2: false, 3: false, 4: false });
-    };
 
-    const handleAddConstraint = () => {
-        if (!constraintYear || !constraintSubject) return alert("Please select a year and subject.");
-        setJointConstraints([...jointConstraints, {
-            id: Date.now(), department: currentDept, year: constraintYear, subjectShortForm: constraintSubject, type: constraintType,
-            assignedFacultyIds: constraintFaculty, notes: constraintNotes,
-        }]);
-        setConstraintSubject(''); setConstraintFaculty([]); setConstraintNotes('');
-    };
-
-    const handleFacultyYearChange = (year) => {
-        const updatedYears = { ...facultyYears, [year]: !facultyYears[year] };
-        if (!updatedYears[year]) {
-            const updatedSubjects = { ...facultySubjects };
-            delete updatedSubjects[year];
-            setFacultySubjects(updatedSubjects);
-        }
-        setFacultyYears(updatedYears);
-    };
-
-    const handleFacultySubjectSelection = (year, shortForm) => {
-        const current = facultySubjects[year] || [];
-        const newSubjects = current.includes(shortForm) ? current.filter(s => s !== shortForm) : [...current, shortForm];
-        setFacultySubjects({ ...facultySubjects, [year]: newSubjects });
-    };
-
+    // Other handlers are unchanged...
+    const handleSetDeptTimings = () => { if (!currentDept) return; const breakInfo = { name: breakName, startTime: breakStartTime, duration: breakDuration }; const timeSlots = generateTimeSlots(startTime, endTime, lectureDuration, breakInfo); const existingDeptIndex = departments.findIndex(d => d.name === currentDept); let updatedDepts; if (existingDeptIndex > -1) { updatedDepts = [...departments]; updatedDepts[existingDeptIndex] = { ...updatedDepts[existingDeptIndex], startTime, endTime, lectureDuration, breakInfo, timeSlots }; } else { updatedDepts = [...departments, { name: currentDept, startTime, endTime, lectureDuration, breakInfo, timeSlots }]; } setDepartments(updatedDepts); setFeedback(`Timings for ${currentDept} set.`); setTimeout(() => setFeedback(''), 4000); };
+    const handleAddLab = () => { if (!labName || !labShortForm) return; setLabs([...labs, { id: Date.now(), name: labName, shortForm: labShortForm.toUpperCase() }]); setLabName(''); setLabShortForm(''); };
+    const handleAddFaculty = () => { if (!facultyName) return; setFaculties([...faculties, { id: Date.now(), department: currentDept, title: facultyTitle, name: facultyName, subjectsByYear: facultySubjects }]); setFacultyName(''); setFacultySubjects({}); setFacultyYears({ 2: false, 3: false, 4: false }); };
+    const handleFacultyYearChange = (year) => { const updatedYears = { ...facultyYears, [year]: !facultyYears[year] }; if (!updatedYears[year]) { const updatedSubjects = { ...facultySubjects }; delete updatedSubjects[year]; setFacultySubjects(updatedSubjects); } setFacultyYears(updatedYears); };
+    const handleFacultySubjectSelection = (year, shortForm) => { const current = facultySubjects[year] || []; const newSubjects = current.includes(shortForm) ? current.filter(s => s !== shortForm) : [...current, shortForm]; setFacultySubjects({ ...facultySubjects, [year]: newSubjects }); };
+    const handleAddConstraint = () => { if (!constraintYear || !constraintSubject) return alert("Please select a year and subject for the constraint."); const newConstraint = { id: Date.now(), department: currentDept, year: constraintYear, subjectShortForm: constraintSubject, type: constraintType, assignedFaculty: constraintFaculty.map(id => faculties.find(f => f.id === id)?.name || ''), notes: constraintNotes }; setJointConstraints([...jointConstraints, newConstraint]); setConstraintSubject(''); setConstraintFaculty([]); setConstraintNotes(''); };
     const isFormDisabled = !currentDept;
 
     return (
@@ -118,33 +69,36 @@ export default function InputForm({ departments, setDepartments, labs, setLabs, 
             </section>
             
             <div className={`space-y-8 ${isFormDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                <section className="bg-white p-6 rounded-lg shadow"><h2 className="text-xl font-semibold mb-4 border-b pb-2">2. Department Timings</h2><div className="grid grid-cols-2 lg:grid-cols-4 gap-4"><InputField label="Lecture Duration (mins)" type="number" value={lectureDuration} onChange={e => setLectureDuration(e.target.value)} disabled={isFormDisabled} /><InputField label="Day Start Time" type="time" value={startTime} onChange={e => setStartTime(e.target.value)} disabled={isFormDisabled} /><InputField label="Day End Time" type="time" value={endTime} onChange={e => setEndTime(e.target.value)} disabled={isFormDisabled} /></div><div className="grid grid-cols-3 gap-4 border-t mt-4 pt-4"><InputField label="Break Name" value={breakName} onChange={e => setBreakName(e.target.value)} disabled={isFormDisabled} /><InputField label="Break Start Time" type="time" value={breakStartTime} onChange={e => setBreakStartTime(e.target.value)} disabled={isFormDisabled} /><InputField label="Break Duration (mins)" type="number" value={breakDuration} onChange={e => setBreakDuration(e.target.value)} disabled={isFormDisabled} /></div><button onClick={handleSetDeptTimings} disabled={isFormDisabled} className="mt-4 w-full bg-indigo-600 text-white py-2 px-4 rounded-md disabled:bg-gray-400">Set Timings</button>{feedback && <div className="mt-2 p-2 text-center bg-green-100 text-sm">{feedback}</div>}</section>
-
+                <section className="bg-white p-6 rounded-lg shadow"><h2 className="text-xl font-semibold mb-4 border-b pb-2">2. Department Timings for <span className="text-indigo-600 font-bold">{currentDept}</span></h2><div className="grid grid-cols-2 lg:grid-cols-4 gap-4"><InputField label="Lecture Duration (mins)" type="number" value={lectureDuration} onChange={e => setLectureDuration(e.target.value)} disabled={isFormDisabled} /><InputField label="Day Start Time" type="time" value={startTime} onChange={e => setStartTime(e.target.value)} disabled={isFormDisabled} /><InputField label="Day End Time" type="time" value={endTime} onChange={e => setEndTime(e.target.value)} disabled={isFormDisabled} /></div><div className="grid grid-cols-3 gap-4 border-t mt-4 pt-4"><InputField label="Break Name" value={breakName} onChange={e => setBreakName(e.target.value)} disabled={isFormDisabled} /><InputField label="Break Start Time" type="time" value={breakStartTime} onChange={e => setBreakStartTime(e.target.value)} disabled={isFormDisabled} /><InputField label="Break Duration (mins)" type="number" value={breakDuration} onChange={e => setBreakDuration(e.target.value)} disabled={isFormDisabled} /></div><button onClick={handleSetDeptTimings} disabled={isFormDisabled} className="mt-4 w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:bg-gray-400">Set/Update Timings</button>{feedback && <div className="mt-2 p-2 text-center bg-green-100 text-green-800 rounded-md text-sm">{feedback}</div>}</section>
+                
+                {/* --- NEW 2-COLUMN LAYOUT --- */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <section className="bg-white p-6 rounded-lg shadow"><h2 className="text-xl font-semibold mb-4 border-b pb-2">3. Laboratories</h2><div className="grid grid-cols-2 gap-4"><InputField label="Lab Name" value={labName} onChange={e => setLabName(e.target.value)} disabled={isFormDisabled} /><InputField label="Short Form" value={labShortForm} onChange={e => setLabShortForm(e.target.value)} disabled={isFormDisabled} /></div><button onClick={handleAddLab} disabled={isFormDisabled} className="mt-4 w-full bg-indigo-600 text-white py-2 px-4 rounded-md disabled:bg-gray-400">Add Lab</button></section>
-                    
-                    <section className="bg-white p-6 rounded-lg shadow"><h2 className="text-xl font-semibold mb-4 border-b pb-2">4. Subjects</h2>
-                        <SelectField label="Year" value={subjectYear} onChange={e => setSubjectYear(e.target.value)} disabled={isFormDisabled}><option value="2">2nd Year</option><option value="3">3rd Year</option><option value="4">4th Year</option></SelectField>
-                        <div className="grid grid-cols-2 gap-4 mt-4"><InputField label="Subject Full Name" value={subjectName} onChange={e => setSubjectName(e.target.value)} disabled={isFormDisabled} /><InputField label="Subject Short Form" value={subjectShortForm} onChange={e => setSubjectShortForm(e.target.value)} disabled={isFormDisabled} /></div>
-                        <div className="mt-4"><label className="block text-sm font-medium mb-2">Class Type:</label><div className="flex space-x-4">{['theory', 'practical', 'both'].map(type => <div key={type} className="flex items-center"><input type="radio" id={type} name="classType" value={type} checked={classType === type} onChange={e => setClassType(e.target.value)} disabled={isFormDisabled} /><label htmlFor={type} className="ml-2 capitalize">{type}</label></div>)}</div></div>
-                        <div className="grid grid-cols-2 gap-4 mt-4 border-t pt-4">{classType !== 'practical' && <InputField label="Lectures / Week" type="number" value={lecturesPerWeek} onChange={e => setLecturesPerWeek(e.target.value)} disabled={isFormDisabled} />}{classType !== 'theory' && <InputField label="Practicals / Week" type="number" value={practicalsPerWeek} onChange={e => setPracticalsPerWeek(e.target.value)} disabled={isFormDisabled} />}</div>
-                        {classType !== 'theory' && <div className="p-3 bg-gray-50 rounded-md border space-y-3 mt-4"><div className="flex items-center"><input type="checkbox" id="noLab" checked={noLabPractical} onChange={e => {setNoLabPractical(e.target.checked); if(e.target.checked) setLabRequired(false)}} disabled={isFormDisabled} /><label htmlFor="noLab" className="ml-2 text-sm">No dedicated lab (schedule last)</label></div><div className="flex items-center"><input type="checkbox" id="labReq" checked={labRequired} onChange={e => {setLabRequired(e.target.checked); if(e.target.checked) setNoLabPractical(false)}} disabled={isFormDisabled || noLabPractical} /><label htmlFor="labReq" className="ml-2 text-sm">Requires a specific lab?</label></div>{labRequired && !noLabPractical && <SelectField label="Select Lab" value={specificLab} onChange={e => setSpecificLab(e.target.value)} disabled={isFormDisabled}><option value="">Any</option>{labs.map(l => <option key={l.shortForm} value={l.shortForm}>{l.shortForm}</option>)}</SelectField>}</div>}
-                        <button onClick={handleAddSubject} disabled={isFormDisabled} className="mt-4 w-full bg-indigo-600 text-white py-2 px-4 rounded-md disabled:bg-gray-400">Add Subject</button>
-                    </section>
+                    {/* --- LEFT COLUMN --- */}
+                    <div className="space-y-8">
+                        <section className="bg-white p-6 rounded-lg shadow"><h2 className="text-xl font-semibold mb-4 border-b pb-2">3. Laboratories</h2><div className="grid grid-cols-2 gap-4"><InputField label="Lab Name" value={labName} onChange={e => setLabName(e.target.value)} disabled={isFormDisabled} /><InputField label="Short Form" value={labShortForm} onChange={e => setLabShortForm(e.target.value)} disabled={isFormDisabled} /></div><button onClick={handleAddLab} disabled={isFormDisabled} className="mt-4 w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:bg-gray-400">Add Lab</button></section>
+                        <section className="bg-white p-6 rounded-lg shadow"><h2 className="text-xl font-semibold mb-4 border-b pb-2">5. Faculty for <span className="text-indigo-600 font-bold">{currentDept}</span></h2><div className="grid grid-cols-3 gap-4"><SelectField label="Title" value={facultyTitle} onChange={e => setFacultyTitle(e.target.value)} disabled={isFormDisabled}><option>Prof.</option><option>Dr.</option><option>Mr.</option><option>Mrs.</option></SelectField><div className="col-span-2"><InputField label="Full Name" value={facultyName} onChange={e => setFacultyName(e.target.value)} disabled={isFormDisabled} /></div></div><div className="mt-4"><label className={`block text-sm font-medium ${isFormDisabled ? 'text-gray-400' : 'text-gray-700'}`}>Teaches in Years:</label><div className="flex space-x-4 mt-2">{[2, 3, 4].map(year => (<div key={year} className="flex items-center"><input type="checkbox" id={`fy-${year}`} checked={!!facultyYears[year]} onChange={() => handleFacultyYearChange(year)} disabled={isFormDisabled} /><label htmlFor={`fy-${year}`} className="ml-2">{year}yr</label></div>))}</div></div>{Object.entries(facultyYears).map(([year, isTeaching]) => isTeaching && (<div className="mt-4 border-t pt-4" key={year}><label className="block text-sm font-medium mb-2">Select Subjects for Year {year}:</label><div className="grid grid-cols-2 gap-2">{subjects.filter(s => s.department === currentDept && s.year === year).map(s => (<div key={s.shortForm} className="flex items-center"><input type="checkbox" id={`${year}-${s.shortForm}`} checked={facultySubjects[year]?.includes(s.shortForm)} onChange={() => handleFacultySubjectSelection(year, s.shortForm)} /><label htmlFor={`${year}-${s.shortForm}`} className="ml-2 text-sm">{s.shortForm}</label></div>))}</div></div>))}<button onClick={handleAddFaculty} disabled={isFormDisabled} className="mt-4 w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:bg-gray-400">Add Faculty</button></section>
+                    </div>
+
+                    {/* --- RIGHT COLUMN --- */}
+                    <div className="space-y-8">
+                        <section className="bg-white p-6 rounded-lg shadow"><h2 className="text-xl font-semibold mb-4 border-b pb-2">4. Subjects for <span className="text-indigo-600 font-bold">{currentDept}</span></h2><SelectField label="Year" value={subjectYear} onChange={e => setSubjectYear(e.target.value)} disabled={isFormDisabled}><option value="2">2nd Year</option><option value="3">3rd Year</option><option value="4">4th Year</option></SelectField><div className="grid grid-cols-2 gap-4 mt-4"><InputField label="Subject Full Name" value={subjectName} onChange={e => setSubjectName(e.target.value)} disabled={isFormDisabled} /><InputField label="Subject Short Form" value={subjectShortForm} onChange={e => setSubjectShortForm(e.target.value)} disabled={isFormDisabled} /></div><div className="mt-4"><label className={`block text-sm font-medium mb-2 ${isFormDisabled ? 'text-gray-400' : 'text-gray-700'}`}>Class Type:</label><div className="flex space-x-4">{['theory', 'practical', 'both'].map(type => <div key={type} className="flex items-center"><input type="radio" id={type} name="classType" value={type} checked={classType === type} onChange={e => setClassType(e.target.value)} disabled={isFormDisabled} /><label htmlFor={type} className="ml-2 capitalize">{type}</label></div>)}</div></div><div className="grid grid-cols-2 gap-4 mt-4 border-t pt-4">{classType !== 'practical' && <InputField label="Lectures / Week" type="number" value={lecturesPerWeek} onChange={e => setLecturesPerWeek(e.target.value)} disabled={isFormDisabled} />}{classType !== 'theory' && <InputField label="Practicals / Week" type="number" value={practicalsPerWeek} onChange={e => setPracticalsPerWeek(e.target.value)} disabled={isFormDisabled} />}</div>
+                            {/* --- NEW 3-option practical logic --- */}
+                            {classType !== 'theory' && <div className="p-3 bg-gray-50 rounded-md border space-y-3 mt-4">
+                                <label className="block text-sm font-medium">Practical Type:</label>
+                                <div className="space-y-2">
+                                    <div className="flex items-center"><input type="radio" id="prac_lab" name="pracType" value="specific_lab" checked={practicalType === 'specific_lab'} onChange={e => setPracticalType(e.target.value)} disabled={isFormDisabled} /><label htmlFor="prac_lab" className="ml-2 text-sm">Requires a specific lab</label></div>
+                                    {practicalType === 'specific_lab' && <div className="pl-5"><SelectField label="Select Lab" value={specificLab} onChange={e => setSpecificLab(e.target.value)} disabled={isFormDisabled}><option value="">Any</option>{labs.map(l => <option key={l.shortForm} value={l.shortForm}>{l.shortForm} ({l.name})</option>)}</SelectField></div>}
+                                    <div className="flex items-center"><input type="radio" id="prac_class" name="pracType" value="classroom_only" checked={practicalType === 'classroom_only'} onChange={e => setPracticalType(e.target.value)} disabled={isFormDisabled} /><label htmlFor="prac_class" className="ml-2 text-sm">Requires a classroom (no lab)</label></div>
+                                    <div className="flex items-center"><input type="radio" id="prac_noroom" name="pracType" value="no_room_last_slots" checked={practicalType === 'no_room_last_slots'} onChange={e => setPracticalType(e.target.value)} disabled={isFormDisabled} /><label htmlFor="prac_noroom" className="ml-2 text-sm">No dedicated room (schedule last)</label></div>
+                                </div>
+                            </div>}
+                        <button onClick={handleAddSubject} disabled={isFormDisabled} className="mt-4 w-full bg-indigo-600 text-white py-2 px-4 rounded-md disabled:bg-gray-400">Add Subject</button></section>
+                    </div>
                 </div>
-                
-                <section className="bg-white p-6 rounded-lg shadow"><h2 className="text-xl font-semibold mb-4 border-b pb-2">5. Faculty</h2><div className="grid grid-cols-3 gap-4"><SelectField label="Title" value={facultyTitle} onChange={e => setFacultyTitle(e.target.value)} disabled={isFormDisabled}><option>Prof.</option><option>Dr.</option><option>Mr.</option><option>Mrs.</option></SelectField><div className="col-span-2"><InputField label="Full Name" value={facultyName} onChange={e => setFacultyName(e.target.value)} disabled={isFormDisabled} /></div></div><div className="mt-4"><label className="block text-sm font-medium">Teaches in Years:</label><div className="flex space-x-4 mt-2">{[2, 3, 4].map(year => (<div key={year} className="flex items-center"><input type="checkbox" id={`fy-${year}`} checked={!!facultyYears[year]} onChange={() => handleFacultyYearChange(year)} disabled={isFormDisabled} /><label htmlFor={`fy-${year}`} className="ml-2">{year}yr</label></div>))}</div></div>{Object.entries(facultyYears).map(([year, isTeaching]) => isTeaching && (<div className="mt-4 border-t pt-4" key={year}><label className="block text-sm font-medium mb-2">Select Subjects for Year {year}:</label><div className="grid grid-cols-2 gap-2">{subjects.filter(s => s.department === currentDept && s.year === year).map(s => (<div key={s.shortForm} className="flex items-center"><input type="checkbox" id={`${year}-${s.shortForm}`} checked={facultySubjects[year]?.includes(s.shortForm)} onChange={() => handleFacultySubjectSelection(year, s.shortForm)} disabled={isFormDisabled} /><label htmlFor={`${year}-${s.shortForm}`} className="ml-2 text-sm">{s.shortForm}</label></div>))}</div></div>))}<button onClick={handleAddFaculty} disabled={isFormDisabled} className="mt-4 w-full bg-indigo-600 text-white py-2 px-4 rounded-md disabled:bg-gray-400">Add Faculty</button></section>
-                
-                <section className="bg-white p-6 rounded-lg shadow"><h2 className="text-xl font-semibold mb-4 border-b pb-2">6. Joint Subject Constraints</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4"><SelectField label="Year" value={constraintYear} onChange={e => setConstraintYear(e.target.value)} disabled={isFormDisabled}><option value="2">SY</option><option value="3">TY</option><option value="4">Final</option></SelectField><SelectField label="Subject" value={constraintSubject} onChange={e => setConstraintSubject(e.target.value)} disabled={isFormDisabled}><option value="">-- Select Subject --</option>{subjects.filter(s => s.department === currentDept && s.year === constraintYear).map(s => <option key={s.shortForm} value={s.shortForm}>{s.shortForm}</option>)}</SelectField><SelectField label="Type" value={constraintType} onChange={e => setConstraintType(e.target.value)} disabled={isFormDisabled}><option value="lecture">Joint Lecture</option><option value="practical">Joint Practical</option></SelectField></div>
-                    <div className="mt-4"><label className="block text-sm font-medium mb-2">Assign Faculty:</label><div className="grid grid-cols-2 md:grid-cols-3 gap-2">{faculties.filter(f => f.department === currentDept).map(f => <div key={f.id} className="flex items-center"><input type="checkbox" id={`cf-${f.id}`} checked={constraintFaculty.includes(f.id)} onChange={() => setConstraintFaculty(prev => prev.includes(f.id) ? prev.filter(id => id !== f.id) : [...prev, f.id])} disabled={isFormDisabled} /><label htmlFor={`cf-${f.id}`} className="ml-2 text-sm">{f.title} {f.name}</label></div>)}</div></div>
-                    <div className="mt-4"><InputField label="Faculty Division Notes (Optional)" value={constraintNotes} onChange={e => setConstraintNotes(e.target.value)} disabled={isFormDisabled} /></div>
-                    <button onClick={handleAddConstraint} disabled={isFormDisabled} className="mt-4 w-full bg-indigo-600 text-white py-2 px-4 rounded-md disabled:bg-gray-400">Add Constraint</button>
-                </section>
-                
-                <section className="mt-12 text-center"><button onClick={() => navigate('/report')} disabled={isFormDisabled} className="bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg disabled:bg-gray-400">View Configuration Report →</button></section>
+
+                <section className="bg-white p-6 rounded-lg shadow"><h2 className="text-xl font-semibold mb-4 border-b pb-2">6. Joint Subject Constraints</h2><div className="grid grid-cols-1 md:grid-cols-3 gap-4"><SelectField label="Year" value={constraintYear} onChange={e => setConstraintYear(e.target.value)} disabled={isFormDisabled}><option value="2">SY</option><option value="3">TY</option><option value="4">Final</option></SelectField><SelectField label="Subject" value={constraintSubject} onChange={e => setConstraintSubject(e.target.value)} disabled={isFormDisabled}><option value="">-- Select --</option>{subjects.filter(s => s.department === currentDept && s.year === constraintYear).map(s => <option key={s.shortForm} value={s.shortForm}>{s.shortForm}</option>)}</SelectField><SelectField label="Type" value={constraintType} onChange={e => setConstraintType(e.target.value)} disabled={isFormDisabled}><option value="lecture">Joint Lecture</option><option value="practical">Joint Practical</option></SelectField></div><div className="mt-4"><label className={`block text-sm font-medium mb-2 ${isFormDisabled ? 'text-gray-400' : 'text-gray-700'}`}>Assign Faculty:</label><div className="grid grid-cols-2 md:grid-cols-3 gap-2">{faculties.filter(f => f.department === currentDept).map(f => <div key={f.id} className="flex items-center"><input type="checkbox" id={`cf-${f.id}`} checked={constraintFaculty.includes(f.id)} onChange={() => setConstraintFaculty(prev => prev.includes(f.id) ? prev.filter(id => id !== f.id) : [...prev, f.id])} disabled={isFormDisabled} /><label htmlFor={`cf-${f.id}`} className="ml-2 text-sm">{f.name}</label></div>)}</div></div><div className="mt-4"><InputField label="Faculty Division Notes (Optional)" value={constraintNotes} onChange={e => setConstraintNotes(e.target.value)} disabled={isFormDisabled} /></div><button onClick={handleAddConstraint} disabled={isFormDisabled} className="mt-4 w-full bg-indigo-600 text-white py-2 px-4 rounded-md disabled:bg-gray-400">Add Constraint</button></section>
+                <section className="mt-12 text-center"><button onClick={() => navigate('/report')} disabled={isFormDisabled} className="bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-green-700 disabled:bg-gray-400">View Configuration Report →</button></section>
             </div>
-            
         </main>
     );
 }

@@ -12,8 +12,6 @@ export default function App() {
   const [labs, setLabs] = useState([]);
   const [facultyUnavailability, setFacultyUnavailability] = useState({});
   const [generatedTimetable, setGeneratedTimetable] = useState(null);
-  
-  // State for the new constraints feature
   const [jointConstraints, setJointConstraints] = useState([]);
 
   return (
