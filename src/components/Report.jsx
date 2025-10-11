@@ -36,7 +36,7 @@ export default function Report({ departments, faculties, subjects, labs, faculty
         if (!details) return null;
         switch (details.type) {
             case 'specific_lab':
-                return `Requires Lab: ${details.lab || 'Any'}`;
+                return `Requires Lab(s): ${details.labs.length > 0 ? details.labs.join(', ') : 'Any'}`;
             case 'classroom_only':
                 return 'Requires Classroom (No Lab)';
             case 'no_room_last_slots':
@@ -85,7 +85,11 @@ export default function Report({ departments, faculties, subjects, labs, faculty
                         <div key={year}>
                             <h3 className="font-bold text-lg mb-2">{year === '2' ? 'Second Year (SY)' : year === '3' ? 'Third Year (TY)' : 'Final Year'}</h3>
                             <div className="space-y-2">
-                                {subjectsByYear[year].map(s => <div key={s.id} className="p-2 bg-gray-50 rounded text-sm"><p className="font-bold">{s.shortForm} - {s.name}</p><p className="text-xs text-gray-600">Lec/wk: {s.workload.lectures}, Prac/wk: {s.workload.practicals}</p>{s.classType !== 'theory' && <p className="text-xs text-blue-600">{getPracticalInfo(s.practicalDetails)}</p>}</div>)}
+                                {subjectsByYear[year].map(s => <div key={s.id} className="p-2 bg-gray-50 rounded text-sm">
+                                    <p className="font-bold">{s.shortForm} - {s.name}</p>
+                                    <p className="text-xs text-gray-600">Lec/wk: {s.workload.lectures}, Prac/wk: {s.workload.practicals}</p>
+                                    {s.classType !== 'theory' && <p className="text-xs text-blue-600">{getPracticalInfo(s.practicalDetails)}</p>}
+                                </div>)}
                             </div>
                         </div>
                     ))}
@@ -96,7 +100,16 @@ export default function Report({ departments, faculties, subjects, labs, faculty
             <section className="bg-white p-6 rounded-lg shadow mb-8">
                 <h2 className="text-xl font-semibold mb-4 border-b pb-2">Lab Assignments</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {labs.map(lab => (<div key={lab.id} className="p-3 bg-gray-50 rounded"><h3 className="font-bold">{lab.name} ({lab.shortForm})</h3><ul className="list-disc list-inside text-sm mt-1">{subjects.filter(s => s.practicalDetails?.lab === lab.shortForm).map(s => <li key={s.id}>{s.shortForm}</li>)}</ul></div>))}
+                    {labs.map(lab => (
+                        <div key={lab.id} className="p-3 bg-gray-50 rounded">
+                            <h3 className="font-bold">{lab.name} ({lab.shortForm})</h3>
+                            <ul className="list-disc list-inside text-sm mt-1">
+                                {subjects
+                                    .filter(s => s.practicalDetails?.labs?.includes(lab.shortForm))
+                                    .map(s => <li key={s.id}>{s.shortForm}</li>)}
+                            </ul>
+                        </div>
+                    ))}
                 </div>
             </section>
 
@@ -104,7 +117,19 @@ export default function Report({ departments, faculties, subjects, labs, faculty
             <section className="bg-white p-6 rounded-lg shadow mb-8">
                 <h2 className="text-xl font-semibold mb-4 border-b pb-2">Subject Constraints</h2>
                 <div className="space-y-3">
-                    {filteredConstraints.length > 0 ? filteredConstraints.map(c => (<div key={c.id} className="p-3 bg-gray-50 rounded-lg border">{c.type === 'joint' && <><p className="font-bold capitalize">{c.sessionType} Session: <span className="text-indigo-600">{c.subjectShortForm}</span> (Year {c.year})</p><p className="text-sm">Assigned Faculty: {c.assignedFaculty.join(', ')}</p>{c.notes && <p className="text-xs mt-1 text-gray-600">Notes: {c.notes}</p>}</>}{c.type === 'slot' && <><p className="font-bold capitalize">Fixed Slot: <span className="text-indigo-600">{c.subjectShortForm}</span> ({c.sessionType}) for Year {c.year}</p><p className="text-sm">Assigned Slot: <span className="font-semibold">{c.day}, {c.startTime} - {c.endTime}</span></p></>}</div>)) : <p className="text-gray-500">No subject constraints defined.</p>}
+                    {filteredConstraints.length > 0 ? filteredConstraints.map(c => (
+                        <div key={c.id} className="p-3 bg-gray-50 rounded-lg border">
+                            {c.type === 'joint' && <>
+                                <p className="font-bold capitalize">{c.sessionType} Session: <span className="text-indigo-600">{c.subjectShortForm}</span> (Year {c.year})</p>
+                                <p className="text-sm">Assigned Faculty: {c.assignedFaculty.join(', ')}</p>
+                                {c.notes && <p className="text-xs mt-1 text-gray-600">Notes: {c.notes}</p>}
+                            </>}
+                            {c.type === 'slot' && <>
+                                <p className="font-bold capitalize">Fixed Slot: <span className="text-indigo-600">{c.subjectShortForm}</span> ({c.sessionType}) for Year {c.year}</p>
+                                <p className="text-sm">Assigned Slot: <span className="font-semibold">{c.day}, {c.startTime} - {c.endTime}</span></p>
+                            </>}
+                        </div>
+                    )) : <p className="text-gray-500">No subject constraints defined.</p>}
                 </div>
             </section>
 
