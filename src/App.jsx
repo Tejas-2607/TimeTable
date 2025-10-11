@@ -12,7 +12,16 @@ export default function App() {
   const [labs, setLabs] = useState([]);
   const [facultyUnavailability, setFacultyUnavailability] = useState({});
   const [generatedTimetable, setGeneratedTimetable] = useState(null);
-  const [jointConstraints, setJointConstraints] = useState([]);
+
+  // --- NEW: State for class/division structure ---
+  const [classStructure, setClassStructure] = useState({
+    '2': { divisions: 0, batchesPerDivision: 0 },
+    '3': { divisions: 0, batchesPerDivision: 0 },
+    '4': { divisions: 0, batchesPerDivision: 0 },
+  });
+
+  // --- RENAMED: from jointConstraints to subjectConstraints to be more generic ---
+  const [subjectConstraints, setSubjectConstraints] = useState([]);
 
   return (
     <div className="min-h-screen bg-gray-100 text-gray-800">
@@ -38,7 +47,8 @@ export default function App() {
               faculties={faculties} setFaculties={setFaculties}
               subjects={subjects} setSubjects={setSubjects}
               labs={labs} setLabs={setLabs}
-              jointConstraints={jointConstraints} setJointConstraints={setJointConstraints}
+              classStructure={classStructure} setClassStructure={setClassStructure}
+              subjectConstraints={subjectConstraints} setSubjectConstraints={setSubjectConstraints}
             />
           } 
         />
@@ -46,19 +56,20 @@ export default function App() {
           path="/report" 
           element={
             <Report 
-              departments={departments} setDepartments={setDepartments}
-              faculties={faculties} setFaculties={setFaculties}
-              subjects={subjects} setSubjects={setSubjects}
-              labs={labs} setLabs={setLabs}
-              facultyUnavailability={facultyUnavailability} setFacultyUnavailability={setFacultyUnavailability}
+              departments={departments}
+              faculties={faculties}
+              subjects={subjects}
+              labs={labs}
+              facultyUnavailability={facultyUnavailability}
               setGeneratedTimetable={setGeneratedTimetable}
-              jointConstraints={jointConstraints}
+              classStructure={classStructure}
+              subjectConstraints={subjectConstraints}
             />
           } 
         />
         <Route
           path="/timetable"
-          element={ <TimetableView config={{ departments, faculties, subjects, labs, facultyUnavailability, jointConstraints }} timetable={generatedTimetable} /> }
+          element={ <TimetableView config={{ departments, faculties, subjects, labs, facultyUnavailability, classStructure, subjectConstraints }} timetable={generatedTimetable} /> }
         />
       </Routes>
     </div>
