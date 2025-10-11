@@ -58,7 +58,6 @@ export default function InputForm({ departments, setDepartments, labs, setLabs, 
             practicalDetails: classType !== 'theory' ? { durationSlots: practicalDurationSlots, type: practicalType, labs: practicalType === 'specific_lab' ? specificLabs : [] } : null
         };
         setSubjects(prevSubjects => [...prevSubjects, newSubject]);
-        // Reset subject form state
         setSubjectName(''); setSubjectShortForm(''); setClassType('both'); setLecturesPerWeek(4); setPracticalsPerWeek(1); setPracticalDurationSlots('2'); setPracticalType('specific_lab'); setSpecificLabs([]);
     };
 
@@ -94,12 +93,32 @@ export default function InputForm({ departments, setDepartments, labs, setLabs, 
             <section className="bg-white p-6 rounded-lg shadow mb-8"><h2 className="text-xl font-semibold mb-2">1. Select Current Department</h2><SelectField value={currentDept} onChange={e => setCurrentDept(e.target.value)}><option value="">-- Select a Department --</option>{["CSE", "ENTC", "ECM", "MECH", "CIVIL", "IT"].map(opt => <option key={opt} value={opt}>{opt}</option>)}</SelectField></section>
             
             <div className={`space-y-8 ${isFormDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                <section className="bg-white p-6 rounded-lg shadow"><h2 className="text-xl font-semibold mb-4 border-b pb-2">2. Department Timings & Structure for <span className="text-indigo-600 font-bold">{currentDept}</span></h2>
+                <section className="bg-white p-6 rounded-lg shadow">
+                    <h2 className="text-xl font-semibold mb-4 border-b pb-2">2. Department Timings & Structure for <span className="text-indigo-600 font-bold">{currentDept}</span></h2>
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4"><InputField label="Lecture Duration (mins)" type="number" value={lectureDuration} onChange={e => setLectureDuration(e.target.value)} disabled={isFormDisabled} /><InputField label="Day Start Time" type="time" value={startTime} onChange={e => setStartTime(e.target.value)} disabled={isFormDisabled} /><InputField label="Day End Time" type="time" value={endTime} onChange={e => setEndTime(e.target.value)} disabled={isFormDisabled} /></div>
                     <div className="grid grid-cols-3 gap-4 border-t mt-4 pt-4"><InputField label="Break Name" value={breakName} onChange={e => setBreakName(e.target.value)} disabled={isFormDisabled} /><InputField label="Break Start Time" type="time" value={breakStartTime} onChange={e => setBreakStartTime(e.target.value)} disabled={isFormDisabled} /><InputField label="Break Duration (mins)" type="number" value={breakDuration} onChange={e => setBreakDuration(e.target.value)} disabled={isFormDisabled} /></div>
                     <button onClick={handleSetDeptTimings} disabled={isFormDisabled} className="mt-4 w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:bg-gray-400">Set/Update Timings</button>
-                    {feedback && <div className="mt-2 p-2 text-center bg-green-100 text-green-800 rounded-md text-sm">{feedback}</div>}
-                    <div className="border-t mt-4 pt-4"><h3 className="font-semibold mb-2">Class & Batch Structure</h3><div className="grid grid-cols-3 gap-4">{['2', '3', '4'].map(year => (<div key={year} className="p-2 border rounded"><p className="font-bold text-sm text-center">{year === '2' ? 'SY' : year === '3' ? 'TY' : 'Final'}</p><InputField label="Divisions" type="number" min="0" value={classStructure[year].divisions} onChange={e => handleClassStructureChange(year, 'divisions', e.target.value)} disabled={isFormDisabled} /><InputField label="Batches/Div" type="number" min="0" value={classStructure[year].batchesPerDivision} onChange={e => handleClassStructureChange(year, 'batchesPerDivision', e.target.value)} disabled={isFormDisabled} /></div>))}</div></div>
+                    {feedback === `Timings for ${currentDept} set.` && <div className="mt-2 p-2 text-center bg-green-100 text-green-800 rounded-md text-sm">{feedback}</div>}
+                    <div className="border-t mt-4 pt-4">
+                        <h3 className="font-semibold mb-2">Class & Batch Structure</h3>
+                        <div className="grid grid-cols-3 gap-4">{['2', '3', '4'].map(year => (<div key={year} className="p-2 border rounded">
+                            <p className="font-bold text-sm text-center">{year === '2' ? 'SY' : year === '3' ? 'TY' : 'Final'}</p>
+                            <InputField label="Divisions" type="number" min="0" value={classStructure[year]?.divisions ?? 0} onChange={e => handleClassStructureChange(year, 'divisions', e.target.value)} disabled={isFormDisabled} />
+                            <InputField label="Batches/Div" type="number" min="0" value={classStructure[year]?.batchesPerDivision ?? 0} onChange={e => handleClassStructureChange(year, 'batchesPerDivision', e.target.value)} disabled={isFormDisabled} />
+                        </div>))}</div>
+                        {/* --- NEW SAVE BUTTON --- */}
+                        <button 
+                            onClick={() => {
+                                setFeedback('Class structure saved!');
+                                setTimeout(() => setFeedback(''), 4000);
+                            }}
+                            disabled={isFormDisabled} 
+                            className="mt-4 w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
+                        >
+                            Save Structure
+                        </button>
+                        {feedback === 'Class structure saved!' && <div className="mt-2 p-2 text-center bg-green-100 text-green-800 rounded-md text-sm">{feedback}</div>}
+                    </div>
                 </section>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -126,7 +145,6 @@ export default function InputForm({ departments, setDepartments, labs, setLabs, 
                         <button onClick={handleAddSubject} disabled={isFormDisabled} className="mt-4 w-full bg-indigo-600 text-white py-2 px-4 rounded-md disabled:bg-gray-400">Add Subject</button></section>
                     </div>
                 </div>
-
                 <section className="bg-white p-6 rounded-lg shadow"><h2 className="text-xl font-semibold mb-4 border-b pb-2">6. Subject Constraints</h2>
                     <div className="flex border-b mb-4"><button onClick={() => setActiveConstraintTab('joint')} className={`py-2 px-4 ${activeConstraintTab === 'joint' ? 'border-b-2 border-indigo-500 font-semibold' : ''}`}>Joined Sessions</button><button onClick={() => setActiveConstraintTab('slot')} className={`py-2 px-4 ${activeConstraintTab === 'slot' ? 'border-b-2 border-indigo-500 font-semibold' : ''}`}>Slot Specification</button></div>
                     {activeConstraintTab === 'joint' && <div><div className="grid grid-cols-1 md:grid-cols-3 gap-4"><SelectField label="Year" value={constraintYear} onChange={e => setConstraintYear(e.target.value)} disabled={isFormDisabled}><option value="2">SY</option><option value="3">TY</option><option value="4">Final</option></SelectField><SelectField label="Subject" value={constraintSubject} onChange={e => setConstraintSubject(e.target.value)} disabled={isFormDisabled}><option value="">-- Select --</option>{subjects.filter(s => s.department === currentDept && s.year === constraintYear).map(s => <option key={s.shortForm} value={s.shortForm}>{s.shortForm}</option>)}</SelectField><SelectField label="Session Type" value={constraintSessionType} onChange={e => setConstraintSessionType(e.target.value)} disabled={isFormDisabled}><option value="lecture">Joint Lectures</option><option value="practical">Joint Practicals</option><option value="both">Both</option></SelectField></div><div className="mt-4"><label className="block text-sm font-medium mb-2">Assign Faculty:</label><div className="grid grid-cols-2 md:grid-cols-3 gap-2">{faculties.filter(f => f.department === currentDept).map(f => <div key={f.id} className="flex items-center"><input type="checkbox" id={`cf-${f.id}`} checked={constraintFaculty.includes(f.id)} onChange={() => setConstraintFaculty(prev => prev.includes(f.id) ? prev.filter(id => id !== f.id) : [...prev, f.id])} /><label htmlFor={`cf-${f.id}`} className="ml-2 text-sm">{f.name}</label></div>)}</div></div><div className="mt-4"><InputField label="Faculty Division Notes (e.g., Prof A for Div A/C)" value={constraintNotes} onChange={e => setConstraintNotes(e.target.value)} disabled={isFormDisabled} /></div></div>}

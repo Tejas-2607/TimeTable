@@ -12,15 +12,11 @@ export default function App() {
   const [labs, setLabs] = useState([]);
   const [facultyUnavailability, setFacultyUnavailability] = useState({});
   const [generatedTimetable, setGeneratedTimetable] = useState(null);
-
-  // --- NEW: State for class/division structure ---
   const [classStructure, setClassStructure] = useState({
     '2': { divisions: 0, batchesPerDivision: 0 },
     '3': { divisions: 0, batchesPerDivision: 0 },
     '4': { divisions: 0, batchesPerDivision: 0 },
   });
-
-  // --- RENAMED: from jointConstraints to subjectConstraints to be more generic ---
   const [subjectConstraints, setSubjectConstraints] = useState([]);
 
   return (
@@ -61,6 +57,8 @@ export default function App() {
               subjects={subjects}
               labs={labs}
               facultyUnavailability={facultyUnavailability}
+              // --- FIX: Pass the setFacultyUnavailability function down to the Report component ---
+              setFacultyUnavailability={setFacultyUnavailability}
               setGeneratedTimetable={setGeneratedTimetable}
               classStructure={classStructure}
               subjectConstraints={subjectConstraints}

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-export default function Report({ departments, faculties, subjects, labs, facultyUnavailability, setFacultyUnavailability, setGeneratedTimetable, classStructure, subjectConstraints }) {
+export default function Report({ departments, faculties, subjects, labs, facultyUnavailability, setFacultyUnavailability, setGeneratedTimetable, classStructure, subjectConstraints = [] }) {
     const navigate = useNavigate();
     const [selectedDeptName, setSelectedDeptName] = useState('');
-    const [timingGridVisibleFor, setTimingGridVisibleFor] = useState(null); // State to track which faculty grid is open
+    const [timingGridVisibleFor, setTimingGridVisibleFor] = useState(null);
 
     useEffect(() => {
         if (departments.length > 0 && !selectedDeptName) {
@@ -12,31 +12,29 @@ export default function Report({ departments, faculties, subjects, labs, faculty
         }
     }, [departments, selectedDeptName]);
 
-    // Handler to toggle a slot's availability for a faculty member
     const handleSlotToggle = (facultyId, day, slot) => {
         const slotIdentifier = `${slot.start}-${slot.end}`;
-        const currentUnavailability = facultyUnavailability[facultyId] || {};
-        const dayUnavailability = currentUnavailability[day] || [];
-
-        const newDayUnavailability = dayUnavailability.includes(slotIdentifier)
-            ? dayUnavailability.filter(s => s !== slotIdentifier) // Make available
-            : [...dayUnavailability, slotIdentifier]; // Make unavailable
-
-        setFacultyUnavailability({
-            ...facultyUnavailability,
-            [facultyId]: {
-                ...currentUnavailability,
-                [day]: newDayUnavailability,
-            },
+        setFacultyUnavailability(prevUnavailability => {
+            const currentUnavailability = prevUnavailability[facultyId] || {};
+            const dayUnavailability = currentUnavailability[day] || [];
+            const newDayUnavailability = dayUnavailability.includes(slotIdentifier)
+                ? dayUnavailability.filter(s => s !== slotIdentifier)
+                : [...dayUnavailability, slotIdentifier];
+            return {
+                ...prevUnavailability,
+                [facultyId]: {
+                    ...currentUnavailability,
+                    [day]: newDayUnavailability,
+                },
+            };
         });
     };
-    
-    // Helper function to render practical details in the subject list
+
     const getPracticalInfo = (details) => {
         if (!details) return null;
         switch (details.type) {
             case 'specific_lab':
-                return `Requires Lab(s): ${details.labs.length > 0 ? details.labs.join(', ') : 'Any'}`;
+                return `Requires Lab(s): ${details.labs && details.labs.length > 0 ? details.labs.join(', ') : 'Any'}`;
             case 'classroom_only':
                 return 'Requires Classroom (No Lab)';
             case 'no_room_last_slots':
@@ -74,7 +72,18 @@ export default function Report({ departments, faculties, subjects, labs, faculty
                     <p><strong>Break:</strong> {selectedDeptData.breakInfo.name} at {selectedDeptData.breakInfo.startTime}</p>
                     <p><strong>Lecture Duration:</strong> {selectedDeptData.lectureDuration} mins</p>
                 </div>
-                <div className="border-t mt-4 pt-4"><h3 className="font-semibold mb-2">Class Structure</h3><div className="flex justify-around text-center">{Object.entries(classStructure).map(([year, data]) => (<div key={year}><p className="font-bold">{year === '2' ? 'SY' : year === '3' ? 'TY' : 'Final'}</p><p className="text-sm">{data.divisions} Divs &times; {data.batchesPerDivision} Batches/Div = <span className="font-bold">{data.divisions * data.batchesPerDivision} Total Batches</span></p></div>))}</div></div>
+                {/* --- FIX IS APPLIED HERE --- */}
+                <div className="border-t mt-4 pt-4">
+                    <h3 className="font-semibold mb-2">Class Structure</h3>
+                    <div className="flex justify-around text-center">
+                        {Object.entries(classStructure).map(([year, data]) => (
+                            <div key={year}>
+                                <p className="font-bold">{year === '2' ? 'SY' : year === '3' ? 'TY' : 'Final'}</p>
+                                <p className="text-sm">{data.divisions} Divs &times; {data.batchesPerDivision} Batches/Div = <span className="font-bold">{data.divisions * data.batchesPerDivision} Total Batches</span></p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </section>}
 
             {/* BOX 2: Subjects by Year */}
@@ -85,11 +94,7 @@ export default function Report({ departments, faculties, subjects, labs, faculty
                         <div key={year}>
                             <h3 className="font-bold text-lg mb-2">{year === '2' ? 'Second Year (SY)' : year === '3' ? 'Third Year (TY)' : 'Final Year'}</h3>
                             <div className="space-y-2">
-                                {subjectsByYear[year].map(s => <div key={s.id} className="p-2 bg-gray-50 rounded text-sm">
-                                    <p className="font-bold">{s.shortForm} - {s.name}</p>
-                                    <p className="text-xs text-gray-600">Lec/wk: {s.workload.lectures}, Prac/wk: {s.workload.practicals}</p>
-                                    {s.classType !== 'theory' && <p className="text-xs text-blue-600">{getPracticalInfo(s.practicalDetails)}</p>}
-                                </div>)}
+                                {subjectsByYear[year].map(s => <div key={s.id} className="p-2 bg-gray-50 rounded text-sm"><p className="font-bold">{s.shortForm} - {s.name}</p><p className="text-xs text-gray-600">Lec/wk: {s.workload.lectures}, Prac/wk: {s.workload.practicals}</p>{s.classType !== 'theory' && <p className="text-xs text-blue-600">{getPracticalInfo(s.practicalDetails)}</p>}</div>)}
                             </div>
                         </div>
                     ))}
@@ -115,67 +120,57 @@ export default function Report({ departments, faculties, subjects, labs, faculty
 
             {/* BOX 4: Subject Constraints */}
             <section className="bg-white p-6 rounded-lg shadow mb-8">
-                <h2 className="text-xl font-semibold mb-4 border-b pb-2">Subject Constraints</h2>
-                <div className="space-y-3">
-                    {filteredConstraints.length > 0 ? filteredConstraints.map(c => (
-                        <div key={c.id} className="p-3 bg-gray-50 rounded-lg border">
-                            {c.type === 'joint' && <>
-                                <p className="font-bold capitalize">{c.sessionType} Session: <span className="text-indigo-600">{c.subjectShortForm}</span> (Year {c.year})</p>
-                                <p className="text-sm">Assigned Faculty: {c.assignedFaculty.join(', ')}</p>
-                                {c.notes && <p className="text-xs mt-1 text-gray-600">Notes: {c.notes}</p>}
-                            </>}
-                            {c.type === 'slot' && <>
-                                <p className="font-bold capitalize">Fixed Slot: <span className="text-indigo-600">{c.subjectShortForm}</span> ({c.sessionType}) for Year {c.year}</p>
-                                <p className="text-sm">Assigned Slot: <span className="font-semibold">{c.day}, {c.startTime} - {c.endTime}</span></p>
-                            </>}
-                        </div>
-                    )) : <p className="text-gray-500">No subject constraints defined.</p>}
-                </div>
+                <h2 className="text-xl font-semibold mb-4 border-b pb-2">Scheduling Constraints</h2>
+                <div className="space-y-3">{filteredConstraints.length > 0 ? filteredConstraints.map(c => (<div key={c.id} className="p-3 bg-gray-50 rounded-lg border"><p className="font-bold capitalize">{c.type}: <span className="text-indigo-600">{c.subjectShortForm}</span> for Year {c.year}</p></div>)) : <p className="text-gray-500">No subject constraints defined.</p>}</div>
             </section>
 
             {/* BOX 5: Faculty List */}
             <section className="bg-white p-6 rounded-lg shadow mb-8">
                 <h2 className="text-xl font-semibold mb-4 border-b pb-2">Faculty in {selectedDeptName}</h2>
                 <div className="space-y-4">
-                    {filteredFaculty.map(faculty => {
-                        let totalLectures = 0;
-                        let totalPracticals = 0;
-                        return (
+                    {filteredFaculty.map(faculty => (
                         <div key={faculty.id} className="p-4 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg shadow-sm border border-indigo-100">
                             <div className="flex justify-between items-start">
                                 <div>
                                     <h3 className="font-bold text-lg text-indigo-800">{faculty.title} {faculty.name}</h3>
-                                    <div className="mt-2 text-sm space-y-1">
-                                        {Object.entries(faculty.subjectsByYear).map(([year, subjectList]) => subjectList.map(shortForm => {
-                                            const subject = filteredSubjects.find(s => s.shortForm === shortForm && s.year === year);
-                                            if (!subject) return null;
-                                            totalLectures += Number(subject.workload.lectures);
-                                            totalPracticals += Number(subject.workload.practicals);
-                                            return <p key={shortForm}>- {subject.name} ({year === '2' ? 'SY' : 'TY'}): {subject.workload.lectures} Lec/wk, {subject.workload.practicals} Prac/wk</p>
-                                        }))}
-                                    </div>
-                                    <div className="mt-2 pt-2 border-t border-indigo-200 font-bold text-sm text-right">→ Total Workload: {totalLectures} Lectures, {totalPracticals} Practicals</div>
+                                    <div className="mt-2"><h4 className="font-semibold text-sm">Subjects:</h4>{Object.entries(faculty.subjectsByYear).map(([year, subjectList]) => (<p key={year} className="text-sm"><span className="font-medium">Year {year}:</span> {subjectList.join(', ')}</p>))}</div>
                                 </div>
-                                <button onClick={() => setTimingGridVisibleFor(timingGridVisibleFor === faculty.id ? null : faculty.id)} className="bg-white text-indigo-600 px-3 py-1 border border-indigo-300 rounded-full text-sm hover:bg-indigo-100">{timingGridVisibleFor === faculty.id ? 'Close Timings' : 'Set Timings'}</button>
+                                <button onClick={() => setTimingGridVisibleFor(timingGridVisibleFor === faculty.id ? null : faculty.id)} className="bg-white text-indigo-600 px-3 py-1 border border-indigo-300 rounded-full text-sm hover:bg-indigo-100">
+                                    {timingGridVisibleFor === faculty.id ? 'Close Timings' : 'Set Timings'}
+                                </button>
                             </div>
+                            
                             {timingGridVisibleFor === faculty.id && selectedDeptData && (
                                 <div className="mt-4 pt-4 border-t border-indigo-200 overflow-x-auto">
-                                    <div className="grid grid-cols-6 gap-1 text-center font-bold text-sm"><div className="p-2">Time</div>{weekDays.map(day => <div key={day} className="p-2">{day}</div>)}</div>
+                                    <div className="grid grid-cols-6 gap-1 text-center font-bold text-sm">
+                                        <div className="p-2">Time</div>
+                                        {weekDays.map(day => <div key={day} className="p-2">{day}</div>)}
+                                    </div>
                                     {selectedDeptData.timeSlots['Monday'].map((slot, slotIndex) => (
                                         <div key={slotIndex} className="grid grid-cols-6 gap-1 text-center text-sm items-center">
                                             <div className="p-2 font-semibold bg-gray-100 rounded-l-md">{slot.type === 'break' ? slot.name : `${slot.start} - ${slot.end}`}</div>
                                             {weekDays.map(day => {
-                                                if (slot.type === 'break') { return <div key={day} className="bg-yellow-200 h-full flex items-center justify-center">Break</div>; }
+                                                if (slot.type === 'break') {
+                                                    return <div key={day} className="bg-yellow-200 h-full flex items-center justify-center">Break</div>;
+                                                }
                                                 const slotIdentifier = `${slot.start}-${slot.end}`;
                                                 const isUnavailable = facultyUnavailability[faculty.id]?.[day]?.includes(slotIdentifier);
-                                                return (<button key={day} onClick={() => handleSlotToggle(faculty.id, day, slot)} className={`p-2 h-full rounded-md transition-colors ${isUnavailable ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-green-400 hover:bg-green-500 text-white'}`}>{isUnavailable ? 'Unavailable' : 'Available'}</button>);
+                                                return (
+                                                    <button 
+                                                        key={day} 
+                                                        onClick={() => handleSlotToggle(faculty.id, day, slot)}
+                                                        className={`p-2 h-full rounded-md transition-colors ${isUnavailable ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-green-400 hover:bg-green-500 text-white'}`}
+                                                    >
+                                                        {isUnavailable ? 'Unavailable' : 'Available'}
+                                                    </button>
+                                                );
                                             })}
                                         </div>
                                     ))}
                                 </div>
                             )}
                         </div>
-                    )})}
+                    ))}
                 </div>
             </section>
         </main>
