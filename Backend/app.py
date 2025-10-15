@@ -19,6 +19,11 @@ def home():
 # ---------- FACULTY ----------
 @app.route('/api/faculty', methods=['GET', 'POST', 'PUT', 'DELETE'])
 def handle_faculty():
+    # GET request - display all faculties
+    if request.method == 'GET':
+        return faculty_handler.display_faculty()
+    
+    # POST, PUT, DELETE - check action from request body
     data = request.json or {}
     action = data.get('action', '').lower()
 
@@ -29,12 +34,17 @@ def handle_faculty():
     elif action == 'update':
         return faculty_handler.update_faculty(data)
     else:
-        return faculty_handler.display_faculty()
+        return jsonify({"error": "Invalid action"}), 400
 
 
 # ---------- LABS ----------
 @app.route('/api/labs', methods=['GET', 'POST', 'PUT', 'DELETE'])
 def handle_labs():
+    # GET request - display all labs
+    if request.method == 'GET':
+        return labs_handler.display_labs()
+    
+    # POST, PUT, DELETE - check action from request body
     data = request.json or {}
     action = data.get('action', '').lower()
 
@@ -45,14 +55,14 @@ def handle_labs():
     elif action == 'update':
         return labs_handler.update_lab(data)
     else:
-        return labs_handler.display_labs()
+        return jsonify({"error": "Invalid action"}), 400
 
 
 # ---------- PREVIOUS YEAR TIMETABLE ----------
 @app.route('/api/previous_timetable', methods=['POST'])
 def previous_timetable():
     data = request.json
-    return timetable_handler.get_previous_year_timetable(data)
+    return timetable_handler.get_master_timetable(data)
 
 
 # ---------- CLASS STRUCTURE ----------
@@ -90,11 +100,42 @@ def save_constraints():
     return constraints_handler.save_constraints(data)
 
 
-# ---------- GENERATE TIMETABLE ----------
+# ---------- GENERATE TIMETABLE (Single Year) ----------
 @app.route('/api/generate_timetable', methods=['POST'])
 def generate_timetable():
     data = request.json
     return timetable_handler.generate_timetable(data)
+
+
+# ---------- GENERATE ALL TIMETABLES (SY, TY, BE) ----------
+@app.route('/api/generate_all_timetables', methods=['POST'])
+def generate_all_timetables():
+    """
+    Generate master practical timetables for all classes (SY, TY, BE)
+    Body: {"sem": "1"}
+    """
+    data = request.json or {}
+    return timetable_handler.generate_all_timetables(data)
+
+
+# ---------- GET ALL MASTER TIMETABLES ----------
+@app.route('/api/master_timetables', methods=['GET'])
+def get_all_master_timetables():
+    """
+    Retrieve all generated master practical timetables
+    """
+    return timetable_handler.get_all_master_timetables()
+
+
+# ---------- GET SPECIFIC MASTER TIMETABLE ----------
+@app.route('/api/master_timetable', methods=['POST'])
+def get_master_timetable():
+    """
+    Retrieve master practical timetable for specific year/semester
+    Body: {"year": "SY", "sem": "1"}
+    """
+    data = request.json or {}
+    return timetable_handler.get_master_timetable(data)
 
 
 if __name__ == '__main__':
