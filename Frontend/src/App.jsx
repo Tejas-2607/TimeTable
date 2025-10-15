@@ -3,7 +3,7 @@ import { Routes, Route, Link } from 'react-router-dom';
 import InputForm from './components/InputForm';
 import Report from './components/Report';
 import TimetableView from './components/TimetableView';
-
+import TempTimetable from './components/TempTT';
 export default function App() {
   // Central state for the entire application
   const [departments, setDepartments] = useState([]);
@@ -30,6 +30,7 @@ export default function App() {
           <nav className="space-x-4">
             <Link to="/" className="text-indigo-600 hover:underline">Input Form</Link>
             <Link to="/report" className="text-indigo-600 hover:underline">Configuration Report</Link>
+            <Link to="/TempTT" className="text-indigo-600 hover:underline font-bold">View Timetable</Link>
           </nav>
         </div>
       </header>
@@ -68,6 +69,10 @@ export default function App() {
         <Route
           path="/timetable"
           element={ <TimetableView config={{ departments, faculties, subjects, labs, facultyUnavailability, classStructure, subjectConstraints }} timetable={generatedTimetable} /> }
+        />
+        <Route
+          path="/TempTT"
+          element={ <TempTimetable appData={{ departments, faculties, subjects, labs, classStructure }} /> }
         />
       </Routes>
     </div>
