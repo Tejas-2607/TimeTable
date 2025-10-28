@@ -29,3 +29,21 @@ def save_class_structure(data):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+    
+def get_class_structure():
+    """
+    Retrieves the current class structure.
+    """
+
+    try:
+        structure = class_structure_collection.find_one({})
+        if structure:
+            structure['_id'] = str(structure['_id'])  # Convert ObjectId to string
+            return jsonify(structure)
+        else:
+            return jsonify({"message": "No class structure found"}), 404
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500  

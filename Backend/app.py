@@ -70,11 +70,15 @@ def previous_timetable():
 
 
 # ---------- CLASS STRUCTURE ----------
+@app.route('/api/class_structure', methods=['GET'])
+def get_class_structure():
+    return class_structure_handler.get_class_structure()
+
 @app.route('/api/class_structure', methods=['POST'])
 def save_class_structure():
-    data = request.json
+    data = request.json or {}
     return class_structure_handler.save_class_structure(data)
-
+    
 
 # ---------- CONFIRM LABS ----------
 @app.route('/api/confirm_labs', methods=['POST'])
