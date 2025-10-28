@@ -13,10 +13,13 @@ export const createFaculty = async (facultyData) => {
 
 // ✅ Update faculty by ID
 export const updateFaculty = async (id, facultyData) => {
-  return await api.put(`/faculty`, {id, facultyData});
+  return await api.put(`/faculty`, {
+    _id: id,
+    updates: facultyData
+  });
 };
 
 // ✅ Delete faculty by ID
 export const deleteFaculty = async (id) => {
-  return await api.delete(`/faculty`, {id, facultyData});
+  return await api.delete(`/faculty`, { data: id });
 };

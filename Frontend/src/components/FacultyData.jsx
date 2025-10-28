@@ -32,6 +32,8 @@ export default function FacultyData() {
         (a, b) => new Date(b.created_at) - new Date(a.created_at)
       );
       setFaculties(sorted);
+      console.log(sorted);
+      
     } catch (error) {
       console.error('Failed to load faculties:', error);
       alert('Error loading faculties');
@@ -76,6 +78,8 @@ export default function FacultyData() {
   const handleDelete = async (id) => {
     if (confirm('Are you sure you want to delete this faculty?')) {
       try {
+        id = {"_id": id};
+        console.log(id);
         await deleteFaculty(id);
         await loadFaculties();
       } catch (error) {

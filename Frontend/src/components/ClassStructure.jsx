@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { storage } from '../lib/storage';
 import { Save } from 'lucide-react';
+import { saveClassStructure, getClassStructure } from '../services/classStructureService';
 
 export default function ClassStructure() {
   const [structures, setStructures] = useState({
@@ -9,24 +9,25 @@ export default function ClassStructure() {
     'Final Year': { num_divisions: 1, batches_per_division: 3 },
   });
 
+  // ✅ Load from backend
   useEffect(() => {
     loadStructures();
   }, []);
 
-  const loadStructures = () => {
-    const data = storage.classStructure.getAll();
+  const loadStructures = async () => {
+    try {
+      const data = await getClassStructure();
+      console.log('Loaded class structure:', data);
+      if (data && Object.keys(data).length > 0) {
+        const { _id, ...structureData } = data; // remove MongoDB ID
+        setStructures(structureData);
+      }
 
-    const structureMap = {};
-    data.forEach((item) => {
-      structureMap[item.year] = {
-        num_divisions: item.num_divisions,
-        batches_per_division: item.batches_per_division,
-      };
-    });
-    if (Object.keys(structureMap).length > 0) {
-      setStructures((prev) => ({ ...prev, ...structureMap }));
+    } catch (error) {
+      console.error('Failed to load class structure:', error);
     }
   };
+
 
   const handleChange = (year, field, value) => {
     setStructures((prev) => ({
@@ -43,18 +44,16 @@ export default function ClassStructure() {
     return num_divisions * batches_per_division;
   };
 
-  const handleSave = () => {
-    for (const [year, data] of Object.entries(structures)) {
-      const structureData = {
-        num_divisions: data.num_divisions,
-        batches_per_division: data.batches_per_division,
-        total_batches: data.num_divisions * data.batches_per_division,
-      };
-
-      storage.classStructure.upsert(year, structureData);
+  // ✅ Save to backend
+  const handleSave = async () => {
+    try {
+      const payload = { ...structures };
+      await saveClassStructure(payload);
+      alert('Class structure saved successfully!');
+    } catch (error) {
+      alert('Failed to save class structure.');
+      console.error(error);
     }
-
-    alert('Class structure saved successfully!');
   };
 
   return (
