@@ -10,37 +10,46 @@ def save_faculty_workload(data):
     Save workload for a faculty by deleting previous workload and adding new one.
     Expected data:
     {
-        "faculty_name": "Dr. Aditi",
+        "faculty_id": "68efe2d652ff29887ed00756",
         "subjects": [
-            {"year": "SY", "class": "A", "practical_hrs": 2, "lec_hrs": 3},
-            {"year": "SY", "class": "B", "practical_hrs": 0, "lec_hrs": 2}
+            {"subject_id": "690abc123...", "year": "SY", "class": "A", "practical_hrs": 2, "lec_hrs": 3},
+            {"subject_id": "690def456...", "year": "SY", "class": "B", "practical_hrs": 0, "lec_hrs": 2}
         ]
     }
     """
-    faculty_name = data.get("faculty_name")
+    faculty_id = data.get("faculty_id")
     subjects = data.get("subjects")
 
-    if not faculty_name or not subjects:
-        return jsonify({"error": "Missing faculty_name or subjects"}), 400
+    if not faculty_id or not subjects:
+        return jsonify({"error": "Missing faculty_id or subjects"}), 400
 
     try:
-        # Get faculty ID
-        faculty = faculty_collection.find_one({"name": faculty_name})
+        # Convert string ID to ObjectId
+        faculty_oid = ObjectId(faculty_id)
+        
+        # Verify faculty exists
+        faculty = faculty_collection.find_one({"_id": faculty_oid})
         if not faculty:
-            return jsonify({"error": f"Faculty '{faculty_name}' not found"}), 404
+            return jsonify({"error": f"Faculty with ID '{faculty_id}' not found"}), 404
 
-        faculty_id = faculty.get("_id")
+        # Convert subject_id strings to ObjectIds in the subjects array
+        processed_subjects = []
+        for subject in subjects:
+            subject_copy = subject.copy()
+            if "subject_id" in subject_copy:
+                subject_copy["subject_id"] = ObjectId(subject_copy["subject_id"])
+            processed_subjects.append(subject_copy)
 
         # Delete existing workload for this faculty
-        workload_collection.delete_many({"faculty_id": faculty_id})
+        workload_collection.delete_many({"faculty_id": faculty_oid})
 
         # Insert new workload
         workload_collection.insert_one({
-            "faculty_id": faculty_id,
-            "subjects": subjects
+            "faculty_id": faculty_oid,
+            "subjects": processed_subjects
         })
 
-        return jsonify({"message": f"Workload saved for faculty '{faculty_name}'"})
+        return jsonify({"message": f"Workload saved for faculty '{faculty.get('name', 'Unknown')}'"})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
