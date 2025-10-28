@@ -15,7 +15,7 @@ export default function FacultyData() {
   const [formData, setFormData] = useState({
     title: 'Prof',
     full_name: '',
-    teaches_year: [],
+    short_name: '',
   });
 
   // ✅ Load faculties from backend
@@ -46,7 +46,6 @@ export default function FacultyData() {
 
     const facultyData = {
       ...formData,
-      teaches_year: formData.teaches_year.join(', '),
     };
 
     try {
@@ -68,9 +67,7 @@ export default function FacultyData() {
     setFormData({
       title: faculty.title,
       full_name: faculty.full_name,
-      teaches_year: faculty.teaches_year
-        ? faculty.teaches_year.split(', ').map((y) => y.trim())
-        : [],
+      short_name : faculty.short_name
     });
     setEditingId(faculty._id || faculty.id);
     setShowForm(true);
@@ -91,10 +88,7 @@ export default function FacultyData() {
 
   const toggleYear = (year) => {
     setFormData((prev) => ({
-      ...prev,
-      teaches_year: prev.teaches_year.includes(year)
-        ? prev.teaches_year.filter((y) => y !== year)
-        : [...prev.teaches_year, year],
+      ...prev
     }));
   };
 
@@ -173,25 +167,18 @@ export default function FacultyData() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-3">
-                Teaches in Year
-              </label>
-              <div className="flex gap-4">
-                {['SY', 'TY', 'Final Year'].map((year) => (
-                  <label
-                    key={year}
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={formData.teaches_year.includes(year)}
-                      onChange={() => toggleYear(year)}
-                      className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                    />
-                    <span className="text-slate-700">{year}</span>
-                  </label>
-                ))}
-              </div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Short Name
+                </label>
+                <input
+                  type="text"
+                  value={formData.short_name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, full_name: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
             </div>
 
             <div className="flex gap-3">
@@ -228,7 +215,7 @@ export default function FacultyData() {
                   Full Name
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">
-                  Teaches Year
+                  Short Name
                 </th>
                 <th className="px-6 py-4 text-right text-sm font-semibold text-slate-700">
                   Actions
@@ -248,7 +235,7 @@ export default function FacultyData() {
                     {faculty.full_name}
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-600">
-                    {faculty.teaches_year}
+                    {faculty.short_name}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
