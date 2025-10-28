@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify
 
 from flask_cors import CORS
 
+
+app = Flask(__name__)
 # Enable CORS for all routes
 CORS(app)
 from modules import (
@@ -13,8 +15,6 @@ from modules import (
     workload_handler,
     constraints_handler
 )
-
-app = Flask(__name__)
 
 @app.route('/')
 def home():
