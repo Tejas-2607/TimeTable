@@ -1,27 +1,47 @@
 import { useState, useEffect } from 'react';
-import { storage } from '../lib/storage';
 import { Trash2, Edit2, Plus, Save, X } from 'lucide-react';
+import {
+  getFaculties,
+  createFaculty,
+  updateFaculty,
+  deleteFaculty,
+} from '../services/facultyService';
 
 export default function FacultyData() {
   const [faculties, setFaculties] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: 'Prof',
     full_name: '',
     teaches_year: [],
   });
 
+  // ✅ Load faculties from backend
   useEffect(() => {
     loadFaculties();
   }, []);
 
-  const loadFaculties = () => {
-    const data = storage.faculties.getAll();
-    setFaculties(data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+  const loadFaculties = async () => {
+    try {
+      setLoading(true);
+      const data = await getFaculties();
+      // Sort by created_at if available
+      const sorted = data.sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      );
+      setFaculties(sorted);
+    } catch (error) {
+      console.error('Failed to load faculties:', error);
+      alert('Error loading faculties');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSubmit = (e) => {
+  // ✅ Submit (Add / Edit)
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const facultyData = {
@@ -29,32 +49,43 @@ export default function FacultyData() {
       teaches_year: formData.teaches_year.join(', '),
     };
 
-    if (editingId) {
-      storage.faculties.update(editingId, facultyData);
-    } else {
-      storage.faculties.insert(facultyData);
+    try {
+      if (editingId) {
+        await updateFaculty(editingId, facultyData);
+      } else {
+        await createFaculty(facultyData);
+      }
+      await loadFaculties();
+      resetForm();
+    } catch (error) {
+      console.error('Error saving faculty:', error);
+      alert('Failed to save faculty');
     }
-
-    setFormData({ title: 'Prof', full_name: '', teaches_year: [] });
-    setEditingId(null);
-    setShowForm(false);
-    loadFaculties();
   };
 
+  // ✅ Edit
   const handleEdit = (faculty) => {
     setFormData({
       title: faculty.title,
       full_name: faculty.full_name,
-      teaches_year: faculty.teaches_year.split(', '),
+      teaches_year: faculty.teaches_year
+        ? faculty.teaches_year.split(', ').map((y) => y.trim())
+        : [],
     });
-    setEditingId(faculty.id);
+    setEditingId(faculty._id || faculty.id);
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
+  // ✅ Delete
+  const handleDelete = async (id) => {
     if (confirm('Are you sure you want to delete this faculty?')) {
-      storage.faculties.delete(id);
-      loadFaculties();
+      try {
+        await deleteFaculty(id);
+        await loadFaculties();
+      } catch (error) {
+        console.error('Error deleting faculty:', error);
+        alert('Failed to delete faculty');
+      }
     }
   };
 
@@ -65,6 +96,12 @@ export default function FacultyData() {
         ? prev.teaches_year.filter((y) => y !== year)
         : [...prev.teaches_year, year],
     }));
+  };
+
+  const resetForm = () => {
+    setFormData({ title: 'Prof', full_name: '', teaches_year: [] });
+    setEditingId(null);
+    setShowForm(false);
   };
 
   return (
@@ -92,11 +129,7 @@ export default function FacultyData() {
               {editingId ? 'Edit Faculty' : 'Add New Faculty'}
             </h3>
             <button
-              onClick={() => {
-                setShowForm(false);
-                setEditingId(null);
-                setFormData({ title: 'Prof', full_name: '', teaches_year: [] });
-              }}
+              onClick={resetForm}
               className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
             >
               <X size={20} />
@@ -171,11 +204,7 @@ export default function FacultyData() {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setShowForm(false);
-                  setEditingId(null);
-                  setFormData({ title: 'Prof', full_name: '', teaches_year: [] });
-                }}
+                onClick={resetForm}
                 className="px-6 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
               >
                 Cancel
@@ -186,56 +215,64 @@ export default function FacultyData() {
       )}
 
       <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-slate-200">
-        <table className="w-full">
-          <thead className="bg-slate-50 border-b border-slate-200">
-            <tr>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">
-                Title
-              </th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">
-                Full Name
-              </th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">
-                Teaches Year
-              </th>
-              <th className="px-6 py-4 text-right text-sm font-semibold text-slate-700">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200">
-            {faculties.map((faculty) => (
-              <tr key={faculty.id} className="hover:bg-slate-50 transition-colors">
-                <td className="px-6 py-4 text-sm text-slate-600">
-                  {faculty.title}
-                </td>
-                <td className="px-6 py-4 text-sm font-medium text-slate-800">
-                  {faculty.full_name}
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-600">
-                  {faculty.teaches_year}
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <button
-                      onClick={() => handleEdit(faculty)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    >
-                      <Edit2 size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(faculty.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </td>
+        {loading ? (
+          <div className="text-center py-12 text-slate-500">Loading...</div>
+        ) : faculties.length > 0 ? (
+          <table className="w-full">
+            <thead className="bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">
+                  Title
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">
+                  Full Name
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">
+                  Teaches Year
+                </th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-slate-700">
+                  Actions
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-        {faculties.length === 0 && (
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {faculties.map((faculty) => (
+                <tr
+                  key={faculty._id || faculty.id}
+                  className="hover:bg-slate-50 transition-colors"
+                >
+                  <td className="px-6 py-4 text-sm text-slate-600">
+                    {faculty.title}
+                  </td>
+                  <td className="px-6 py-4 text-sm font-medium text-slate-800">
+                    {faculty.full_name}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-600">
+                    {faculty.teaches_year}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => handleEdit(faculty)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button
+                        onClick={() =>
+                          handleDelete(faculty._id || faculty.id)
+                        }
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
           <div className="text-center py-12 text-slate-500">
             No faculty members added yet
           </div>
