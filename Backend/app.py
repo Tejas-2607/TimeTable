@@ -1,4 +1,9 @@
 from flask import Flask, request, jsonify
+
+from flask_cors import CORS
+
+# Enable CORS for all routes
+CORS(app)
 from modules import (
     faculty_handler,
     labs_handler,
