@@ -1,80 +1,39 @@
-import React, { useState } from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
-import InputForm from './components/InputForm';
-import Report from './components/Report';
-import TimetableView from './components/TimetableView';
-import TempTimetable from './components/TempTT';
-export default function App() {
-  // Central state for the entire application
-  const [departments, setDepartments] = useState([]);
-  const [faculties, setFaculties] = useState([]);
-  const [subjects, setSubjects] = useState([]);
-  const [labs, setLabs] = useState([]);
-  const [facultyUnavailability, setFacultyUnavailability] = useState({});
-  const [generatedTimetable, setGeneratedTimetable] = useState(null);
-  const [classStructure, setClassStructure] = useState({
-    '2': { divisions: 0, batchesPerDivision: 0 },
-    '3': { divisions: 0, batchesPerDivision: 0 },
-    '4': { divisions: 0, batchesPerDivision: 0 },
-  });
-  const [subjectConstraints, setSubjectConstraints] = useState([]);
+import { useState } from 'react';
+import Sidebar from './components/Sidebar';
+import GenerateTimetable from './components/GenerateTimetable';
+import FacultyData from './components/FacultyData';
+import LabsData from './components/LabsData';
+import ClassStructure from './components/ClassStructure';
+import ViewTimetables from './components/ViewTimetables';
+
+function App() {
+  const [activeTab, setActiveTab] = useState('generate');
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'generate':
+        return <GenerateTimetable />;
+      case 'faculty':
+        return <FacultyData />;
+      case 'labs':
+        return <LabsData />;
+      case 'structure':
+        return <ClassStructure />;
+      case 'view':
+        return <ViewTimetables />;
+      default:
+        return <GenerateTimetable />;
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-800">
-      <header className="bg-white shadow-md">
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-indigo-700">Smart Timetable Generator 🗓️</h1>
-            <p className="text-gray-600 mt-1">An advanced tool for creating conflict-free academic schedules.</p>
-          </div>
-          <nav className="space-x-4">
-            <Link to="/" className="text-indigo-600 hover:underline">Input Form</Link>
-            <Link to="/report" className="text-indigo-600 hover:underline">Configuration Report</Link>
-            <Link to="/TempTT" className="text-indigo-600 hover:underline font-bold">View Timetable</Link>
-          </nav>
-        </div>
-      </header>
-      
-      <Routes>
-        <Route 
-          path="/" 
-          element={
-            <InputForm 
-              departments={departments} setDepartments={setDepartments}
-              faculties={faculties} setFaculties={setFaculties}
-              subjects={subjects} setSubjects={setSubjects}
-              labs={labs} setLabs={setLabs}
-              classStructure={classStructure} setClassStructure={setClassStructure}
-              subjectConstraints={subjectConstraints} setSubjectConstraints={setSubjectConstraints}
-            />
-          } 
-        />
-        <Route 
-          path="/report" 
-          element={
-            <Report 
-              departments={departments}
-              faculties={faculties}
-              subjects={subjects}
-              labs={labs}
-              facultyUnavailability={facultyUnavailability}
-              // --- FIX: Pass the setFacultyUnavailability function down to the Report component ---
-              setFacultyUnavailability={setFacultyUnavailability}
-              setGeneratedTimetable={setGeneratedTimetable}
-              classStructure={classStructure}
-              subjectConstraints={subjectConstraints}
-            />
-          } 
-        />
-        <Route
-          path="/timetable"
-          element={ <TimetableView config={{ departments, faculties, subjects, labs, facultyUnavailability, classStructure, subjectConstraints }} timetable={generatedTimetable} /> }
-        />
-        <Route
-          path="/TempTT"
-          element={ <TempTimetable appData={{ departments, faculties, subjects, labs, classStructure }} /> }
-        />
-      </Routes>
+    <div className="flex min-h-screen bg-slate-100">
+      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <main className="flex-1 overflow-auto">
+        {renderContent()}
+      </main>
     </div>
   );
 }
+
+export default App;
