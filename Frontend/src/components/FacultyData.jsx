@@ -14,7 +14,7 @@ export default function FacultyData() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: 'Prof',
-    full_name: '',
+    name: '',
     short_name: '',
   });
 
@@ -43,12 +43,11 @@ export default function FacultyData() {
   // ✅ Submit (Add / Edit)
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const facultyData = {
-      ...formData,
-    };
+    const facultyData = { ...formData };
 
     try {
+      console.log(facultyData);
+      
       if (editingId) {
         await updateFaculty(editingId, facultyData);
       } else {
@@ -66,8 +65,8 @@ export default function FacultyData() {
   const handleEdit = (faculty) => {
     setFormData({
       title: faculty.title,
-      full_name: faculty.full_name,
-      short_name : faculty.short_name
+      name: faculty.name,
+      short_name: faculty.short_name,
     });
     setEditingId(faculty._id || faculty.id);
     setShowForm(true);
@@ -86,14 +85,8 @@ export default function FacultyData() {
     }
   };
 
-  const toggleYear = (year) => {
-    setFormData((prev) => ({
-      ...prev
-    }));
-  };
-
   const resetForm = () => {
-    setFormData({ title: 'Prof', full_name: '', teaches_year: [] });
+    setFormData({ title: 'Prof', name: '', short_name: '' });
     setEditingId(null);
     setShowForm(false);
   };
@@ -132,6 +125,7 @@ export default function FacultyData() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-2 gap-6">
+              {/* Title */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Title
@@ -150,15 +144,16 @@ export default function FacultyData() {
                 </select>
               </div>
 
+              {/* Full Name */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Full Name
                 </label>
                 <input
                   type="text"
-                  value={formData.full_name}
+                  value={formData.name}
                   onChange={(e) =>
-                    setFormData({ ...formData, full_name: e.target.value })
+                    setFormData({ ...formData, name: e.target.value })
                   }
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
@@ -166,19 +161,22 @@ export default function FacultyData() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+            {/* Short Name */}
+            <div className="grid grid-cols-2 gap-6 mt-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Short Name
                 </label>
                 <input
                   type="text"
                   value={formData.short_name}
                   onChange={(e) =>
-                    setFormData({ ...formData, full_name: e.target.value })
+                    setFormData({ ...formData, short_name: e.target.value })
                   }
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
+              </div>
             </div>
 
             <div className="flex gap-3">
@@ -232,7 +230,7 @@ export default function FacultyData() {
                     {faculty.title}
                   </td>
                   <td className="px-6 py-4 text-sm font-medium text-slate-800">
-                    {faculty.full_name}
+                    {faculty.name}
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-600">
                     {faculty.short_name}
