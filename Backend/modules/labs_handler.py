@@ -1,4 +1,5 @@
 from flask import jsonify
+from bson import ObjectId
 from config import db
 
 # Collection for labs
@@ -7,7 +8,10 @@ labs_collection = db['labs']
 # ---------- Display all labs ----------
 def display_labs():
     try:
-        labs = list(labs_collection.find({}, {'_id': 0}))
+        labs = list(labs_collection.find({}))
+        # Convert ObjectId to string for JSON serialization
+        for lab in labs:
+            lab['_id'] = str(lab['_id'])
         return jsonify(labs)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -27,44 +31,53 @@ def add_lab(data):
         return jsonify({"error": f"Lab '{name}' already exists"}), 400
 
     try:
-        labs_collection.insert_one({
+        result = labs_collection.insert_one({
             "name": name,
             "short_name": short_name
         })
-        return jsonify({"message": f"Lab '{name}' added successfully!"})
+        return jsonify({
+            "message": f"Lab '{name}' added successfully!",
+            "_id": str(result.inserted_id)
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
 # ---------- Delete a lab ----------
 def delete_lab(data):
-    name = data.get('name')
+    lab_id = data.get('_id')
 
-    if not name:
-        return jsonify({"error": "Missing name"}), 400
+    if not lab_id:
+        return jsonify({"error": "Missing _id"}), 400
 
     try:
-        result = labs_collection.delete_one({"name": name})
+        # Convert string ID to ObjectId
+        object_id = ObjectId(lab_id)
+        
+        result = labs_collection.delete_one({"_id": object_id})
         if result.deleted_count == 0:
-            return jsonify({"error": f"Lab '{name}' not found"}), 404
-        return jsonify({"message": f"Lab '{name}' deleted successfully!"})
+            return jsonify({"error": f"Lab with ID '{lab_id}' not found"}), 404
+        return jsonify({"message": f"Lab deleted successfully!"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
 # ---------- Update a lab ----------
 def update_lab(data):
-    name = data.get('name')
+    lab_id = data.get('_id')
     updates = data.get('updates')  # e.g., {"name": "New Lab Name", "short_name": "NL"}
 
-    if not name or not updates:
-        return jsonify({"error": "Missing name or updates"}), 400
+    if not lab_id or not updates:
+        return jsonify({"error": "Missing _id or updates"}), 400
 
     try:
-        result = labs_collection.update_one({"name": name}, {"$set": updates})
+        # Convert string ID to ObjectId
+        object_id = ObjectId(lab_id)
+        
+        result = labs_collection.update_one({"_id": object_id}, {"$set": updates})
         if result.matched_count == 0:
-            return jsonify({"error": f"Lab '{name}' not found"}), 404
-        return jsonify({"message": f"Lab '{name}' updated successfully!"})
+            return jsonify({"error": f"Lab with ID '{lab_id}' not found"}), 404
+        return jsonify({"message": f"Lab updated successfully!"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -73,16 +86,19 @@ def update_lab(data):
 def confirm_labs(data):
     """
     Custom function: confirm labs (for example, set a 'confirmed' flag)
-    Expected data: {"lab_names": ["Lab1", "Lab2"]}
+    Expected data: {"lab_ids": ["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"]}
     """
-    lab_names = data.get('lab_names', [])
+    lab_ids = data.get('lab_ids', [])
 
-    if not lab_names:
+    if not lab_ids:
         return jsonify({"error": "No labs provided for confirmation"}), 400
 
     try:
+        # Convert string IDs to ObjectIds
+        object_ids = [ObjectId(lab_id) for lab_id in lab_ids]
+        
         result = labs_collection.update_many(
-            {"name": {"$in": lab_names}},
+            {"_id": {"$in": object_ids}},
             {"$set": {"confirmed": True}}
         )
         return jsonify({
