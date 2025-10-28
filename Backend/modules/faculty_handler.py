@@ -17,6 +17,7 @@ def display_faculty():
 def add_faculty(data):
     name = data.get('name')
     short_name = data.get('short_name')
+    title = data.get('title')  # New field
 
     if not name or not short_name:
         return jsonify({"error": "Missing name or short_name"}), 400
@@ -27,10 +28,16 @@ def add_faculty(data):
         return jsonify({"error": f"Faculty '{name}' already exists"}), 400
 
     try:
-        faculty_collection.insert_one({
+        faculty_data = {
             "name": name,
             "short_name": short_name
-        })
+        }
+        
+        # Add title if provided
+        if title:
+            faculty_data["title"] = title
+        
+        faculty_collection.insert_one(faculty_data)
         return jsonify({"message": f"Faculty '{name}' added successfully!"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -55,7 +62,7 @@ def delete_faculty(data):
 # ---------- Update a faculty ----------
 def update_faculty(data):
     name = data.get('name')
-    updates = data.get('updates')  # e.g., {"name": "New Name", "short_name": "NN"}
+    updates = data.get('updates')  # e.g., {"name": "New Name", "short_name": "NN", "title": "Professor"}
 
     if not name or not updates:
         return jsonify({"error": "Missing name or updates"}), 400
