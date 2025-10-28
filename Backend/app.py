@@ -1,11 +1,10 @@
 from flask import Flask, request, jsonify
-
 from flask_cors import CORS
-
 
 app = Flask(__name__)
 # Enable CORS for all routes
 CORS(app)
+
 from modules import (
     faculty_handler,
     labs_handler,
@@ -22,45 +21,45 @@ def home():
 
 
 # ---------- FACULTY ----------
-@app.route('/api/faculty', methods=['GET', 'POST', 'PUT', 'DELETE'])
-def handle_faculty():
-    # GET request - display all faculties
-    if request.method == 'GET':
-        return faculty_handler.display_faculty()
-    
-    # POST, PUT, DELETE - check action from request body
-    data = request.json or {}
-    action = data.get('action', '').lower()
+@app.route('/api/faculty', methods=['GET'])
+def get_faculty():
+    return faculty_handler.display_faculty()
 
-    if action == 'add':
-        return faculty_handler.add_faculty(data)
-    elif action == 'delete':
-        return faculty_handler.delete_faculty(data)
-    elif action == 'update':
-        return faculty_handler.update_faculty(data)
-    else:
-        return jsonify({"error": "Invalid action"}), 400
+@app.route('/api/faculty', methods=['POST'])
+def add_faculty():
+    data = request.json or {}
+    return faculty_handler.add_faculty(data)
+
+@app.route('/api/faculty', methods=['PUT'])
+def update_faculty():
+    data = request.json or {}
+    return faculty_handler.update_faculty(data)
+
+@app.route('/api/faculty', methods=['DELETE'])
+def delete_faculty():
+    data = request.json or {}
+    return faculty_handler.delete_faculty(data)
 
 
 # ---------- LABS ----------
-@app.route('/api/labs', methods=['GET', 'POST', 'PUT', 'DELETE'])
-def handle_labs():
-    # GET request - display all labs
-    if request.method == 'GET':
-        return labs_handler.display_labs()
-    
-    # POST, PUT, DELETE - check action from request body
-    data = request.json or {}
-    action = data.get('action', '').lower()
+@app.route('/api/labs', methods=['GET'])
+def get_labs():
+    return labs_handler.display_labs()
 
-    if action == 'add':
-        return labs_handler.add_lab(data)
-    elif action == 'delete':
-        return labs_handler.delete_lab(data)
-    elif action == 'update':
-        return labs_handler.update_lab(data)
-    else:
-        return jsonify({"error": "Invalid action"}), 400
+@app.route('/api/labs', methods=['POST'])
+def add_lab():
+    data = request.json or {}
+    return labs_handler.add_lab(data)
+
+@app.route('/api/labs', methods=['PUT'])
+def update_lab():
+    data = request.json or {}
+    return labs_handler.update_lab(data)
+
+@app.route('/api/labs', methods=['DELETE'])
+def delete_lab():
+    data = request.json or {}
+    return labs_handler.delete_lab(data)
 
 
 # ---------- PREVIOUS YEAR TIMETABLE ----------
