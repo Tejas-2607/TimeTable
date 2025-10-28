@@ -40,15 +40,9 @@ def get_class_structure():
     try:
         structure = class_structure_collection.find_one({})
         if structure:
-<<<<<<< HEAD
-            structure['_id'] = str(structure['_id'])  
-            print(structure)
-            return jsonify(structure),200
-=======
             structure['_id'] = str(structure['_id'])  # Convert ObjectId to string
             print(structure)
             return jsonify(structure), 200
->>>>>>> 896261af4fdf97b3a974d64fba818dbc072d8f46
         else:
             return jsonify({"message": "No class structure found"}), 404
 
