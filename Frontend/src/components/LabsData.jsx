@@ -1,53 +1,79 @@
 import { useState, useEffect } from 'react';
-import { storage } from '../lib/storage';
 import { Trash2, Edit2, Plus, Save, X } from 'lucide-react';
+import {
+  getAllLabs,
+  addLab,
+  updateLab,
+  deleteLab,
+} from '../services/labsService';
 
 export default function LabsData() {
   const [labs, setLabs] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    lab_name: '',
-    lab_short_form: '',
+    name: '',
+    short_name: '',
   });
+
+  // ✅ Load labs from backend
+  const loadLabs = async () => {
+    try {
+      const data = await getAllLabs();
+      // Sort newest first if backend sends `created_at`
+      const sorted = data.sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      );
+      setLabs(sorted);
+    } catch (error) {
+      console.error('Error loading labs:', error);
+    }
+  };
 
   useEffect(() => {
     loadLabs();
   }, []);
 
-  const loadLabs = () => {
-    const data = storage.labs.getAll();
-    setLabs(data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
-  };
-
-  const handleSubmit = (e) => {
+  // ✅ Handle Save or Update
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (editingId) {
-      storage.labs.update(editingId, formData);
-    } else {
-      storage.labs.insert(formData);
-    }
+    try {
+      if (editingId) {
+        await updateLab(editingId, formData);
+      } else {
+        await addLab(formData);
+      }
 
-    setFormData({ lab_name: '', lab_short_form: '' });
-    setEditingId(null);
-    setShowForm(false);
-    loadLabs();
+      setFormData({ name: '', short_name: '' });
+      setEditingId(null);
+      setShowForm(false);
+      loadLabs();
+    } catch (error) {
+      console.error('Error saving lab:', error);
+    }
   };
 
+  // ✅ Edit existing lab
   const handleEdit = (lab) => {
     setFormData({
-      lab_name: lab.lab_name,
-      lab_short_form: lab.lab_short_form,
+      name: lab.name,
+      short_name: lab.short_name,
     });
-    setEditingId(lab.id);
+    setEditingId(lab._id || lab.id);
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
+  // ✅ Delete lab
+  const handleDelete = async (id) => {
     if (confirm('Are you sure you want to delete this lab?')) {
-      storage.labs.delete(id);
-      loadLabs();
+      try {
+        id = {"_id":id}
+        await deleteLab(id);
+        loadLabs();
+      } catch (error) {
+        console.error('Error deleting lab:', error);
+      }
     }
   };
 
@@ -79,7 +105,7 @@ export default function LabsData() {
               onClick={() => {
                 setShowForm(false);
                 setEditingId(null);
-                setFormData({ lab_name: '', lab_short_form: '' });
+                setFormData({ name: '', short_name: '' });
               }}
               className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
             >
@@ -95,9 +121,9 @@ export default function LabsData() {
                 </label>
                 <input
                   type="text"
-                  value={formData.lab_name}
+                  value={formData.name}
                   onChange={(e) =>
-                    setFormData({ ...formData, lab_name: e.target.value })
+                    setFormData({ ...formData, name: e.target.value })
                   }
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="e.g., Computer Networks Lab"
@@ -111,9 +137,12 @@ export default function LabsData() {
                 </label>
                 <input
                   type="text"
-                  value={formData.lab_short_form}
+                  value={formData.short_name}
                   onChange={(e) =>
-                    setFormData({ ...formData, lab_short_form: e.target.value })
+                    setFormData({
+                      ...formData,
+                      short_name: e.target.value,
+                    })
                   }
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="e.g., CNL"
@@ -135,7 +164,7 @@ export default function LabsData() {
                 onClick={() => {
                   setShowForm(false);
                   setEditingId(null);
-                  setFormData({ lab_name: '', lab_short_form: '' });
+                  setFormData({ name: '', short_name: '' });
                 }}
                 className="px-6 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
               >
@@ -163,12 +192,12 @@ export default function LabsData() {
           </thead>
           <tbody className="divide-y divide-slate-200">
             {labs.map((lab) => (
-              <tr key={lab.id} className="hover:bg-slate-50 transition-colors">
+              <tr key={lab._id || lab.id} className="hover:bg-slate-50 transition-colors">
                 <td className="px-6 py-4 text-sm font-medium text-slate-800">
-                  {lab.lab_name}
+                  {lab.name}
                 </td>
                 <td className="px-6 py-4 text-sm text-slate-600">
-                  {lab.lab_short_form}
+                  {lab.short_name}
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex items-center justify-end gap-2">
@@ -179,7 +208,7 @@ export default function LabsData() {
                       <Edit2 size={16} />
                     </button>
                     <button
-                      onClick={() => handleDelete(lab.id)}
+                      onClick={() => handleDelete(lab._id || lab.id)}
                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     >
                       <Trash2 size={16} />
@@ -191,9 +220,7 @@ export default function LabsData() {
           </tbody>
         </table>
         {labs.length === 0 && (
-          <div className="text-center py-12 text-slate-500">
-            No labs added yet
-          </div>
+          <div className="text-center py-12 text-slate-500">No labs added yet</div>
         )}
       </div>
     </div>
