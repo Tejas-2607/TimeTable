@@ -115,7 +115,25 @@ def update_subject():
 @app.route('/api/faculty_workload', methods=['POST'])
 def save_workload():
     data = request.json
-    return workload_handler.save_faculty_workload(data)
+    return workload_handler.add_faculty_workload(data)
+
+# ---------- GET FACULTY WORKLOAD ----------
+@app.route('/api/faculty_workload', methods=['GET'])
+def get_faculty_workload():
+    return workload_handler.get_faculty_workload()
+
+
+# ---------- DELETE FACULTY WORKLOAD ----------
+@app.route('/api/faculty_workload', methods=['DELETE'])
+def delete_faculty_workload():
+    data = request.json
+    return workload_handler.delete_faculty_workload(data)
+
+# ---------- UPDATE FACULTY WORKLOAD ----------
+@app.route('/api/faculty_workload', methods=['PUT'])
+def update_faculty_workload():
+    data = request.json
+    return workload_handler.update_faculty_workload(data)
 
 
 # ---------- SAVE CONSTRAINTS ----------

@@ -377,31 +377,35 @@ class PracticalTimetableGenerator:
         return True
     
     def save_to_database(self):
-        """Save generated timetable to database"""
+        """Save generated timetable to database (lab-wise format)"""
         try:
-            # Prepare document
-            doc = {
-                'year': self.year,
-                'semester': self.semester,
-                'generated_at': datetime.now(),
-                'schedule': self.timetable,
-                'total_assignments': len(self.assignments)
-            }
-            
-            # Delete existing timetable for this year/semester
+            # Extract only the lab-wise schedule
+            lab_wise_schedule = self.timetable.get('labs', {})
+
+            # Delete existing records for this semester 
             master_lab_timetable_collection.delete_many({
-                'year': self.year,
                 'semester': self.semester
             })
-            
-            # Insert new timetable
-            result = master_lab_timetable_collection.insert_one(doc)
-            logger.info(f"Timetable saved with ID: {result.inserted_id}")
-            return result.inserted_id
-            
+
+            # Store each lab as a separate document
+            for lab_name, schedule in lab_wise_schedule.items():
+                doc = {
+                    'lab_name': lab_name,
+                    'year': self.year,
+                    'semester': self.semester,
+                    'schedule': schedule,
+                    'generated_at': datetime.now(),
+                    'total_assignments': len(self.assignments)
+                }
+                master_lab_timetable_collection.insert_one(doc)
+
+            logger.info(f"Saved {len(lab_wise_schedule)} lab-wise timetables successfully")
+            return True
+
         except Exception as e:
             logger.error(f"Error saving timetable to database: {str(e)}")
-            return None
+            return False
+
 
 
 def generate(data):

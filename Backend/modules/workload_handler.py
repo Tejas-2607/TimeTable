@@ -2,54 +2,112 @@ from flask import jsonify
 from bson import ObjectId
 from config import db
 
+# MongoDB collection
 workload_collection = db['workload']
-faculty_collection = db['faculty']
 
-def save_faculty_workload(data):
+
+# ---------- GET FACULTY WORKLOAD ----------
+def get_faculty_workload():
     """
-    Save workload for a faculty by deleting previous workload and adding new one.
-    Expected data:
+    Retrieve all faculty workloads.
+    """
+    try:
+        workload_data = list(workload_collection.find({}))
+
+        for w in workload_data:
+            w["_id"] = str(w["_id"])
+
+        return jsonify({"workloads": workload_data}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ---------- ADD FACULTY WORKLOAD ----------
+def add_faculty_workload(data):
+    """
+    Add a new faculty workload entry.
+    Expected JSON structure:
     {
-        "faculty_id": "68efe2d652ff29887ed00756",
-        "subjects": [
-            {"subject_id": "690abc123...", "year": "SY", "class": "A", "practical_hrs": 2, "lec_hrs": 3},
-            {"subject_id": "690def456...", "year": "SY", "class": "B", "practical_hrs": 0, "lec_hrs": 2}
-        ]
+        "faculty_id": "64b25f9ed1a4b5d8f0e6a9b3",
+        "year": "SY",
+        "subject": "OOPJ",
+        "subject_full": "Java Programming (OOPJ)",
+        "division": "A",
+        "batches": [1, 2],
+        "theory_hrs": 2,
+        "practical_hrs": 2
     }
     """
-    faculty_id = data.get("faculty_id")
-    subjects = data.get("subjects")
-
-    if not faculty_id or not subjects:
-        return jsonify({"error": "Missing faculty_id or subjects"}), 400
-
     try:
-        # Convert string ID to ObjectId
-        faculty_oid = ObjectId(faculty_id)
-        
-        # Verify faculty exists
-        faculty = faculty_collection.find_one({"_id": faculty_oid})
-        if not faculty:
-            return jsonify({"error": f"Faculty with ID '{faculty_id}' not found"}), 404
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
 
-        # Convert subject_id strings to ObjectIds in the subjects array
-        processed_subjects = []
-        for subject in subjects:
-            subject_copy = subject.copy()
-            if "subject_id" in subject_copy:
-                subject_copy["subject_id"] = ObjectId(subject_copy["subject_id"])
-            processed_subjects.append(subject_copy)
+        # Basic validation
+        required_fields = ["faculty_id", "year", "subject"]
+        missing = [f for f in required_fields if f not in data]
+        if missing:
+            return jsonify({"error": f"Missing required fields: {', '.join(missing)}"}), 400
 
-        # Delete existing workload for this faculty
-        workload_collection.delete_many({"faculty_id": faculty_oid})
+        result = workload_collection.insert_one(data)
+        return jsonify({
+            "message": "Workload added successfully",
+            "inserted_id": str(result.inserted_id)
+        }), 201
 
-        # Insert new workload
-        workload_collection.insert_one({
-            "faculty_id": faculty_oid,
-            "subjects": processed_subjects
-        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-        return jsonify({"message": f"Workload saved for faculty '{faculty.get('name', 'Unknown')}'"})
+
+# ---------- DELETE FACULTY WORKLOAD ----------
+def delete_faculty_workload(data):
+    """
+    Delete a workload entry by its _id.
+    Expected JSON: {"_id": "<workload_id>"}
+    """
+    try:
+        workload_id = data.get("_id")
+        if not workload_id or not ObjectId.is_valid(workload_id):
+            return jsonify({"error": "Invalid or missing workload ID"}), 400
+
+        result = workload_collection.delete_one({"_id": ObjectId(workload_id)})
+
+        if result.deleted_count == 0:
+            return jsonify({"error": "Workload not found"}), 404
+
+        return jsonify({"message": "Workload deleted successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ---------- UPDATE FACULTY WORKLOAD ----------
+def update_faculty_workload(data):
+    """
+    Update a workload entry by its _id.
+    Expected JSON:
+    {
+        "_id": "<workload_id>",
+        "subject": "OOPJ",
+        "practical_hrs": 3
+    }
+    """
+    try:
+        workload_id = data.get("_id")
+        if not workload_id or not ObjectId.is_valid(workload_id):
+            return jsonify({"error": "Invalid or missing workload ID"}), 400
+
+        update_data = {k: v for k, v in data.items() if k != "_id"}
+
+        result = workload_collection.update_one(
+            {"_id": ObjectId(workload_id)},
+            {"$set": update_data}
+        )
+
+        if result.matched_count == 0:
+            return jsonify({"error": "Workload not found"}), 404
+
+        return jsonify({"message": "Workload updated successfully"}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
