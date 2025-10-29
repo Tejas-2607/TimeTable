@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { ChevronRight, ChevronLeft, Check } from 'lucide-react';
 import DepartmentTimings from './generate-steps/DepartmentTimings';
 import SubjectsStep from './generate-steps/SubjectsStep';
-import PracticalAssignment from './generate-steps/PracticalAssignment';
-import TheoryAssignment from './generate-steps/TheoryAssignment';
+import FacultyAssignment from './generate-steps/FacultyAssignment';
 
 export default function GenerateTimetable() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -17,8 +16,7 @@ export default function GenerateTimetable() {
   const steps = [
     { number: 1, title: 'Department Timings', component: DepartmentTimings },
     { number: 2, title: 'Enter Subjects', component: SubjectsStep },
-    { number: 3, title: 'Practical Assignment', component: PracticalAssignment },
-    { number: 4, title: 'Theory Assignment', component: TheoryAssignment },
+    { number: 3, title: 'Faculty Assignment', component: FacultyAssignment },
   ];
 
   const CurrentStepComponent = steps[currentStep - 1].component;
