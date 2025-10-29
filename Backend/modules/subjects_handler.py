@@ -2,8 +2,6 @@ from flask import jsonify
 from bson import ObjectId
 from config import db
 
-workload_collection = db['workload']
-faculty_collection = db['faculty']
 subjects_collection = db['subjects']  # Add subjects collection
 
 def save_subjects(data):
@@ -37,6 +35,7 @@ def save_subjects(data):
 
         # Prepare subject object (without year field)
         subject_obj = {
+            "_id": str(ObjectId()),  # Generate unique ID for the subject
             "name": data.get('name'),
             "short_name": data.get('short_name'),
             "hrs_per_week_lec": data.get('hrs_per_week_lec'),
@@ -67,12 +66,17 @@ def save_subjects(data):
             )
             message = f"Subject '{data.get('name')}' added to {year.upper()}"
         else:
-            # Create new document with this subject
-            new_doc = {year: [subject_obj]}
+            # Create new document with all three years
+            new_doc = {
+                "sy": [],
+                "ty": [],
+                "be": []
+            }
+            new_doc[year] = [subject_obj]
             subjects_collection.insert_one(new_doc)
             message = f"Subjects collection created and '{data.get('name')}' added to {year.upper()}"
 
-        return jsonify({"message": message}), 201
+        return jsonify({"message": message, "subject_id": subject_obj["_id"]}), 201
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -80,13 +84,8 @@ def save_subjects(data):
 
 def get_subjects():
     """
-    Retrieve all subjects organized by year.
-    Returns:
-    {
-        "sy": [...],
-        "ty": [...],
-        "be": [...]
-    }
+    Retrieve all subjects, regardless of the year.
+    Always returns all subjects organized by year (sy, ty, be).
     """
     try:
         subjects_doc = subjects_collection.find_one({})
@@ -97,12 +96,83 @@ def get_subjects():
         # Remove MongoDB _id from response
         subjects_doc.pop('_id', None)
         
-        # Ensure all years exist in response
-        for year in ['sy', 'ty', 'be']:
-            if year not in subjects_doc:
-                subjects_doc[year] = []
+        # Ensure all years exist in document
+        for yr in ['sy', 'ty', 'be']:
+            if yr not in subjects_doc:
+                subjects_doc[yr] = []
         
+        # Always return all subjects — ignore 'year' parameter
         return jsonify(subjects_doc), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+def update_subject(data):
+    """
+    Update a subject by its ID.
+    Expected data:
+    {
+        "id": "subject_id_here",
+        "year": "sy",  # year where the subject exists
+        "name": "Updated Name",
+        "short_name": "UN",
+        "hrs_per_week_lec": 4,
+        "hrs_per_week_practical": 2,
+        "practical_duration": 2,
+        "practical_type": "Specific Lab",
+        "required_labs": "OS Lab"  # optional
+    }
+    """
+    try:
+        subject_id = data.get('id')
+        year = data.get('year', '').lower()
+        
+        if not subject_id or not year:
+            return jsonify({"error": "Missing 'id' or 'year'"}), 400
+        
+        valid_years = ['sy', 'ty', 'be']
+        if year not in valid_years:
+            return jsonify({"error": f"Invalid year. Must be one of: {', '.join(valid_years)}"}), 400
+        
+        # Get existing subjects document
+        subjects_doc = subjects_collection.find_one({})
+        if not subjects_doc:
+            return jsonify({"error": "No subjects found"}), 404
+        
+        # Find the subject in the specified year
+        year_subjects = subjects_doc.get(year, [])
+        subject_index = None
+        for idx, subject in enumerate(year_subjects):
+            if subject.get('_id') == subject_id:
+                subject_index = idx
+                break
+        
+        if subject_index is None:
+            return jsonify({"error": f"Subject with ID '{subject_id}' not found in {year.upper()}"}), 404
+        
+        # Prepare updated subject object
+        updated_subject = {
+            "_id": subject_id,  # Keep the same ID
+            "name": data.get('name'),
+            "short_name": data.get('short_name'),
+            "hrs_per_week_lec": data.get('hrs_per_week_lec'),
+            "hrs_per_week_practical": data.get('hrs_per_week_practical'),
+            "practical_duration": data.get('practical_duration'),
+            "practical_type": data.get('practical_type')
+        }
+        
+        # Add optional field if provided
+        if 'required_labs' in data and data.get('required_labs'):
+            updated_subject['required_labs'] = data.get('required_labs')
+        
+        # Update the subject at the specific index
+        update_field = f"{year}.{subject_index}"
+        subjects_collection.update_one(
+            {"_id": subjects_doc["_id"]},
+            {"$set": {update_field: updated_subject}}
+        )
+        
+        return jsonify({"message": f"Subject '{data.get('name')}' updated successfully"}), 200
     
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -110,76 +180,36 @@ def get_subjects():
 
 def delete_subject(data):
     """
-    Delete a subject by short_name and year.
+    Delete a subject by its ID.
     Expected data:
     {
-        "year": "sy",
-        "short_name": "DS"
+        "id": "subject_id_here",
+        "year": "sy"  # year where the subject exists
     }
     """
     try:
+        subject_id = data.get('id')
         year = data.get('year', '').lower()
-        short_name = data.get('short_name')
         
-        if not year or not short_name:
-            return jsonify({"error": "Missing 'year' or 'short_name'"}), 400
+        if not subject_id or not year:
+            return jsonify({"error": "Missing 'id' or 'year'"}), 400
         
         valid_years = ['sy', 'ty', 'be']
         if year not in valid_years:
             return jsonify({"error": f"Invalid year. Must be one of: {', '.join(valid_years)}"}), 400
         
-        # Remove subject from the year array
+        # Remove subject with the specified ID from the year array
         result = subjects_collection.update_one(
             {},
-            {"$pull": {year: {"short_name": short_name}}}
+            {"$pull": {year: {"_id": subject_id}}}
         )
         
         if result.modified_count > 0:
-            return jsonify({"message": f"Subject '{short_name}' deleted from {year.upper()}"}), 200
+            return jsonify({"message": f"Subject deleted successfully from {year.upper()}"}), 200
         else:
-            return jsonify({"error": f"Subject '{short_name}' not found in {year.upper()}"}), 404
+            return jsonify({"error": f"Subject with ID '{subject_id}' not found in {year.upper()}"}), 404
     
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
-def save_faculty_workload(data):
-    """
-    Save workload for a faculty by deleting previous workload and adding new one.
-    Expected data:
-    {
-        "faculty_id": "68efe2d652ff29887ed00756",
-        "subjects": [
-            {"subject_short_name": "DS", "year": "SY", "class": "A", "practical_hrs": 2, "lec_hrs": 3},
-            {"subject_short_name": "CG", "year": "SY", "class": "B", "practical_hrs": 2, "lec_hrs": 2}
-        ]
-    }
-    """
-    faculty_id = data.get("faculty_id")
-    subjects = data.get("subjects")
-
-    if not faculty_id or not subjects:
-        return jsonify({"error": "Missing faculty_id or subjects"}), 400
-
-    try:
-        # Convert string ID to ObjectId
-        faculty_oid = ObjectId(faculty_id)
-        
-        # Verify faculty exists
-        faculty = faculty_collection.find_one({"_id": faculty_oid})
-        if not faculty:
-            return jsonify({"error": f"Faculty with ID '{faculty_id}' not found"}), 404
-
-        # Delete existing workload for this faculty
-        workload_collection.delete_many({"faculty_id": faculty_oid})
-
-        # Insert new workload
-        workload_collection.insert_one({
-            "faculty_id": faculty_oid,
-            "subjects": subjects
-        })
-
-        return jsonify({"message": f"Workload saved for faculty '{faculty.get('name', 'Unknown')}'"})
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500

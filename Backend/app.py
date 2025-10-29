@@ -93,6 +93,23 @@ def save_subjects():
     data = request.json
     return subjects_handler.save_subjects(data)
 
+# ---------- GET SUBJECTS ----------
+@app.route('/api/subjects', methods=['GET'])
+def get_subjects():
+    return subjects_handler.get_subjects()
+
+
+# ---------- DELETE SUBJECTS ----------
+@app.route('/api/subjects', methods=['DELETE'])
+def delete_subject():
+    data = request.json
+    return subjects_handler.delete_subject(data)
+
+# ---------- UPDATE SUBJECTS ----------
+@app.route('/api/subjects', methods=['PUT'])
+def update_subject():
+    data = request.json
+    return subjects_handler.update_subject(data)
 
 # ---------- SAVE FACULTY WORKLOAD ----------
 @app.route('/api/faculty_workload', methods=['POST'])
