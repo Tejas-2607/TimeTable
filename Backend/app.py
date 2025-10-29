@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-
+import datetime
+from datetime import datetime
 app = Flask(__name__)
 # Enable CORS for all routes
 CORS(app)
@@ -156,8 +157,6 @@ def regenerate_master_practical_timetable():
     """
     Deletes all existing records from master_lab_timetable collection
     and generates a new consolidated lab-wise timetable.
-
-    No input fields required.
     """
     try:
         from modules import timetable_generator
@@ -176,19 +175,33 @@ def regenerate_master_practical_timetable():
                 "error": "Failed to generate new timetable. Please verify subject, faculty, and workload data."
             }), 400
 
+        # --- LEFTover CHECK AND REPORT ---
+        leftovers = result.get("leftovers", {})
+        total_leftovers = sum(len(sub_qs) for y_divs in leftovers.values() for div_subs in y_divs.values() for sub_qs in div_subs.values())
+
+        response_message = "Master practical timetable regenerated successfully!"
+        status_code = 201
+        
+        if total_leftovers > 0:
+            response_message = f"Timetable generated, but {total_leftovers} assignments were NOT scheduled. Check the 'leftovers' report for details."
+            status_code = 206 # 206 Partial Content is appropriate for a partial success
+        # --- END LEFTover CHECK ---
+
         # 3️⃣ Store each lab’s schedule as an independent document
         labs_schedule = result.get("labs", {})
         for lab_name, schedule in labs_schedule.items():
             master_lab_timetable_collection.insert_one({
                 "lab_name": lab_name,
-                "schedule": schedule
+                "schedule": schedule,
+                "generated_at": datetime.now() # Added datetime to match generator output
             })
 
         return jsonify({
-            "message": "Master practical timetable regenerated successfully!",
+            "message": response_message,
             "deleted_records": deleted_count,
-            "labs_generated": len(labs_schedule)
-        }), 201
+            "labs_generated": len(labs_schedule),
+            "leftovers": leftovers # Include the full report
+        }), status_code
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
