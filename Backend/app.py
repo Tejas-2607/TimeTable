@@ -150,31 +150,45 @@ def generate_timetable():
     return timetable_handler.generate_timetable(data)
 
 
-# ---------- GENERATE MASTER PRACTICAL TIMETABLE ----------
-@app.route('/api/generate_master_practical_timetable', methods=['POST'])
-def generate_master_practical_timetable():
+# ---------- REGENERATE MASTER PRACTICAL TIMETABLE ----------
+@app.route('/api/regenerate_master_practical_timetable', methods=['POST'])
+def regenerate_master_practical_timetable():
     """
-    Generate a master practical timetable (lab-wise) for a specific year and semester.
-    Example Request Body:
-    {
-        "year": "SY",
-        "sem": "1"
-    }
+    Deletes all existing records from master_lab_timetable collection
+    and generates a new consolidated lab-wise timetable.
+
+    No input fields required.
     """
     try:
-        data = request.json or {}
-        from modules import timetable_generator  # import your generator
-        result = timetable_generator.generate(data)
+        from modules import timetable_generator
+        from config import db
 
-        if result:
+        master_lab_timetable_collection = db['master_lab_timetable']
+
+        # 1️⃣ Delete existing timetable data
+        deleted_count = master_lab_timetable_collection.delete_many({}).deleted_count
+
+        # 2️⃣ Generate new timetable (single unified generation)
+        result = timetable_generator.generate({})
+
+        if not result:
             return jsonify({
-                "message": "Master practical timetable generated successfully!",
-                "timetable": result
-            }), 201
-        else:
-            return jsonify({
-                "error": "Failed to generate a valid timetable. Please check data consistency."
+                "error": "Failed to generate new timetable. Please verify subject, faculty, and workload data."
             }), 400
+
+        # 3️⃣ Store each lab’s schedule as an independent document
+        labs_schedule = result.get("labs", {})
+        for lab_name, schedule in labs_schedule.items():
+            master_lab_timetable_collection.insert_one({
+                "lab_name": lab_name,
+                "schedule": schedule
+            })
+
+        return jsonify({
+            "message": "Master practical timetable regenerated successfully!",
+            "deleted_records": deleted_count,
+            "labs_generated": len(labs_schedule)
+        }), 201
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
