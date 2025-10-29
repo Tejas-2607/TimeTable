@@ -5,6 +5,7 @@ import FacultyData from './components/FacultyData';
 import LabsData from './components/LabsData';
 import ClassStructure from './components/ClassStructure';
 import ViewTimetables from './components/ViewTimetables';
+import PracticalPlan from './components/PracticalPlan';
 
 function App() {
   const [activeTab, setActiveTab] = useState('generate');
@@ -21,6 +22,8 @@ function App() {
         return <ClassStructure />;
       case 'view':
         return <ViewTimetables />;
+      case 'practical':
+        return <PracticalPlan />;
       default:
         return <GenerateTimetable />;
     }

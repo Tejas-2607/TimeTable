@@ -1,123 +1,177 @@
 import { useState, useEffect } from 'react';
-import { storage } from '../../lib/storage';
 import { Plus, Trash2, Edit2, X } from 'lucide-react';
+import { getSubjects, addSubject, updateSubject, deleteSubject } from '../../services/subjectService';
+import { getAllLabs } from '../../services/labsService';
 
 export default function SubjectsStep({ data, onDataChange }) {
-  const [year, setYear] = useState('SY');
+  const [year, setYear] = useState('sy');
   const [subjects, setSubjects] = useState([]);
   const [labs, setLabs] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    subject_full_name: '',
-    subject_short_form: '',
-    class_type: 'Both',
-    lectures_per_week: 4,
-    practicals_per_week: 1,
-    practical_duration: 2,
-    practical_type: 'specific_lab',
-    required_labs: [],
+    name: '',
+    short_name: '',
+    hrs_per_week_lec: '4',
+    hrs_per_week_practical: '1',
+    practical_duration: '2',
+    practical_type: 'Specific Lab',
+    required_labs: '',
   });
 
+  // Load labs only once on mount
+  useEffect(() => {
+    loadLabs();
+  }, []);
+
+  // Load subjects when year changes
   useEffect(() => {
     loadSubjects();
-    loadLabs();
   }, [year]);
 
-  const loadSubjects = () => {
-    const subjectsData = storage.subjects.getByYear(year);
-    setSubjects(subjectsData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+  const loadSubjects = async () => {
+    try {
+      setLoading(true);
+      const res = await getSubjects();
+      console.log('Subjects response:', res);
+      
+      const data = res.data || res;
+      const yearData = data[year] || [];
+      
+      console.log('Year data for', year, ':', yearData);
+      setSubjects(Array.isArray(yearData) ? yearData : []);
+    } catch (err) {
+      console.error('Error loading subjects:', err);
+      setSubjects([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const loadLabs = () => {
-    const labsData = storage.labs.getAll();
-    setLabs(labsData);
+  const loadLabs = async () => {
+    try {
+      const res = await getAllLabs();
+      console.log('Labs full response:', res);
+      
+      // Check different possible response structures
+      let labsArray = [];
+      
+      if (res.data && Array.isArray(res.data)) {
+        labsArray = res.data;
+      } else if (res.data && res.data.data && Array.isArray(res.data.data)) {
+        labsArray = res.data.data;
+      } else if (Array.isArray(res)) {
+        labsArray = res;
+      }
+      
+      console.log('Processed labs array:', labsArray);
+      console.log('Labs count:', labsArray.length);
+      setLabs(labsArray);
+    } catch (err) {
+      console.error('Error loading labs:', err);
+      setLabs([]);
+    }
   };
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const toggleLab = (labId) => {
-    setFormData((prev) => ({
-      ...prev,
-      required_labs: prev.required_labs.includes(labId)
-        ? prev.required_labs.filter((id) => id !== labId)
-        : [...prev.required_labs, labId],
-    }));
-  };
-
   const handleEdit = (subject) => {
     setFormData({
-      subject_full_name: subject.subject_full_name,
-      subject_short_form: subject.subject_short_form,
-      class_type: subject.class_type,
-      lectures_per_week: subject.lectures_per_week,
-      practicals_per_week: subject.practicals_per_week,
-      practical_duration: subject.practical_duration,
-      practical_type: subject.practical_type || 'specific_lab',
-      required_labs: subject.required_labs || [],
+      name: subject.name,
+      short_name: subject.short_name,
+      hrs_per_week_lec: String(subject.hrs_per_week_lec),
+      hrs_per_week_practical: String(subject.hrs_per_week_practical),
+      practical_duration: String(subject.practical_duration),
+      practical_type: subject.practical_type || 'Specific Lab',
+      required_labs: subject.required_labs || '',
     });
-    setEditingId(subject.id);
+    setEditingId(subject._id);
     setShowForm(true);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const subjectData = {
-      year,
-      ...formData,
-      lectures_per_week: parseInt(formData.lectures_per_week),
-      practicals_per_week: parseInt(formData.practicals_per_week),
-      practical_duration: parseInt(formData.practical_duration),
-    };
+    try {
+      setLoading(true);
+      const subjectData = {
+        year,
+        name: formData.name,
+        short_name: formData.short_name,
+        hrs_per_week_lec: parseInt(formData.hrs_per_week_lec),
+        hrs_per_week_practical: parseInt(formData.hrs_per_week_practical),
+        practical_duration: parseInt(formData.practical_duration),
+        practical_type: formData.practical_type,
+        ...(formData.required_labs && { required_labs: formData.required_labs }),
+      };
 
-    if (editingId) {
-      storage.subjects.update(editingId, subjectData);
-    } else {
-      storage.subjects.insert(subjectData);
+      if (editingId) {
+        await updateSubject({
+          id: editingId,
+          ...subjectData,
+        });
+      } else {
+        await addSubject(subjectData);
+      }
+
+      setFormData({
+        name: '',
+        short_name: '',
+        hrs_per_week_lec: '4',
+        hrs_per_week_practical: '1',
+        practical_duration: '2',
+        practical_type: 'Specific Lab',
+        required_labs: '',
+      });
+      setEditingId(null);
+      setShowForm(false);
+
+      await loadSubjects();
+    } catch (err) {
+      console.error('Error submitting subject:', err);
+      alert('Error saving subject. Please try again.');
+    } finally {
+      setLoading(false);
     }
-
-    setFormData({
-      subject_full_name: '',
-      subject_short_form: '',
-      class_type: 'Both',
-      lectures_per_week: 4,
-      practicals_per_week: 1,
-      practical_duration: 2,
-      practical_type: 'specific_lab',
-      required_labs: [],
-    });
-    setEditingId(null);
-    setShowForm(false);
-
-    loadSubjects();
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (confirm('Are you sure you want to delete this subject?')) {
-      storage.subjects.delete(id);
-      loadSubjects();
+      try {
+        setLoading(true);
+        await deleteSubject(year, id);
+        await loadSubjects();
+      } catch (err) {
+        console.error('Error deleting subject:', err);
+        alert('Error deleting subject. Please try again.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  const getLabNames = (labIds) => {
-    if (!labIds || labIds.length === 0) return 'None';
-    return labs
-      .filter((lab) => labIds.includes(lab.id))
-      .map((lab) => lab.lab_short_form)
-      .join(', ');
+  const getYearLabel = (yearCode) => {
+    switch (yearCode) {
+      case 'sy':
+        return '2nd Year (SY)';
+      case 'ty':
+        return '3rd Year (TY)';
+      case 'be':
+        return 'Final Year (BE)';
+      default:
+        return yearCode;
+    }
   };
 
   const getPracticalTypeLabel = (type) => {
     switch (type) {
-      case 'specific_lab':
+      case 'Specific Lab':
         return 'Specific Lab';
-      case 'classroom':
-        return 'Classroom';
-      case 'no_room':
-        return 'No Room';
+      case 'Common Lab':
+        return 'Common Lab';
       default:
         return type;
     }
@@ -142,9 +196,9 @@ export default function SubjectsStep({ data, onDataChange }) {
             onChange={(e) => setYear(e.target.value)}
             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
-            <option value="SY">2nd Year (SY)</option>
-            <option value="TY">3rd Year (TY)</option>
-            <option value="Final Year">Final Year</option>
+            <option value="sy">{getYearLabel('sy')}</option>
+            <option value="ty">{getYearLabel('ty')}</option>
+            <option value="be">{getYearLabel('be')}</option>
           </select>
         </div>
         {!showForm && (
@@ -152,6 +206,7 @@ export default function SubjectsStep({ data, onDataChange }) {
             <button
               onClick={() => setShowForm(true)}
               className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              disabled={loading}
             >
               <Plus size={20} />
               Add Subject
@@ -164,21 +219,20 @@ export default function SubjectsStep({ data, onDataChange }) {
         <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-blue-200">
           <div className="flex items-center justify-between mb-6">
             <h4 className="text-lg font-semibold text-slate-800">
-              {editingId ? 'Edit Subject' : 'Add New Subject'} for {year}
+              {editingId ? 'Edit Subject' : 'Add New Subject'} for {getYearLabel(year)}
             </h4>
             <button
               onClick={() => {
                 setShowForm(false);
                 setEditingId(null);
                 setFormData({
-                  subject_full_name: '',
-                  subject_short_form: '',
-                  class_type: 'Both',
-                  lectures_per_week: 4,
-                  practicals_per_week: 1,
-                  practical_duration: 2,
-                  practical_type: 'specific_lab',
-                  required_labs: [],
+                  name: '',
+                  short_name: '',
+                  hrs_per_week_lec: '4',
+                  hrs_per_week_practical: '1',
+                  practical_duration: '2',
+                  practical_type: 'Specific Lab',
+                  required_labs: '',
                 });
               }}
               className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
@@ -195,10 +249,10 @@ export default function SubjectsStep({ data, onDataChange }) {
                 </label>
                 <input
                   type="text"
-                  value={formData.subject_full_name}
-                  onChange={(e) => handleChange('subject_full_name', e.target.value)}
+                  value={formData.name}
+                  onChange={(e) => handleChange('name', e.target.value)}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., Data Structures and Algorithms"
+                  placeholder="e.g., Data Structures"
                   required
                 />
               </div>
@@ -209,33 +263,12 @@ export default function SubjectsStep({ data, onDataChange }) {
                 </label>
                 <input
                   type="text"
-                  value={formData.subject_short_form}
-                  onChange={(e) => handleChange('subject_short_form', e.target.value)}
+                  value={formData.short_name}
+                  onChange={(e) => handleChange('short_name', e.target.value)}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., DSA"
+                  placeholder="e.g., DS"
                   required
                 />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-3">
-                Class Type
-              </label>
-              <div className="flex gap-6">
-                {['Theory', 'Practical', 'Both'].map((type) => (
-                  <label key={type} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="class_type"
-                      value={type}
-                      checked={formData.class_type === type}
-                      onChange={(e) => handleChange('class_type', e.target.value)}
-                      className="w-4 h-4 text-blue-600"
-                    />
-                    <span className="text-slate-700">{type}</span>
-                  </label>
-                ))}
               </div>
             </div>
 
@@ -247,8 +280,8 @@ export default function SubjectsStep({ data, onDataChange }) {
                 <input
                   type="number"
                   min="0"
-                  value={formData.lectures_per_week}
-                  onChange={(e) => handleChange('lectures_per_week', e.target.value)}
+                  value={formData.hrs_per_week_lec}
+                  onChange={(e) => handleChange('hrs_per_week_lec', e.target.value)}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
@@ -260,14 +293,14 @@ export default function SubjectsStep({ data, onDataChange }) {
                 <input
                   type="number"
                   min="0"
-                  value={formData.practicals_per_week}
-                  onChange={(e) => handleChange('practicals_per_week', e.target.value)}
+                  value={formData.hrs_per_week_practical}
+                  onChange={(e) => handleChange('hrs_per_week_practical', e.target.value)}
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
             </div>
 
-            {(formData.class_type === 'Practical' || formData.class_type === 'Both') && (
+            {parseInt(formData.hrs_per_week_practical) > 0 && (
               <div className="p-4 bg-slate-50 rounded-lg border border-slate-300">
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -295,40 +328,36 @@ export default function SubjectsStep({ data, onDataChange }) {
                       <input
                         type="radio"
                         name="practical_type"
-                        value="specific_lab"
-                        checked={formData.practical_type === 'specific_lab'}
+                        value="Specific Lab"
+                        checked={formData.practical_type === 'Specific Lab'}
                         onChange={(e) => handleChange('practical_type', e.target.value)}
                         className="w-4 h-4 text-blue-600 mt-1"
                       />
                       <div className="flex-1">
                         <span className="text-slate-700">Requires specific lab(s)</span>
-                        {formData.practical_type === 'specific_lab' && (
+                        {formData.practical_type === 'Specific Lab' && (
                           <div className="mt-3 pl-6 space-y-2 bg-white p-3 rounded border border-slate-200">
-                            <p className="text-sm font-medium text-slate-700 mb-2">
-                              Select Labs:
-                            </p>
-                            {labs.length > 0 ? (
-                              labs.map((lab) => (
-                                <label
-                                  key={lab.id}
-                                  className="flex items-center gap-2 cursor-pointer"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={formData.required_labs.includes(lab.id)}
-                                    onChange={() => toggleLab(lab.id)}
-                                    className="w-4 h-4 text-blue-600 rounded"
-                                  />
-                                  <span className="text-sm text-slate-700">
-                                    {lab.lab_name} ({lab.lab_short_form})
-                                  </span>
-                                </label>
-                              ))
-                            ) : (
-                              <p className="text-sm text-slate-500">
-                                No labs available. Please add labs first.
-                              </p>
-                            )}
+                            <div>
+                              <label className="block text-sm font-medium text-slate-700 mb-2">
+                                Required Lab
+                              </label>
+                              <select
+                                value={formData.required_labs}
+                                onChange={(e) => handleChange('required_labs', e.target.value)}
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              >
+                                <option value="">Select a lab (optional)</option>
+                                {labs && labs.length > 0 ? (
+                                  labs.map((lab) => (
+                                    <option key={lab._id} value={lab.name}>
+                                      {lab.name}
+                                    </option>
+                                  ))
+                                ) : (
+                                  <option disabled>No labs available</option>
+                                )}
+                              </select>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -338,26 +367,12 @@ export default function SubjectsStep({ data, onDataChange }) {
                       <input
                         type="radio"
                         name="practical_type"
-                        value="classroom"
-                        checked={formData.practical_type === 'classroom'}
+                        value="Common Lab"
+                        checked={formData.practical_type === 'Common Lab'}
                         onChange={(e) => handleChange('practical_type', e.target.value)}
                         className="w-4 h-4 text-blue-600"
                       />
-                      <span className="text-slate-700">Requires a classroom (no lab)</span>
-                    </label>
-
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="practical_type"
-                        value="no_room"
-                        checked={formData.practical_type === 'no_room'}
-                        onChange={(e) => handleChange('practical_type', e.target.value)}
-                        className="w-4 h-4 text-blue-600"
-                      />
-                      <span className="text-slate-700">
-                        No dedicated room (schedule last)
-                      </span>
+                      <span className="text-slate-700">Common Lab</span>
                     </label>
                   </div>
                 </div>
@@ -367,7 +382,8 @@ export default function SubjectsStep({ data, onDataChange }) {
             <div className="flex gap-3">
               <button
                 type="submit"
-                className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                disabled={loading}
               >
                 <Plus size={18} />
                 {editingId ? 'Update' : 'Add'} Subject
@@ -378,17 +394,17 @@ export default function SubjectsStep({ data, onDataChange }) {
                   setShowForm(false);
                   setEditingId(null);
                   setFormData({
-                    subject_full_name: '',
-                    subject_short_form: '',
-                    class_type: 'Both',
-                    lectures_per_week: 4,
-                    practicals_per_week: 1,
-                    practical_duration: 2,
-                    practical_type: 'specific_lab',
-                    required_labs: [],
+                    name: '',
+                    short_name: '',
+                    hrs_per_week_lec: '4',
+                    hrs_per_week_practical: '1',
+                    practical_duration: '2',
+                    practical_type: 'Specific Lab',
+                    required_labs: '',
                   });
                 }}
-                className="px-6 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                className="px-6 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50"
+                disabled={loading}
               >
                 Cancel
               </button>
@@ -399,35 +415,28 @@ export default function SubjectsStep({ data, onDataChange }) {
 
       <div className="bg-gradient-to-br from-blue-50 to-slate-50 rounded-xl shadow-lg p-6 border border-slate-200">
         <h4 className="text-xl font-bold text-slate-800 mb-4">
-          Subjects for {year} ({subjects.length})
+          Subjects for {getYearLabel(year)} ({subjects.length})
         </h4>
 
-        {subjects.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-slate-500">Loading subjects...</p>
+          </div>
+        ) : subjects.length > 0 ? (
           <div className="space-y-4">
             {subjects.map((subject) => (
               <div
-                key={subject.id}
+                key={subject._id}
                 className="bg-white rounded-lg p-5 border border-slate-200 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3">
                       <h5 className="text-lg font-bold text-slate-800">
-                        {subject.subject_full_name}
+                        {subject.name}
                       </h5>
                       <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
-                        {subject.subject_short_form}
-                      </span>
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          subject.class_type === 'Theory'
-                            ? 'bg-green-100 text-green-700'
-                            : subject.class_type === 'Practical'
-                            ? 'bg-orange-100 text-orange-700'
-                            : 'bg-purple-100 text-purple-700'
-                        }`}
-                      >
-                        {subject.class_type}
+                        {subject.short_name}
                       </span>
                     </div>
 
@@ -435,16 +444,16 @@ export default function SubjectsStep({ data, onDataChange }) {
                       <div className="flex items-center gap-2">
                         <span className="text-slate-600 font-medium">Lectures/Week:</span>
                         <span className="text-slate-800 font-semibold">
-                          {subject.lectures_per_week}
+                          {subject.hrs_per_week_lec}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-slate-600 font-medium">Practicals/Week:</span>
                         <span className="text-slate-800 font-semibold">
-                          {subject.practicals_per_week}
+                          {subject.hrs_per_week_practical}
                         </span>
                       </div>
-                      {(subject.class_type === 'Practical' || subject.class_type === 'Both') && (
+                      {subject.hrs_per_week_practical > 0 && (
                         <>
                           <div className="flex items-center gap-2">
                             <span className="text-slate-600 font-medium">
@@ -460,11 +469,11 @@ export default function SubjectsStep({ data, onDataChange }) {
                               {getPracticalTypeLabel(subject.practical_type)}
                             </span>
                           </div>
-                          {subject.practical_type === 'specific_lab' && (
+                          {subject.practical_type === 'Specific Lab' && subject.required_labs && (
                             <div className="col-span-2 flex items-start gap-2">
-                              <span className="text-slate-600 font-medium">Required Labs:</span>
+                              <span className="text-slate-600 font-medium">Required Lab:</span>
                               <span className="text-slate-800 font-semibold">
-                                {getLabNames(subject.required_labs)}
+                                {subject.required_labs}
                               </span>
                             </div>
                           )}
@@ -476,15 +485,17 @@ export default function SubjectsStep({ data, onDataChange }) {
                   <div className="flex items-center gap-2 ml-4">
                     <button
                       onClick={() => handleEdit(subject)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
                       title="Edit subject"
+                      disabled={loading}
                     >
                       <Edit2 size={18} />
                     </button>
                     <button
-                      onClick={() => handleDelete(subject.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      onClick={() => handleDelete(subject._id)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
                       title="Delete subject"
+                      disabled={loading}
                     >
                       <Trash2 size={18} />
                     </button>
@@ -495,7 +506,7 @@ export default function SubjectsStep({ data, onDataChange }) {
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-slate-500 text-lg">No subjects added for {year} yet</p>
+            <p className="text-slate-500 text-lg">No subjects added for {getYearLabel(year)} yet</p>
             <p className="text-slate-400 text-sm mt-2">
               Click "Add Subject" to get started
             </p>

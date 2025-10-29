@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { ChevronRight, ChevronLeft, Check } from 'lucide-react';
+import { regenerateMasterTimetable } from '../services/timetableGeneratorService';
 import DepartmentTimings from './generate-steps/DepartmentTimings';
 import SubjectsStep from './generate-steps/SubjectsStep';
 import FacultyAssignment from './generate-steps/FacultyAssignment';
 
 export default function GenerateTimetable() {
   const [currentStep, setCurrentStep] = useState(1);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [formData, setFormData] = useState({
     timings: null,
     subjects: [],
@@ -38,6 +40,25 @@ export default function GenerateTimetable() {
       ...prev,
       [stepName]: data,
     }));
+  };
+
+  const handleGenerateTimetable = async () => {
+    setIsGenerating(true);
+
+    try {
+      const response = await regenerateMasterTimetable();
+      
+      // Show success alert
+      alert('✅ Timetable generated successfully!\n\nPlease navigate to the "Practical Plan" tab to view the schedules.');
+      
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to generate timetable. Please try again.';
+      
+      // Show error alert
+      alert(`❌ Error: ${errorMessage}`);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -108,9 +129,9 @@ export default function GenerateTimetable() {
       <div className="mt-6 flex items-center justify-between">
         <button
           onClick={handlePrevious}
-          disabled={currentStep === 1}
+          disabled={currentStep === 1 || isGenerating}
           className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all ${
-            currentStep === 1
+            currentStep === 1 || isGenerating
               ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
               : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
           }`}
@@ -126,15 +147,20 @@ export default function GenerateTimetable() {
         {currentStep < steps.length ? (
           <button
             onClick={handleNext}
-            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+            disabled={isGenerating}
+            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Next
             <ChevronRight size={20} />
           </button>
         ) : (
-          <button className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors">
+          <button
+            onClick={handleGenerateTimetable}
+            disabled={isGenerating}
+            className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <Check size={20} />
-            Generate Timetable
+            {isGenerating ? 'Generating...' : 'Generate Timetable'}
           </button>
         )}
       </div>

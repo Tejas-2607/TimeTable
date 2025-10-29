@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Menu, X, Calendar, Users, FlaskConical, Grid3x3, Eye } from 'lucide-react';
+import { Menu, X, Calendar, Users, FlaskConical, Grid3x3, Eye, BookOpen } from 'lucide-react';
 
 export default function Sidebar({ activeTab, onTabChange }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -10,6 +10,7 @@ export default function Sidebar({ activeTab, onTabChange }) {
     { id: 'labs', label: 'Labs Data', icon: FlaskConical },
     { id: 'structure', label: 'Class Structure', icon: Grid3x3 },
     { id: 'view', label: 'View Timetables', icon: Eye },
+    { id: 'practical', label: 'Practical Plan', icon: BookOpen },
   ];
 
   return (

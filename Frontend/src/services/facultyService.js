@@ -3,7 +3,10 @@ import api from '../lib/api';
 
 // ✅ Get all faculties
 export const getFaculties = async () => {
-  return await api.get('/faculty');
+  const res = await api.get('/faculty');
+  console.log(res);
+  
+  return res;
 };
 
 // ✅ Add new faculty
