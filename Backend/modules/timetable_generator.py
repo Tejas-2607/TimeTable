@@ -105,12 +105,20 @@ class PracticalTimetableGenerator:
                 if not faculty_name:
                     continue
 
-                year_subjects = workload.get('subjects', [])
-                practical_subjects = [s for s in year_subjects if s.get('year') == self.year]
-                if practical_subjects:
-                    faculty_subjects[faculty_name] = practical_subjects
+                # Directly use subject from workload (not subjects list)
+                subject_full = workload.get('subject_full')
+                year = workload.get('year', '').upper()
+
+                if year == self.year.upper() and subject_full:
+                    if faculty_name not in faculty_subjects:
+                        faculty_subjects[faculty_name] = []
+                    faculty_subjects[faculty_name].append({
+                        "subject_full": subject_full,
+                        "year": year
+                    })
 
             return faculty_subjects
+
         except Exception as e:
             logger.error(f"Error building faculty-subject mapping: {str(e)}")
             return {}
@@ -120,10 +128,30 @@ class PracticalTimetableGenerator:
             class_struct = class_structure_collection.find_one({})
             if not class_struct:
                 return []
-            return class_struct.get(self.year.lower(), [])
+
+            year_key_map = {
+                "SY": "SY",
+                "TY": "TY",
+                "BE": "Final Year"
+            }
+
+            key = year_key_map.get(self.year.upper())
+            if not key or key not in class_struct:
+                return []
+
+            year_info = class_struct[key]
+            num_divs = year_info.get('num_divisions', 1)
+            batches_per_div = year_info.get('batches_per_division', 3)
+
+            # Convert it to expected structure
+            return [
+                {"div": chr(65 + i), "batches": batches_per_div}
+                for i in range(num_divs)
+            ]
         except Exception as e:
             logger.error(f"Error loading class structure: {str(e)}")
             return []
+
 
     def _prepare_batch_assignments(self, practicals):
         batch_assignments = []
@@ -174,16 +202,20 @@ class PracticalTimetableGenerator:
         return False
 
     def _is_valid_assignment(self, assignment, day, slot, lab, faculty_name):
-        return (not self._has_batch_conflict(assignment, day, slot)
-                and not self._has_lab_conflict(lab, day, slot)
-                and not self._has_faculty_conflict(faculty_name, day, slot))
+        return (
+            not self._has_batch_conflict(assignment, day, slot)
+            and not self._has_lab_conflict(lab, day, slot)
+            and not self._has_faculty_conflict(faculty_name, day, slot)
+        )
 
     def _has_batch_conflict(self, assignment, day, slot):
         for lab_name, lab_schedule in self.timetable['labs'].items():
             for existing in lab_schedule[day][slot]:
-                if (existing['class'] == assignment['class']
-                        and existing['division'] == assignment['division']
-                        and existing['batch'] == assignment['batch']):
+                if (
+                    existing['class'] == assignment['class']
+                    and existing['division'] == assignment['division']
+                    and existing['batch'] == assignment['batch']
+                ):
                     return True
         return False
 
@@ -216,7 +248,12 @@ class PracticalTimetableGenerator:
             'subject_full': assignment['subject_full'],
             'faculty': faculty_name
         })
-        self.assignments.append({'day': day, 'slot': slot, 'lab': lab_name, 'faculty': faculty_name})
+        self.assignments.append({
+            'day': day,
+            'slot': slot,
+            'lab': lab_name,
+            'faculty': faculty_name
+        })
 
     def _undo_assignment(self, assignment, day, slot, lab):
         lab_name = lab.get('name', 'Unknown Lab')
@@ -263,7 +300,7 @@ def generate(data=None):
                 'generated_at': datetime.now()
             })
 
-        logger.info(f"✅ Unified lab-wise timetable generated for all years.")
+        logger.info("✅ Unified lab-wise timetable generated for all years.")
         return merged_timetable
 
     except Exception as e:
