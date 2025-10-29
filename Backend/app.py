@@ -150,35 +150,41 @@ def generate_timetable():
     return timetable_handler.generate_timetable(data)
 
 
-# ---------- GENERATE ALL TIMETABLES (SY, TY, BE) ----------
-@app.route('/api/generate_all_timetables', methods=['POST'])
-def generate_all_timetables():
+# ---------- GENERATE MASTER PRACTICAL TIMETABLE ----------
+@app.route('/api/generate_master_practical_timetable', methods=['POST'])
+def generate_master_practical_timetable():
     """
-    Generate master practical timetables for all classes (SY, TY, BE)
-    Body: {"sem": "1"}
+    Generate a master practical timetable (lab-wise) for a specific year and semester.
+    Example Request Body:
+    {
+        "year": "SY",
+        "sem": "1"
+    }
     """
-    data = request.json or {}
-    return timetable_handler.generate_all_timetables(data)
+    try:
+        data = request.json or {}
+        from modules import timetable_generator  # import your generator
+        result = timetable_generator.generate(data)
+
+        if result:
+            return jsonify({
+                "message": "Master practical timetable generated successfully!",
+                "timetable": result
+            }), 201
+        else:
+            return jsonify({
+                "error": "Failed to generate a valid timetable. Please check data consistency."
+            }), 400
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 
 # ---------- GET ALL MASTER TIMETABLES ----------
 @app.route('/api/master_timetables', methods=['GET'])
 def get_all_master_timetables():
-    """
-    Retrieve all generated master practical timetables
-    """
-    return timetable_handler.get_all_master_timetables()
-
-
-# ---------- GET SPECIFIC MASTER TIMETABLE ----------
-@app.route('/api/master_timetable', methods=['POST'])
-def get_master_timetable():
-    """
-    Retrieve master practical timetable for specific year/semester
-    Body: {"year": "SY", "sem": "1"}
-    """
-    data = request.json or {}
-    return timetable_handler.get_master_timetable(data)
+    return timetable_handler.get_master_practical_timetable()
 
 
 if __name__ == '__main__':
