@@ -35,10 +35,10 @@ export default function SubjectsStep({ data, onDataChange }) {
       setLoading(true);
       const res = await getSubjects();
       console.log('Subjects response:', res);
-      
+
       const data = res.data || res;
       const yearData = data[year] || [];
-      
+
       console.log('Year data for', year, ':', yearData);
       setSubjects(Array.isArray(yearData) ? yearData : []);
     } catch (err) {
@@ -53,10 +53,10 @@ export default function SubjectsStep({ data, onDataChange }) {
     try {
       const res = await getAllLabs();
       console.log('Labs full response:', res);
-      
+
       // Check different possible response structures
       let labsArray = [];
-      
+
       if (res.data && Array.isArray(res.data)) {
         labsArray = res.data;
       } else if (res.data && res.data.data && Array.isArray(res.data.data)) {
@@ -64,7 +64,7 @@ export default function SubjectsStep({ data, onDataChange }) {
       } else if (Array.isArray(res)) {
         labsArray = res;
       }
-      
+
       console.log('Processed labs array:', labsArray);
       console.log('Labs count:', labsArray.length);
       setLabs(labsArray);
@@ -194,7 +194,7 @@ export default function SubjectsStep({ data, onDataChange }) {
           <select
             value={year}
             onChange={(e) => setYear(e.target.value)}
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
           >
             <option value="sy">{getYearLabel('sy')}</option>
             <option value="ty">{getYearLabel('ty')}</option>
@@ -251,7 +251,7 @@ export default function SubjectsStep({ data, onDataChange }) {
                   type="text"
                   value={formData.name}
                   onChange={(e) => handleChange('name', e.target.value)}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
                   placeholder="e.g., Data Structures"
                   required
                 />
@@ -265,7 +265,7 @@ export default function SubjectsStep({ data, onDataChange }) {
                   type="text"
                   value={formData.short_name}
                   onChange={(e) => handleChange('short_name', e.target.value)}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
                   placeholder="e.g., DS"
                   required
                 />
@@ -282,7 +282,7 @@ export default function SubjectsStep({ data, onDataChange }) {
                   min="0"
                   value={formData.hrs_per_week_lec}
                   onChange={(e) => handleChange('hrs_per_week_lec', e.target.value)}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
                 />
               </div>
 
@@ -295,7 +295,7 @@ export default function SubjectsStep({ data, onDataChange }) {
                   min="0"
                   value={formData.hrs_per_week_practical}
                   onChange={(e) => handleChange('hrs_per_week_practical', e.target.value)}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
                 />
               </div>
             </div>
@@ -309,7 +309,7 @@ export default function SubjectsStep({ data, onDataChange }) {
                   <select
                     value={formData.practical_duration}
                     onChange={(e) => handleChange('practical_duration', e.target.value)}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
                   >
                     {[1, 2, 3, 4].map((num) => (
                       <option key={num} value={num}>
@@ -331,7 +331,7 @@ export default function SubjectsStep({ data, onDataChange }) {
                         value="Specific Lab"
                         checked={formData.practical_type === 'Specific Lab'}
                         onChange={(e) => handleChange('practical_type', e.target.value)}
-                        className="w-4 h-4 text-blue-600 mt-1"
+                        className="w-4 h-4 text-blue-600 mt-1 transition-all cursor-pointer"
                       />
                       <div className="flex-1">
                         <span className="text-slate-700">Requires specific lab(s)</span>
@@ -344,7 +344,7 @@ export default function SubjectsStep({ data, onDataChange }) {
                               <select
                                 value={formData.required_labs}
                                 onChange={(e) => handleChange('required_labs', e.target.value)}
-                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
                               >
                                 <option value="">Select a lab (optional)</option>
                                 {labs && labs.length > 0 ? (
@@ -370,7 +370,7 @@ export default function SubjectsStep({ data, onDataChange }) {
                         value="Common Lab"
                         checked={formData.practical_type === 'Common Lab'}
                         onChange={(e) => handleChange('practical_type', e.target.value)}
-                        className="w-4 h-4 text-blue-600"
+                        className="w-4 h-4 text-blue-600 transition-all cursor-pointer"
                       />
                       <span className="text-slate-700">Common Lab</span>
                     </label>

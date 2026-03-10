@@ -128,7 +128,7 @@ export default function PracticalAssignment({ data, onDataChange }) {
           <select
             value={year}
             onChange={(e) => setYear(e.target.value)}
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
           >
             <option value="SY">2nd Year (SY)</option>
             <option value="TY">3rd Year (TY)</option>
@@ -183,7 +183,7 @@ export default function PracticalAssignment({ data, onDataChange }) {
                   onChange={(e) =>
                     setFormData({ ...formData, subject_id: e.target.value })
                   }
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
                   required
                 >
                   <option value="">Select Subject</option>
@@ -204,7 +204,7 @@ export default function PracticalAssignment({ data, onDataChange }) {
                   onChange={(e) =>
                     setFormData({ ...formData, faculty_id: e.target.value })
                   }
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
                   required
                 >
                   <option value="">Select Faculty</option>
@@ -227,7 +227,7 @@ export default function PracticalAssignment({ data, onDataChange }) {
                   onChange={(e) =>
                     setFormData({ ...formData, division: e.target.value })
                   }
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
                   required
                 >
                   {getDivisions().map((div) => (
@@ -247,7 +247,7 @@ export default function PracticalAssignment({ data, onDataChange }) {
                   onChange={(e) =>
                     setFormData({ ...formData, batch: e.target.value })
                   }
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
                   required
                 >
                   {getBatches().map((batch) => (
@@ -270,7 +270,7 @@ export default function PracticalAssignment({ data, onDataChange }) {
                   onChange={(e) =>
                     setFormData({ ...formData, workload_hours: e.target.value })
                   }
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
                   required
                 />
               </div>

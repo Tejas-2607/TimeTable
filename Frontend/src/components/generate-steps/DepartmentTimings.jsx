@@ -77,7 +77,7 @@ export default function DepartmentTimings({ data, onDataChange }) {
             type="number"
             value={formData.lecture_duration}
             onChange={(e) => handleChange('lecture_duration', e.target.value)}
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
           />
         </div>
 
@@ -89,7 +89,7 @@ export default function DepartmentTimings({ data, onDataChange }) {
             type="time"
             value={formData.day_start_time}
             onChange={(e) => handleChange('day_start_time', e.target.value)}
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
           />
         </div>
 
@@ -101,7 +101,7 @@ export default function DepartmentTimings({ data, onDataChange }) {
             type="time"
             value={formData.day_end_time}
             onChange={(e) => handleChange('day_end_time', e.target.value)}
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
           />
         </div>
       </div>
@@ -132,7 +132,7 @@ export default function DepartmentTimings({ data, onDataChange }) {
                   type="text"
                   value={brk.name}
                   onChange={(e) => updateBreak(index, 'name', e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
                   placeholder="e.g., Lunch"
                 />
               </div>
@@ -147,7 +147,7 @@ export default function DepartmentTimings({ data, onDataChange }) {
                   onChange={(e) =>
                     updateBreak(index, 'start_time', e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
                 />
               </div>
 
@@ -161,7 +161,7 @@ export default function DepartmentTimings({ data, onDataChange }) {
                   onChange={(e) =>
                     updateBreak(index, 'duration', e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
                 />
               </div>
 

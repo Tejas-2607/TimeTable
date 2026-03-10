@@ -21,7 +21,7 @@ export default function PracticalPlan() {
     try {
       const response = await getMasterTimetables();
       console.log('Timetables response:', response);
-      
+
       const timetablesData = response.timetables || response.data?.timetables || [];
       setPracticalData({ timetables: timetablesData });
     } catch (err) {
@@ -173,12 +173,19 @@ export default function PracticalPlan() {
         )}
 
         {isLoading ? (
-          <div className="bg-white rounded-xl shadow-md p-12 text-center">
-            <div className="max-w-md mx-auto">
-              <BookOpen size={48} className="mx-auto mb-4 text-blue-600 animate-pulse" />
-              <h2 className="text-2xl font-semibold text-slate-800 mb-4">Loading Practical Plan</h2>
-              <p className="text-slate-600">Fetching timetable schedules...</p>
-            </div>
+          <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden animate-pulse">
+            <div className="h-12 bg-slate-300/50 border-b border-slate-300"></div>
+            <div className="h-10 bg-slate-200/50 border-b border-slate-200"></div>
+            {[...Array(6)].map((_, idx) => (
+              <div key={idx} className="flex border-b border-slate-100">
+                <div className="w-24 border-r border-slate-200 bg-slate-50"></div>
+                <div className="flex-1 h-20 p-2 flex gap-4">
+                  {[...Array(4)].map((_, cellIdx) => (
+                    <div key={cellIdx} className="flex-1 bg-slate-100 rounded border border-slate-200"></div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         ) : !practicalData || !practicalData.timetables || practicalData.timetables.length === 0 ? (
           <div className="bg-white rounded-xl shadow-md p-12 text-center">

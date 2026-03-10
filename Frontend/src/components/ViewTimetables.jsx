@@ -49,7 +49,7 @@ export default function ViewTimetables() {
               value={academicYear}
               onChange={(e) => setAcademicYear(e.target.value)}
               placeholder="e.g., 2024-2025"
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
             />
           </div>
 
@@ -60,7 +60,7 @@ export default function ViewTimetables() {
             <select
               value={semester}
               onChange={(e) => setSemester(e.target.value)}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
             >
               <option value="odd">Odd Semester</option>
               <option value="even">Even Semester</option>

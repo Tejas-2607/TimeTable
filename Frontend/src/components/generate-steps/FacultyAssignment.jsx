@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2, X } from 'lucide-react';
 import { getSubjects } from '../../services/subjectService';
 import { getFaculties } from '../../services/facultyService';
-import { 
-  getFacultyWorkload, 
-  addFacultyWorkload, 
-  updateFacultyWorkload, 
-  deleteFacultyWorkload 
+import {
+  getFacultyWorkload,
+  addFacultyWorkload,
+  updateFacultyWorkload,
+  deleteFacultyWorkload
 } from '../../services/workloadService';
 
 export default function FacultyAssignment({ data, onDataChange }) {
@@ -59,12 +59,12 @@ export default function FacultyAssignment({ data, onDataChange }) {
   const loadAllStaticData = async () => {
     try {
       setLoading(true);
-      
+
       // Load faculties
       const facultiesRes = await getFaculties();
       const facultiesArray = Array.isArray(facultiesRes) ? facultiesRes : facultiesRes.data || [];
       setFaculties(
-        facultiesArray.sort((a, b) => 
+        facultiesArray.sort((a, b) =>
           `${a.title || ''} ${a.full_name || ''}`.localeCompare(`${b.title || ''} ${b.full_name || ''}`)
         )
       );
@@ -87,16 +87,16 @@ export default function FacultyAssignment({ data, onDataChange }) {
       setLoading(true);
       const res = await getFacultyWorkload();
       const workloadData = res.workloads || res.data?.workloads || [];
-      
+
       // console.log('All workload data:', workloadData);
-      
+
       // Filter workloads by year - handle both uppercase and lowercase
       const yearFilter = year.toUpperCase();
       const yearWorkloads = workloadData.filter(w => {
         const wYear = String(w.year).toUpperCase();
         return wYear === yearFilter;
       });
-      
+
       console.log('Filtered workloads for', yearFilter, ':', yearWorkloads);
       setWorkloads(yearWorkloads);
     } catch (err) {
@@ -109,7 +109,7 @@ export default function FacultyAssignment({ data, onDataChange }) {
 
   const getSubjectType = (subject) => {
     if (!subject) return null;
-    
+
     const theoryHrs = subject.hrs_per_week_lec || 0;
     const practicalHrs = subject.hrs_per_week_practical || 0;
 
@@ -272,7 +272,7 @@ export default function FacultyAssignment({ data, onDataChange }) {
           <select
             value={year}
             onChange={(e) => setYear(e.target.value)}
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
           >
             <option value="sy">{getYearLabel('sy')}</option>
             <option value="ty">{getYearLabel('ty')}</option>
@@ -328,7 +328,7 @@ export default function FacultyAssignment({ data, onDataChange }) {
                 <select
                   value={formData.subject}
                   onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
                   required
                 >
                   <option value="">Select Subject</option>
@@ -350,7 +350,7 @@ export default function FacultyAssignment({ data, onDataChange }) {
                 <select
                   value={formData.faculty_id}
                   onChange={(e) => setFormData({ ...formData, faculty_id: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
                   required
                 >
                   <option value="">Select Faculty</option>
@@ -371,7 +371,7 @@ export default function FacultyAssignment({ data, onDataChange }) {
                 <select
                   value={formData.division}
                   onChange={(e) => setFormData({ ...formData, division: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
                   required
                 >
                   {divisions.map((div) => (
@@ -394,7 +394,7 @@ export default function FacultyAssignment({ data, onDataChange }) {
                           type="checkbox"
                           checked={formData.batches.includes(batch)}
                           onChange={() => toggleBatch(batch)}
-                          className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                          className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
                         />
                         <span className="text-slate-700">{batch}</span>
                       </label>
@@ -416,7 +416,7 @@ export default function FacultyAssignment({ data, onDataChange }) {
                     min="0"
                     value={formData.theory_hrs}
                     onChange={(e) => setFormData({ ...formData, theory_hrs: e.target.value })}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
                     required
                   />
                 </div>
@@ -433,7 +433,7 @@ export default function FacultyAssignment({ data, onDataChange }) {
                     min="0"
                     value={formData.practical_hrs}
                     onChange={(e) => setFormData({ ...formData, practical_hrs: e.target.value })}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
                     required
                   />
                 </div>
@@ -524,20 +524,19 @@ export default function FacultyAssignment({ data, onDataChange }) {
                           {subjectType === 'Both'
                             ? `${workload.theory_hrs} (Theory) + ${workload.practical_hrs} (Practical) hrs/week`
                             : subjectType === 'Theory'
-                            ? `${workload.theory_hrs} hrs/week`
-                            : `${workload.practical_hrs} hrs/week`}
+                              ? `${workload.theory_hrs} hrs/week`
+                              : `${workload.practical_hrs} hrs/week`}
                         </p>
                       </div>
                       <div className="col-span-2">
                         <span className="text-xs font-semibold text-slate-500 uppercase">Assignment Type</span>
                         <p className="text-slate-800 font-semibold mt-1">
-                          <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                            subjectType === 'Theory'
-                              ? 'bg-green-100 text-green-700'
-                              : subjectType === 'Practical'
+                          <span className={`px-2 py-1 rounded text-xs font-semibold ${subjectType === 'Theory'
+                            ? 'bg-green-100 text-green-700'
+                            : subjectType === 'Practical'
                               ? 'bg-orange-100 text-orange-700'
                               : 'bg-blue-100 text-blue-700'
-                          }`}>
+                            }`}>
                             {subjectType === 'Both' ? 'Theory + Practical' : subjectType}
                           </span>
                         </p>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import GenerateTimetable from './components/GenerateTimetable';
 import FacultyData from './components/FacultyData';
@@ -10,32 +11,22 @@ import PracticalPlan from './components/PracticalPlan';
 function App() {
   const [activeTab, setActiveTab] = useState('generate');
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'generate':
-        return <GenerateTimetable />;
-      case 'faculty':
-        return <FacultyData />;
-      case 'labs':
-        return <LabsData />;
-      case 'structure':
-        return <ClassStructure />;
-      case 'view':
-        return <ViewTimetables />;
-      case 'practical':
-        return <PracticalPlan />;
-      default:
-        return <GenerateTimetable />;
-    }
-  };
-
   return (
-    <div className="flex min-h-screen bg-slate-100">
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-      <main className="flex-1 overflow-auto">
-        {renderContent()}
-      </main>
-    </div>
+    <Router>
+      <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
+        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+        <main className="flex-1 h-full overflow-y-auto overflow-x-hidden">
+          <Routes>
+            <Route path="/" element={<Navigate to="/generate" replace />} />
+            <Route path="/generate" element={<GenerateTimetable />} />
+            <Route path="/faculty" element={<FacultyData />} />
+            <Route path="/labs" element={<LabsData />} />
+            <Route path="/structure" element={<ClassStructure />} />
+            <Route path="/practical" element={<PracticalPlan />} />
+          </Routes>
+        </main>
+      </div>
+    </Router>
   );
 }
 
