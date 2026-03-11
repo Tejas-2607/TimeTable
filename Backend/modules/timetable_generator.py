@@ -1,18 +1,15 @@
-# timetable_generator.py - PARALLEL SCHEDULING (SMART VERSION)
-# This version intelligently selects batches to schedule in parallel
+# timetable_generator.py - FIXED VERSION (No Same Batch Conflicts)
+# Correctly schedules batches without putting same batch in multiple places
 from datetime import datetime
 from config import db
 import logging
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Constants
 DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 SLOTS = ['11:15', '14:15', '16:20']
 
-# Database collections
 subjects_collection = db['subjects']
 faculty_collection = db['faculty']
 labs_collection = db['labs']
@@ -22,17 +19,25 @@ master_lab_timetable_collection = db['master_lab_timetable']
 
 
 class PracticalTimetableGenerator:
-    """Build per-year assignment queues from workload collection."""
+    """Build per-batch assignment queues from workload collection."""
     def __init__(self, year, semester='1'):
         self.year = year
         self.semester = semester
 
     def prepare_assignments(self):
         """
-        Group all batches of a division together.
-        Returns dict: (year, division) → list of batch assignments
+        Group assignments by (year, division, batch).
+        
+        KEY CHANGE: Now groups by BATCH, not just division!
+        
+        This ensures:
+        - Each batch has its own queue
+        - Subjects for same batch are scheduled separately
+        - No same batch in multiple labs at same time
+        
+        Returns: {(year, division, batch): [subject1, subject2, ...]}
         """
-        assignments_by_division = {}
+        assignments_by_batch = {}
         try:
             workloads = list(workload_collection.find({}))
             faculties = list(faculty_collection.find({}, {'_id': 1, 'name': 1}))
@@ -50,7 +55,7 @@ class PracticalTimetableGenerator:
                 faculty_id = str(w.get('faculty_id', ''))
                 faculty_name = faculty_id_to_name.get(faculty_id, faculty_id)
 
-                # Create assignment for each batch
+                # Create one assignment per batch
                 for batch in batches:
                     a = {
                         'subject': subject,
@@ -61,15 +66,17 @@ class PracticalTimetableGenerator:
                         'faculty_id': faculty_id,
                         'faculty': faculty_name
                     }
-                    # Group by division only
-                    key = (self.year.upper(), division)
-                    assignments_by_division.setdefault(key, []).append(a)
+                    
+                    # KEY FIX: Group by (year, division, batch)
+                    # Each batch gets its own queue
+                    key = (self.year.upper(), division, batch)
+                    assignments_by_batch.setdefault(key, []).append(a)
 
             logger.info(f"Prepared assignments for {self.year}")
-            for key, queue in assignments_by_division.items():
-                logger.info(f"  {key[0]}-{key[1]}: {len(queue)} batches total")
+            for key, queue in assignments_by_batch.items():
+                logger.info(f"  {key[0]}-{key[1]}-Batch{key[2]}: {len(queue)} subjects")
             
-            return assignments_by_division
+            return assignments_by_batch
 
         except Exception as e:
             logger.error(f"Error preparing assignments for {self.year}: {e}", exc_info=True)
@@ -78,7 +85,21 @@ class PracticalTimetableGenerator:
 
 def generate(data=None):
     """
-    SMART PARALLEL SCHEDULING: Schedule multiple batches at same time in different labs
+    FIXED PARALLEL SCHEDULING: Schedule multiple DIFFERENT BATCHES at same time in different labs.
+    
+    KEY CONSTRAINT: SAME BATCH can only appear ONCE per time slot across all labs.
+    
+    CORRECT:
+      Monday 11:15:
+        Lab1: SY-A-B1-DS (different subject/batch from Lab2)
+        Lab2: SY-A-B2-CG (different batch!)
+        Lab3: SY-A-B3-OOPJ (different batch!)
+    
+    WRONG (WHAT WE HAD):
+      Monday 11:15:
+        Lab1: SY-A-B1-DS
+        Lab2: SY-A-B1-CG (SAME BATCH! ❌)
+        Lab3: SY-A-B1-OOPJ (SAME BATCH! ❌)
     """
     try:
         master_lab_timetable_collection.delete_many({})
@@ -94,14 +115,14 @@ def generate(data=None):
         for lab_name in lab_names:
             merged_timetable['labs'][lab_name] = {day: {slot: [] for slot in SLOTS} for day in DAYS}
 
-        # Prepare assignments
+        # Prepare assignments: (year, division, batch) → [subjects]
         years_prio = ['SY', 'TY', 'BE']
         assignments = {}
         for y in years_prio:
             gen = PracticalTimetableGenerator(y)
             assignments.update(gen.prepare_assignments())
 
-        logger.info(f"Total assignment groups: {len(assignments)}")
+        logger.info(f"Total assignment batches: {len(assignments)}")
 
         # Helper functions
         def faculty_busy(faculty_name, day, slot):
@@ -109,6 +130,16 @@ def generate(data=None):
             for lab_schedule in merged_timetable['labs'].values():
                 for sess in lab_schedule[day][slot]:
                     if sess.get('faculty') == faculty_name:
+                        return True
+            return False
+
+        def batch_has_session(batch_id, division, class_name, day, slot):
+            """Check if this batch already has a session in this time slot."""
+            for lab_schedule in merged_timetable['labs'].values():
+                for sess in lab_schedule[day][slot]:
+                    if (sess.get('batch') == batch_id and 
+                        sess.get('division') == division and 
+                        sess.get('class') == class_name):
                         return True
             return False
 
@@ -120,50 +151,26 @@ def generate(data=None):
             """Get list of free lab names at this slot."""
             return [ln for ln in lab_names if len(merged_timetable['labs'][ln][day][slot]) == 0]
 
-        def select_compatible_batches(queue, day, slot):
-            """
-            SMART: Select batches that can be placed in parallel.
-            
-            Returns: (selected_batches, remaining_queue)
-            
-            Selection criteria:
-            1. All faculties must be different (no duplicate faculty)
-            2. All faculties must be free
-            3. Must fit in available labs
-            """
-            free_labs = get_free_labs(day, slot)
-            selected = []
-            remaining = []
-            used_faculties = set()
-            
-            for batch in queue:
-                faculty = batch['faculty']
-                
-                # Can we add this batch?
-                can_add = (
-                    faculty not in used_faculties and  # Faculty not already selected
-                    not faculty_busy(faculty, day, slot) and  # Faculty is free
-                    len(selected) < len(free_labs)  # We have a free lab
-                )
-                
-                if can_add:
-                    selected.append(batch)
-                    used_faculties.add(faculty)
-                else:
-                    remaining.append(batch)
-            
-            return selected, remaining
+        def count_practicals_today(division, class_name, day):
+            """Count how many practicals this division has today."""
+            count = 0
+            for lab_schedule in merged_timetable['labs'].values():
+                for slot in SLOTS:
+                    for sess in lab_schedule[day][slot]:
+                        if sess.get('division') == division and sess.get('class') == class_name:
+                            count += 1
+            return count
 
         # Main scheduling loop
         for day in DAYS:
-            scheduled_divisions_today = set()
+            scheduled_divisions_today = {}  # Track practicals per division per day
             sorted_keys = sorted(assignments.keys(),
-                                key=lambda k: (years_prio.index(k[0]), k[1]))
+                                key=lambda k: (years_prio.index(k[0]), k[1], k[2]))
 
             for slot in SLOTS:
                 
                 for key in list(sorted_keys):
-                    year, division = key
+                    year, division, batch = key
                     queue = assignments.get(key)
                     
                     if not queue or len(queue) == 0:
@@ -171,68 +178,74 @@ def generate(data=None):
                     
                     division_key = (year, division)
 
-                    # CONSTRAINT 1: One division per day
-                    if division_key in scheduled_divisions_today:
-                        logger.debug(f"Skipping {year}-{division}: Already scheduled today")
+                    # CONSTRAINT 1: Max 2 practicals per division per day
+                    practicals_today = count_practicals_today(year, division, day)
+                    if practicals_today >= 2:
+                        logger.debug(f"Skipping {year}-{division}-B{batch}: Already has 2 practicals today")
                         continue
 
-                    # CONSTRAINT 2: Intelligently select batches that can be placed in parallel
-                    selected_batches, remaining_batches = select_compatible_batches(queue, day, slot)
+                    # CONSTRAINT 2: Batch already has session in this time slot? (THE FIX!)
+                    if batch_has_session(batch, division, year, day, slot):
+                        logger.debug(f"Skipping {year}-{division}-B{batch}: Already scheduled this time")
+                        continue
+
+                    # CONSTRAINT 3: Take next subject from this batch's queue
+                    assignment = queue[0]  # Get first subject for this batch
                     
-                    if not selected_batches:
-                        logger.debug(f"Skipping {year}-{division} at {day} {slot}: No compatible batches")
+                    # CONSTRAINT 4: Faculty must be free
+                    if faculty_busy(assignment['faculty'], day, slot):
+                        logger.debug(f"Skipping {year}-{division}-B{batch}-{assignment['subject']}: Faculty busy")
                         continue
 
-                    # CONSTRAINT 3: Place selected batches
+                    # CONSTRAINT 5: Must have a free lab
                     free_labs = get_free_labs(day, slot)
-                    
-                    placement_log = f"Placing {year}-{division} at {day} {slot}: "
-                    for idx, batch in enumerate(selected_batches):
-                        lab_name = free_labs[idx]
-                        
-                        sess = {
-                            'batch': batch.get('batch'),
-                            'class': batch.get('class'),
-                            'division': batch.get('division'),
-                            'faculty': batch.get('faculty'),
-                            'faculty_id': batch.get('faculty_id'),
-                            'subject': batch.get('subject'),
-                            'subject_full': batch.get('subject_full')
-                        }
-                        merged_timetable['labs'][lab_name][day][slot].append(sess)
-                        placement_log += f"[{lab_name}:{sess['subject']}({sess['faculty']})] "
-                    
-                    logger.info(placement_log)
+                    if not free_labs:
+                        logger.debug(f"Skipping {year}-{division}-B{batch}: No free labs")
+                        continue
 
-                    # Update queue with remaining batches
-                    if remaining_batches:
-                        assignments[key] = remaining_batches
-                    else:
+                    # All checks passed - place this subject
+                    lab_name = free_labs[0]
+                    
+                    sess = {
+                        'batch': assignment.get('batch'),
+                        'class': assignment.get('class'),
+                        'division': assignment.get('division'),
+                        'faculty': assignment.get('faculty'),
+                        'faculty_id': assignment.get('faculty_id'),
+                        'subject': assignment.get('subject'),
+                        'subject_full': assignment.get('subject_full')
+                    }
+                    merged_timetable['labs'][lab_name][day][slot].append(sess)
+                    
+                    logger.info(f"Placing {year}-{division}-B{batch}-{assignment['subject']} at {day} {slot}: {lab_name}")
+
+                    # Remove this subject from queue
+                    queue.pop(0)
+                    
+                    # If queue empty, remove the key
+                    if not queue:
                         assignments.pop(key, None)
                     
-                    # Mark division as scheduled for the day
-                    scheduled_divisions_today.add(division_key)
-
-                    # Re-sort keys
+                    # Re-sort for next iteration
                     sorted_keys = sorted([k for k in assignments.keys()],
-                                        key=lambda k: (years_prio.index(k[0]), k[1]))
+                                        key=lambda k: (years_prio.index(k[0]), k[1], k[2]))
 
         # Gather leftovers
         leftovers = {}
-        for (year, div), queue in assignments.items():
+        for (year, div, batch), queue in assignments.items():
             if queue and len(queue) > 0:
-                leftovers.setdefault(year, {})[div] = queue
+                leftovers.setdefault(year, {})[f"{div}-B{batch}"] = {
+                    'count': len(queue),
+                    'subjects': [q.get('subject') for q in queue]
+                }
 
         if leftovers:
-            total_leftovers = 0
-            for year_dict in leftovers.values():
-                for queue in year_dict.values():
-                    total_leftovers += len(queue)
-            
+            total_leftovers = sum(len(d) for y_dict in leftovers.values() for d in y_dict.values() if isinstance(d, dict) and 'count' in d)
             logger.warning(f"⚠️ Leftover (unscheduled) assignments: {total_leftovers}")
             for year, div_dict in leftovers.items():
-                for div, queue in div_dict.items():
-                    logger.warning(f"  → {year}-{div}: {len(queue)} batches")
+                for div, data in div_dict.items():
+                    if isinstance(data, dict):
+                        logger.warning(f"  → {year}-{div}: {data['count']} subjects: {data['subjects']}")
         else:
             logger.info("✅ All assignments successfully scheduled!")
 
@@ -246,17 +259,7 @@ def generate(data=None):
             }
             timetables.append(doc)
 
-        # Convert leftovers to serializable format
-        leftovers_clean = {}
-        for year, div_dict in leftovers.items():
-            leftovers_clean[year] = {}
-            for div, queue in div_dict.items():
-                leftovers_clean[year][div] = {
-                    'count': len(queue),
-                    'batches': [{'batch': b.get('batch'), 'subject': b.get('subject'), 'faculty': b.get('faculty')} for b in queue]
-                }
-
-        return {'timetables': timetables, 'leftovers': leftovers_clean, 'labs': merged_timetable['labs']}
+        return {'timetables': timetables, 'leftovers': leftovers, 'labs': merged_timetable['labs']}
 
     except Exception as e:
         logger.error(f"Error in generate(): {e}", exc_info=True)
