@@ -177,7 +177,22 @@ def regenerate_master_practical_timetable():
 
         # --- LEFTover CHECK AND REPORT ---
         leftovers = result.get("leftovers", {})
-        total_leftovers = sum(len(sub_qs) for y_divs in leftovers.values() for div_subs in y_divs.values() for sub_qs in div_subs.values())
+        # Calculate total leftovers - handle both old and new formats
+        total_leftovers = 0
+        for year_dict in leftovers.values():
+            if isinstance(year_dict, dict):
+                for div_data in year_dict.values():
+                    if isinstance(div_data, dict) and 'count' in div_data:
+                        # New format: {count: N, batches: [...]}
+                        total_leftovers += div_data['count']
+                    elif isinstance(div_data, list):
+                        # Old format: direct list of batches
+                        total_leftovers += len(div_data)
+                    else:
+                        # Even older format with nested dicts
+                        for item in div_data.values() if isinstance(div_data, dict) else []:
+                            if isinstance(item, list):
+                                total_leftovers += len(item)
 
         response_message = "Master practical timetable regenerated successfully!"
         status_code = 201
