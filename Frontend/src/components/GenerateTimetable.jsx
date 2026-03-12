@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { ChevronRight, ChevronLeft, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronRight, ChevronLeft, Check, CheckCircle2, ArrowRight } from 'lucide-react';
 import { regenerateMasterTimetable } from '../services/timetableGeneratorService';
 import DepartmentTimings from './generate-steps/DepartmentTimings';
 import SubjectsStep from './generate-steps/SubjectsStep';
 import FacultyAssignment from './generate-steps/FacultyAssignment';
 
 export default function GenerateTimetable() {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [formData, setFormData] = useState({
     timings: null,
     subjects: [],
@@ -48,8 +51,8 @@ export default function GenerateTimetable() {
     try {
       const response = await regenerateMasterTimetable();
 
-      // Show success alert
-      alert('✅ Timetable generated successfully!\n\nPlease navigate to the "Practical Plan" tab to view the schedules.');
+      // Show success popup
+      setShowSuccess(true);
 
     } catch (error) {
       const errorMessage = error.response?.data?.error || error.message || 'Failed to generate timetable. Please try again.';
@@ -158,6 +161,27 @@ export default function GenerateTimetable() {
           </button>
         )}
       </div>
-    </div >
+      {/* Success Modal */}
+      {showSuccess && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle2 size={36} className="text-emerald-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-slate-800 mb-2">Timetable Generated!</h3>
+            <p className="text-slate-500 text-sm mb-6">
+              Your timetable has been generated successfully. You can now view the master practical plan and class-wise timetables.
+            </p>
+            <button
+              onClick={() => { setShowSuccess(false); navigate('/view'); }}
+              className="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-cyan-700 transition-all shadow-md shadow-blue-600/20 active:scale-[0.98]"
+            >
+              View Timetables
+              <ArrowRight size={18} />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

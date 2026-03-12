@@ -1,0 +1,611 @@
+{
+  "timetables": [
+    {
+      "_id": "69b1c6eba39e8ead77906348",
+      "class": "SY",
+      "class_key": "SY-A",
+      "division": "A",
+      "generated_at": "2026-03-12T01:17:55.774000",
+      "schedule": {
+        "Friday": {
+          "10:15": [],
+          "11:15": [],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [],
+          "15:15": [],
+          "16:20": []
+        },
+        "Monday": {
+          "10:15": [],
+          "11:15": [
+            {
+              "batch": "Batch 1",
+              "faculty": "RKD",
+              "faculty_id": "69025d0a90f648650d4c68a7",
+              "lab": "DBMS Lab",
+              "subject": "DS",
+              "subject_full": "Data Structures",
+              "type": "practical"
+            }
+          ],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [
+            {
+              "batch": "Batch 1",
+              "faculty": "KRP",
+              "faculty_id": "69025d4090f648650d4c68ab",
+              "lab": "DBMS Lab",
+              "subject": "CG",
+              "subject_full": "Computer Graphics ",
+              "type": "practical"
+            },
+            {
+              "batch": "Batch 2",
+              "faculty": "RKD",
+              "faculty_id": "69025d0a90f648650d4c68a7",
+              "lab": "OS Lab",
+              "subject": "DS",
+              "subject_full": "Data Structures",
+              "type": "practical"
+            }
+          ],
+          "15:15": [],
+          "16:20": [
+            {
+              "batch": "Batch 1",
+              "faculty": "AMP",
+              "faculty_id": "69025cff90f648650d4c68a6",
+              "lab": "DBMS Lab",
+              "subject": "OOPJ",
+              "subject_full": "Object Oriented Programming using Java",
+              "type": "practical"
+            },
+            {
+              "batch": "Batch 2",
+              "faculty": "KRP",
+              "faculty_id": "69025d4090f648650d4c68ab",
+              "lab": "OS Lab",
+              "subject": "CG",
+              "subject_full": "Computer Graphics ",
+              "type": "practical"
+            },
+            {
+              "batch": "Batch 3",
+              "faculty": "RKD",
+              "faculty_id": "69025d0a90f648650d4c68a7",
+              "lab": "Networking Lab",
+              "subject": "DS",
+              "subject_full": "Data Structures",
+              "type": "practical"
+            }
+          ]
+        },
+        "Thursday": {
+          "10:15": [],
+          "11:15": [],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [],
+          "15:15": [],
+          "16:20": []
+        },
+        "Tuesday": {
+          "10:15": [],
+          "11:15": [
+            {
+              "batch": "Batch 2",
+              "faculty": "AMP",
+              "faculty_id": "69025cff90f648650d4c68a6",
+              "lab": "DBMS Lab",
+              "subject": "OOPJ",
+              "subject_full": "Object Oriented Programming using Java",
+              "type": "practical"
+            },
+            {
+              "batch": "Batch 3",
+              "faculty": "KRP",
+              "faculty_id": "69025d4090f648650d4c68ab",
+              "lab": "OS Lab",
+              "subject": "CG",
+              "subject_full": "Computer Graphics ",
+              "type": "practical"
+            }
+          ],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [
+            {
+              "batch": "Batch 3",
+              "faculty": "AMP",
+              "faculty_id": "69025cff90f648650d4c68a6",
+              "lab": "DBMS Lab",
+              "subject": "OOPJ",
+              "subject_full": "Object Oriented Programming using Java",
+              "type": "practical"
+            }
+          ],
+          "15:15": [],
+          "16:20": []
+        },
+        "Wednesday": {
+          "10:15": [],
+          "11:15": [],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [],
+          "15:15": [],
+          "16:20": []
+        }
+      },
+      "total_practicals": 9
+    },
+    {
+      "_id": "69b1c6eba39e8ead77906349",
+      "class": "SY",
+      "class_key": "SY-B",
+      "division": "B",
+      "generated_at": "2026-03-12T01:17:55.792000",
+      "schedule": {
+        "Friday": {
+          "10:15": [],
+          "11:15": [],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [],
+          "15:15": [],
+          "16:20": []
+        },
+        "Monday": {
+          "10:15": [],
+          "11:15": [],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [],
+          "15:15": [],
+          "16:20": []
+        },
+        "Thursday": {
+          "10:15": [],
+          "11:15": [],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [],
+          "15:15": [],
+          "16:20": []
+        },
+        "Tuesday": {
+          "10:15": [],
+          "11:15": [
+            {
+              "batch": "Batch 1",
+              "faculty": "RKD",
+              "faculty_id": "69025d0a90f648650d4c68a7",
+              "lab": "Networking Lab",
+              "subject": "DS",
+              "subject_full": "Data Structures",
+              "type": "practical"
+            }
+          ],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [
+            {
+              "batch": "Batch 1",
+              "faculty": "NS",
+              "faculty_id": "69025d1f90f648650d4c68a8",
+              "lab": "OS Lab",
+              "subject": "CG",
+              "subject_full": "Computer Graphics ",
+              "type": "practical"
+            },
+            {
+              "batch": "Batch 2",
+              "faculty": "RKD",
+              "faculty_id": "69025d0a90f648650d4c68a7",
+              "lab": "Networking Lab",
+              "subject": "DS",
+              "subject_full": "Data Structures",
+              "type": "practical"
+            }
+          ],
+          "15:15": [],
+          "16:20": [
+            {
+              "batch": "Batch 1",
+              "faculty": "VJ",
+              "faculty_id": "69025d2a90f648650d4c68a9",
+              "lab": "DBMS Lab",
+              "subject": "OOPJ",
+              "subject_full": "Object Oriented Programming using Java",
+              "type": "practical"
+            },
+            {
+              "batch": "Batch 2",
+              "faculty": "NS",
+              "faculty_id": "69025d1f90f648650d4c68a8",
+              "lab": "OS Lab",
+              "subject": "CG",
+              "subject_full": "Computer Graphics ",
+              "type": "practical"
+            },
+            {
+              "batch": "Batch 3",
+              "faculty": "RKD",
+              "faculty_id": "69025d0a90f648650d4c68a7",
+              "lab": "Networking Lab",
+              "subject": "DS",
+              "subject_full": "Data Structures",
+              "type": "practical"
+            }
+          ]
+        },
+        "Wednesday": {
+          "10:15": [],
+          "11:15": [
+            {
+              "batch": "Batch 2",
+              "faculty": "VJ",
+              "faculty_id": "69025d2a90f648650d4c68a9",
+              "lab": "DBMS Lab",
+              "subject": "OOPJ",
+              "subject_full": "Object Oriented Programming using Java",
+              "type": "practical"
+            },
+            {
+              "batch": "Batch 3",
+              "faculty": "NS",
+              "faculty_id": "69025d1f90f648650d4c68a8",
+              "lab": "OS Lab",
+              "subject": "CG",
+              "subject_full": "Computer Graphics ",
+              "type": "practical"
+            }
+          ],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [
+            {
+              "batch": "Batch 3",
+              "faculty": "VJ",
+              "faculty_id": "69025d2a90f648650d4c68a9",
+              "lab": "DBMS Lab",
+              "subject": "OOPJ",
+              "subject_full": "Object Oriented Programming using Java",
+              "type": "practical"
+            }
+          ],
+          "15:15": [],
+          "16:20": []
+        }
+      },
+      "total_practicals": 9
+    },
+    {
+      "_id": "69b1c6eba39e8ead7790634a",
+      "class": "TY",
+      "class_key": "TY-B",
+      "division": "B",
+      "generated_at": "2026-03-12T01:17:55.812000",
+      "schedule": {
+        "Friday": {
+          "10:15": [],
+          "11:15": [],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [],
+          "15:15": [],
+          "16:20": []
+        },
+        "Monday": {
+          "10:15": [],
+          "11:15": [
+            {
+              "batch": "Batch 1",
+              "faculty": "KRP",
+              "faculty_id": "69025d4090f648650d4c68ab",
+              "lab": "Networking Lab",
+              "subject": "DBMS",
+              "subject_full": "Data Base Management",
+              "type": "practical"
+            }
+          ],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [
+            {
+              "batch": "Batch 1",
+              "faculty": "NS",
+              "faculty_id": "69025d1f90f648650d4c68a8",
+              "lab": "Computer Lab 2",
+              "subject": "OS",
+              "subject_full": "Operating Systems",
+              "type": "practical"
+            }
+          ],
+          "15:15": [],
+          "16:20": [
+            {
+              "batch": "Batch 1",
+              "faculty": "VJ",
+              "faculty_id": "69025d2a90f648650d4c68a9",
+              "lab": "Computer Lab 1",
+              "subject": "WD",
+              "subject_full": "Web Development",
+              "type": "practical"
+            }
+          ]
+        },
+        "Thursday": {
+          "10:15": [],
+          "11:15": [],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [],
+          "15:15": [],
+          "16:20": []
+        },
+        "Tuesday": {
+          "10:15": [],
+          "11:15": [],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [
+            {
+              "batch": "Batch 2",
+              "faculty": "KRP",
+              "faculty_id": "69025d4090f648650d4c68ab",
+              "lab": "Computer Lab 1",
+              "subject": "DBMS",
+              "subject_full": "Data Base Management",
+              "type": "practical"
+            }
+          ],
+          "15:15": [],
+          "16:20": []
+        },
+        "Wednesday": {
+          "10:15": [],
+          "11:15": [],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [
+            {
+              "batch": "Batch 2",
+              "faculty": "NS",
+              "faculty_id": "69025d1f90f648650d4c68a8",
+              "lab": "Networking Lab",
+              "subject": "OS",
+              "subject_full": "Operating Systems",
+              "type": "practical"
+            }
+          ],
+          "15:15": [],
+          "16:20": [
+            {
+              "batch": "Batch 2",
+              "faculty": "VJ",
+              "faculty_id": "69025d2a90f648650d4c68a9",
+              "lab": "DBMS Lab",
+              "subject": "WD",
+              "subject_full": "Web Development",
+              "type": "practical"
+            }
+          ]
+        }
+      },
+      "total_practicals": 6
+    },
+    {
+      "_id": "69b1c6eba39e8ead7790634b",
+      "class": "TY",
+      "class_key": "TY-A",
+      "division": "A",
+      "generated_at": "2026-03-12T01:17:55.830000",
+      "schedule": {
+        "Friday": {
+          "10:15": [],
+          "11:15": [],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [],
+          "15:15": [],
+          "16:20": []
+        },
+        "Monday": {
+          "10:15": [],
+          "11:15": [
+            {
+              "batch": "Batch 1",
+              "faculty": "PS",
+              "faculty_id": "69025d4990f648650d4c68ac",
+              "lab": "OS Lab",
+              "subject": "DBMS",
+              "subject_full": "Data Base Management",
+              "type": "practical"
+            }
+          ],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [
+            {
+              "batch": "Batch 1",
+              "faculty": "AMP",
+              "faculty_id": "69025cff90f648650d4c68a6",
+              "lab": "Networking Lab",
+              "subject": "OS",
+              "subject_full": "Operating Systems",
+              "type": "practical"
+            },
+            {
+              "batch": "Batch 2",
+              "faculty": "PS",
+              "faculty_id": "69025d4990f648650d4c68ac",
+              "lab": "Computer Lab 1",
+              "subject": "DBMS",
+              "subject_full": "Data Base Management",
+              "type": "practical"
+            }
+          ],
+          "15:15": [],
+          "16:20": []
+        },
+        "Thursday": {
+          "10:15": [],
+          "11:15": [],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [],
+          "15:15": [],
+          "16:20": []
+        },
+        "Tuesday": {
+          "10:15": [],
+          "11:15": [],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [],
+          "15:15": [],
+          "16:20": [
+            {
+              "batch": "Batch 2",
+              "faculty": "AMP",
+              "faculty_id": "69025cff90f648650d4c68a6",
+              "lab": "Computer Lab 1",
+              "subject": "OS",
+              "subject_full": "Operating Systems",
+              "type": "practical"
+            }
+          ]
+        },
+        "Wednesday": {
+          "10:15": [],
+          "11:15": [
+            {
+              "batch": "Batch 1",
+              "faculty": "RKD",
+              "faculty_id": "69025d0a90f648650d4c68a7",
+              "lab": "Networking Lab",
+              "subject": "WD",
+              "subject_full": "Web Development",
+              "type": "practical"
+            }
+          ],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [
+            {
+              "batch": "Batch 2",
+              "faculty": "RKD",
+              "faculty_id": "69025d0a90f648650d4c68a7",
+              "lab": "OS Lab",
+              "subject": "WD",
+              "subject_full": "Web Development",
+              "type": "practical"
+            }
+          ],
+          "15:15": [],
+          "16:20": []
+        }
+      },
+      "total_practicals": 6
+    },
+    {
+      "_id": "69b1c6eba39e8ead7790634c",
+      "class": "BE",
+      "class_key": "BE-A",
+      "division": "A",
+      "generated_at": "2026-03-12T01:17:55.850000",
+      "schedule": {
+        "Friday": {
+          "10:15": [],
+          "11:15": [],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [],
+          "15:15": [],
+          "16:20": []
+        },
+        "Monday": {
+          "10:15": [],
+          "11:15": [],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [],
+          "15:15": [],
+          "16:20": [
+            {
+              "batch": "Batch 1",
+              "faculty": "PS",
+              "faculty_id": "69025d4990f648650d4c68ac",
+              "lab": "Computer Lab 2",
+              "subject": "CN",
+              "subject_full": "Computer Networks",
+              "type": "practical"
+            }
+          ]
+        },
+        "Thursday": {
+          "10:15": [],
+          "11:15": [],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [],
+          "15:15": [],
+          "16:20": []
+        },
+        "Tuesday": {
+          "10:15": [],
+          "11:15": [
+            {
+              "batch": "Batch 2",
+              "faculty": "PS",
+              "faculty_id": "69025d4990f648650d4c68ac",
+              "lab": "Computer Lab 1",
+              "subject": "CN",
+              "subject_full": "Computer Networks",
+              "type": "practical"
+            }
+          ],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [],
+          "15:15": [],
+          "16:20": []
+        },
+        "Wednesday": {
+          "10:15": [],
+          "11:15": [
+            {
+              "batch": "Batch 1",
+              "faculty": "AMP",
+              "faculty_id": "69025cff90f648650d4c68a6",
+              "lab": "Computer Lab 1",
+              "subject": "AI",
+              "subject_full": "Artificial Intelligence",
+              "type": "practical"
+            }
+          ],
+          "12:15": [],
+          "13:15": [],
+          "14:15": [
+            {
+              "batch": "Batch 2",
+              "faculty": "AMP",
+              "faculty_id": "69025cff90f648650d4c68a6",
+              "lab": "Computer Lab 1",
+              "subject": "AI",
+              "subject_full": "Artificial Intelligence",
+              "type": "practical"
+            }
+          ],
+          "15:15": [],
+          "16:20": []
+        }
+      },
+      "total_practicals": 4
+    }
+  ],
+  "total": 5
+}

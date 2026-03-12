@@ -12,7 +12,7 @@ export default function Sidebar({ onTabChange }) {
     { id: 'faculty', label: 'Faculty Data', icon: Users },
     { id: 'labs', label: 'Labs Data', icon: FlaskConical },
     { id: 'structure', label: 'Class Structure', icon: Grid3x3 },
-    // { id: 'view', label: 'View Timetables', icon: Eye },
+    { id: 'view', label: 'View Timetables', icon: Eye },
     { id: 'practical', label: 'Practical Plan', icon: BookOpen },
   ];
 

@@ -22,6 +22,7 @@ function App() {
             <Route path="/faculty" element={<FacultyData />} />
             <Route path="/labs" element={<LabsData />} />
             <Route path="/structure" element={<ClassStructure />} />
+            <Route path="/view" element={<ViewTimetables />} />
             <Route path="/practical" element={<PracticalPlan />} />
           </Routes>
         </main>
