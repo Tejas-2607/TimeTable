@@ -1,33 +1,5 @@
 # timetable_generator.py
-"""
-Schedules all practical lab sessions across labs.
 
-BUGS FIXED:
-1. Class slot was blocked for ALL batches the moment any one batch occupied it.
-   Batches from the same class CAN be in different labs at the same time.
-   Fixed: tracking is now per (year, div, batch_int), not per (year, div).
-
-2. timetable_generator was writing class timetables directly, then
-   class_timetable_handler also rebuilt them from the master lab timetable —
-   causing duplicate entries in follow-on slots (12:15, 15:15).
-   Fixed: timetable_generator ONLY writes the master lab timetable.
-   class_timetable_handler is the single writer for class timetables.
-
-3. Lab follow-on slots were untracked, allowing double-booking of labs.
-   Fixed: lab_schedule tracks ALL slots; _write_session fills both
-   primary and follow-on slot in the lab schedule.
-
-4. required_labs field from subjects was ignored.
-   Fixed: _select_lab() enforces required_labs for Specific Lab subjects.
-
-5. practical_duration in subjects is now authoritative (not workload.practical_hrs).
-
-6. Only queue[0] was tried per batch per slot.
-   Fixed: inner loop tries every pending subject in the batch queue.
-
-7. Multiple candidates could grab the same lab in one pass.
-   Fixed: used_labs set prevents double-claiming.
-"""
 
 from datetime import datetime
 from config import db

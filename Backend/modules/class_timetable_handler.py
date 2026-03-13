@@ -1,25 +1,4 @@
 # class_timetable_handler.py
-"""
-Converts the Master Lab Timetable into individual Class Timetables.
-
-This is the SINGLE authoritative writer for class timetables.
-timetable_generator.py only writes the master lab timetable;
-this module reads it and produces the per-class view.
-
-BUG FIXED — duplicate follow-on slot entries:
-Previously _write_session in timetable_generator also wrote to class schedules,
-then this module re-read the master lab timetable and wrote the follow-on slot
-a second time.  Now timetable_generator does NOT write class schedules at all —
-this module is the sole source of truth for class timetables.
-
-LOGIC:
-- A practical session in the master lab timetable appears at its START slot.
-  For 2-hour practicals the master also stores an entry in the follow-on slot
-  (so the lab shows as occupied for both hours).
-- When building class timetables we only read the START slots (11:15, 14:15,
-  16:20) from the master lab timetable and write BOTH the primary and follow-on
-  slots into the class schedule ourselves — exactly once.
-"""
 
 from flask import jsonify
 from config import db

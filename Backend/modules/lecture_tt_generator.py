@@ -1,21 +1,4 @@
 # lecture_tt_generator.py
-"""
-Fills class timetables with lectures after practicals have been placed.
-
-BUG FIXED — over-scheduled lectures for WD and AJP:
-Previously theory_hrs was read from the workload collection, which stores the
-faculty's total assignment hours (including practical hours together).
-The authoritative value for lectures per week is hrs_per_week_lec in the
-subjects collection. workload.theory_hrs is now only used as a fallback
-when the subject is not found in the subjects collection.
-
-All other bugs remain fixed from the previous version:
-1. Afternoon phase was gated on any_pending checked once — fixed.
-2. One subject exhausted all slots for all classes — fixed (round-robin).
-3. No retry for blocked lectures — fixed (outer retry loop).
-4. 13:15 lunch slot implicit skip — fixed (explicit).
-5. schedule dict KeyError on edge cases — fixed.
-"""
 
 from datetime import datetime
 from config import db
