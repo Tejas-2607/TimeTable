@@ -188,110 +188,104 @@ def update_faculty_workload():
 @app.route('/api/regenerate_master_practical_timetable', methods=['POST'])
 def regenerate_master_practical_timetable():
     """
-    MAIN ENDPOINT - Regenerate master practical timetable + auto-generate lectures.
-    
-    This is the ONLY button in frontend that:
-    1. Deletes existing timetables
-    2. Generates master practical timetable (lab-wise)
-    3. Automatically generates class timetables from master timetable
-    4. **AUTOMATICALLY GENERATES LECTURES** ← New!
-    5. Returns complete status
-    
-    This is a complete "Generate All Timetables" endpoint.
+    MAIN ENDPOINT - Regenerate master practical timetable + lectures.
+
+    Pipeline (order matters):
+    1. Delete existing master lab timetables and class timetables
+    2. timetable_generator  → schedules practicals, saves master lab timetable ONLY
+    3. class_timetable_handler → reads master lab timetable, builds class timetables
+                                  (single writer — prevents duplicate follow-on entries)
+    4. lecture_tt_generator → reads class timetables, fills in lectures, re-saves
     """
     try:
         from config import db
 
         master_lab_timetable_collection = db['master_lab_timetable']
+        class_timetable_col             = db['class_timetable']
 
         logger.info("=" * 80)
         logger.info("STARTING COMPLETE TIMETABLE GENERATION")
         logger.info("=" * 80)
 
-        # STEP 1: Delete existing timetable data
+        # STEP 1: Delete all existing timetable data
         logger.info("\n[STEP 1] Deleting existing timetables...")
-        deleted_count = master_lab_timetable_collection.delete_many({}).deleted_count
-        logger.info(f"✓ Deleted {deleted_count} existing lab timetables")
+        deleted_labs    = master_lab_timetable_collection.delete_many({}).deleted_count
+        deleted_classes = class_timetable_col.delete_many({}).deleted_count
+        logger.info(f"✓ Deleted {deleted_labs} lab timetables, "
+                    f"{deleted_classes} class timetables")
 
-        # STEP 2: Generate master practical timetable
+        # STEP 2: Generate master practical timetable (writes to master_lab_timetable only)
         logger.info("\n[STEP 2] Generating master practical timetable...")
         result = timetable_generator.generate()
 
-        if not result:
-            logger.error("✗ Timetable generation failed")
+        if not result or not result.get('success'):
+            logger.error("✗ Practical timetable generation failed")
             return jsonify({
-                "error": "Failed to generate new timetable. Please verify subject, faculty, and workload data."
+                "error": "Failed to generate practical timetable. "
+                         "Please verify subject, faculty, and workload data.",
+                "detail": result.get('error', '') if result else ''
             }), 400
 
-        # --- LEFTOVER CHECK AND REPORT ---
         leftovers = result.get("leftovers", {})
-        total_leftovers = 0
-        for year_dict in leftovers.values():
-            if isinstance(year_dict, dict):
-                for div_data in year_dict.values():
-                    if isinstance(div_data, dict) and 'count' in div_data:
-                        total_leftovers += div_data['count']
-                    elif isinstance(div_data, list):
-                        total_leftovers += len(div_data)
 
-        response_message = "Master practical timetable regenerated successfully!"
-        status_code = 201
-        
-        if total_leftovers > 0:
-            response_message = f"Timetable generated, but {total_leftovers} assignments were NOT scheduled."
-            status_code = 206
-
-        # STEP 3: Store each lab's schedule
-        logger.info("\n[STEP 3] Storing master lab timetables...")
-        labs_schedule = result.get("labs", {})
-        for lab_name, schedule in labs_schedule.items():
-            master_lab_timetable_collection.insert_one({
-                "lab_name": lab_name,
-                "schedule": schedule,
-                "generated_at": datetime.now()
-            })
-        logger.info(f"✓ Stored {len(labs_schedule)} lab timetables")
-
-        # STEP 4: Generate class timetables automatically
-        logger.info("\n[STEP 4] Generating class timetables...")
+        # STEP 3: Build class timetables from master lab timetable
+        # (this is the ONLY place class timetables are written for practicals)
+        logger.info("\n[STEP 3] Building class timetables from master lab timetable...")
         class_timetables_result = class_timetable_handler.generate_class_timetables()
+        if not class_timetables_result.get('success'):
+            logger.error(f"✗ Class timetable generation failed: "
+                         f"{class_timetables_result.get('error')}")
+            return jsonify({
+                "error": "Failed to build class timetables.",
+                "detail": class_timetables_result.get('error', '')
+            }), 500
         logger.info(f"✓ {class_timetables_result.get('message', '')}")
 
-        # STEP 5: **NEW** - AUTOMATICALLY GENERATE LECTURES
-        logger.info("\n[STEP 5] Generating lecture timetable (AUTO)...")
+        # STEP 4: Fill lectures into class timetables
+        logger.info("\n[STEP 4] Generating lecture timetable...")
         lecture_result = lecture_tt_generator.generate()
         logger.info(f"✓ {lecture_result.get('message', '')}")
-        
+
         if not lecture_result.get('success'):
-            logger.warning(f"⚠️ Lecture generation had issues: {lecture_result.get('error', '')}")
-        
+            logger.warning(
+                f"⚠️ Lecture generation had issues: {lecture_result.get('error', '')}")
+
         logger.info("\n" + "=" * 80)
-        logger.info("✅ COMPLETE TIMETABLE GENERATION FINISHED SUCCESSFULLY!")
+        logger.info("✅ COMPLETE TIMETABLE GENERATION FINISHED")
         logger.info("=" * 80)
 
+        status_code      = 201
+        response_message = "Timetable regenerated successfully!"
+        if leftovers:
+            unscheduled = sum(len(v) for v in leftovers.values())
+            response_message = (f"Timetable generated, but {unscheduled} practical "
+                                f"session(s) could not be scheduled.")
+            status_code = 206
+
         return jsonify({
-            "message": response_message,
-            "deleted_records": deleted_count,
-            "labs_generated": len(labs_schedule),
+            "message":          response_message,
+            "deleted_records":  deleted_labs,
+            "labs_generated":   result.get('labs_generated', 0),
+            "practicals_scheduled": result.get('practicals_scheduled', 0),
             "class_timetables": {
-                "success": class_timetables_result['success'],
-                "message": class_timetables_result.get('message', ''),
-                "timetables_created": class_timetables_result.get('timetables_created', 0)
+                "success":            class_timetables_result['success'],
+                "message":            class_timetables_result.get('message', ''),
+                "timetables_created": class_timetables_result.get('timetables_created', 0),
             },
             "lectures": {
-                "success": lecture_result.get('success', False),
-                "message": lecture_result.get('message', ''),
+                "success":            lecture_result.get('success', False),
+                "message":            lecture_result.get('message', ''),
                 "lectures_scheduled": lecture_result.get('lectures_scheduled', 0),
-                "leftovers": lecture_result.get('leftovers', {})
+                "leftovers":          lecture_result.get('leftovers', {}),
             },
-            "practical_leftovers": leftovers
+            "practical_leftovers": leftovers,
         }), status_code
 
     except Exception as e:
-        logger.error(f"✗ Error in regenerate_master_practical_timetable: {e}", exc_info=True)
+        logger.error(
+            f"✗ Error in regenerate_master_practical_timetable: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
-
-
+    
 @app.route('/api/master_timetables', methods=['GET'])
 def get_all_master_timetables():
     """Get all master practical timetables (lab-wise)"""
