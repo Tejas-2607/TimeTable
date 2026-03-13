@@ -1,4 +1,7 @@
-# Uses morning first, then fills free afternoon slots
+# WITH NO CONSECUTIVE SAME SUBJECT CONSTRAINT
+# Reads lectures_per_week from workload and schedules all lectures
+# across morning (priority) and afternoon (backup) slots
+
 from datetime import datetime
 from config import db
 import logging
@@ -29,12 +32,16 @@ class LectureTimetableGenerator:
         """
         Intelligently extract lectures per week from workload document.
         
-        Tries multiple possible field names:
-        1. lectures_per_week (if exists)
-        2. theory_hrs (if exists)
-        3. lecture_hours (if exists)
-        4. theory (if exists)
-        5. Default to 1 if none found
+        SMART FIELD DETECTION - tries multiple possible field names:
+        1. lectures_per_week (most explicit)
+        2. theory_hrs (standard in system)
+        3. lecture_hours (alternative)
+        4. theory (short name)
+        5. hours (generic)
+        
+        Default: 1 if none found
+        
+        This makes the system FLEXIBLE - works with any database schema!
         """
         possible_fields = ['lectures_per_week', 'theory_hrs', 'lecture_hours', 'theory', 'hours']
         
@@ -42,6 +49,7 @@ class LectureTimetableGenerator:
             if field in workload_doc and workload_doc[field]:
                 value = workload_doc[field]
                 if isinstance(value, (int, float)) and value > 0:
+                    logger.debug(f"Detected {field}={value} for {workload_doc.get('subject')}")
                     return int(value)
         
         logger.warning(f"Could not find lectures per week for {workload_doc.get('subject')} - using default 1")
@@ -52,9 +60,19 @@ class LectureTimetableGenerator:
         Prepare lecture assignments directly from workload collection.
         
         For EACH workload entry:
-        - Get the number of lectures per week
+        - Get the number of lectures per week (smart detection)
         - Create that many lecture entries
         - Group by (year, division, subject)
+        
+        This creates QUEUES of lectures ready to be scheduled.
+        
+        Output structure:
+        {
+          (SY, A, DS): [L1, L2, L3, L4],     # 4 lectures for SY-A DS
+          (SY, A, CG): [L1, L2, L3],         # 3 lectures for SY-A CG
+          (SY, A, OOPJ): [L1, L2, L3, L4],   # 4 lectures for SY-A OOPJ
+          ... etc
+        }
         """
         assignments = {}
         try:
@@ -113,6 +131,9 @@ class LectureTimetableGenerator:
         """
         Fetch all class timetables from database.
         These are the ones we'll fill with lectures.
+        
+        Already contain practicals scheduled from practical_generator.
+        We're just adding lectures to empty slots.
         """
         try:
             timetables = list(class_timetable_collection.find({}))
@@ -132,7 +153,8 @@ class LectureTimetableGenerator:
         """
         Check if faculty is already teaching at this time in ANY class.
         
-        Searches all class timetables to prevent faculty conflicts.
+        GLOBAL CHECK - searches ALL 5 classes to prevent faculty conflicts.
+        Faculty cannot be in 2 classrooms at the same time!
         """
         for (year, div), timetable in self.class_timetables.items():
             schedule = timetable.get('schedule', {})
@@ -146,7 +168,12 @@ class LectureTimetableGenerator:
         return False
     
     def is_slot_available(self, class_name, division, day, slot):
-        """Check if a slot is empty in a class timetable"""
+        """
+        Check if a slot is empty in a class timetable.
+        
+        Slot can be empty OR occupied by practical.
+        We only place lecture if slot is completely empty.
+        """
         key = (class_name, division)
         if key not in self.class_timetables:
             return False
@@ -158,6 +185,66 @@ class LectureTimetableGenerator:
         
         # Slot is available if it's empty
         return len(slot_sessions) == 0
+    
+    def is_consecutive_subject_free(self, class_name, division, day, slot, subject):
+        """
+        ✨ NEW CONSTRAINT: Check if same subject is NOT in consecutive time slots
+        
+        Prevents: Monday 10:15 [DS] and Monday 11:15 [DS]
+        
+        This ensures better variety for students - no same subject back-to-back.
+        Lunch (13:15) breaks the sequence (12:15 and 14:15 are NOT consecutive).
+        
+        Args:
+            class_name: 'SY', 'TY', 'BE'
+            division: 'A', 'B', 'C'
+            day: 'Monday', 'Tuesday', etc.
+            slot: '10:15', '11:15', '12:15', '14:15', '15:15', '16:20'
+            subject: 'DS', 'CG', 'OOPJ', etc.
+        
+        Returns:
+            True: Safe to place (no consecutive same subject)
+            False: Blocked (same subject in adjacent slot)
+        """
+        
+        # Define what slots are adjacent to each slot
+        # Lunch (13:15) breaks the sequence!
+        adjacency_map = {
+            '10:15': {'adjacent': ['11:15']},
+            '11:15': {'adjacent': ['10:15', '12:15']},
+            '12:15': {'adjacent': ['11:15']},              # Skip lunch - no 14:15
+            '13:15': {'adjacent': []},                     # Lunch - never scheduled
+            '14:15': {'adjacent': ['15:15']},              # Skip lunch - no 12:15
+            '15:15': {'adjacent': ['14:15', '16:20']},
+            '16:20': {'adjacent': ['15:15']}
+        }
+        
+        timetable = self.class_timetables.get((class_name, division))
+        if not timetable:
+            return True  # Safety - if no timetable, allow
+        
+        schedule = timetable.get('schedule', {})
+        day_schedule = schedule.get(day, {})
+        
+        # Get adjacent slots for current slot
+        adjacent_slots = adjacency_map.get(slot, {}).get('adjacent', [])
+        
+        # Check each adjacent slot
+        for adjacent_slot in adjacent_slots:
+            sessions = day_schedule.get(adjacent_slot, [])
+            
+            for session in sessions:
+                session_subject = session.get('subject')
+                
+                # If same subject found in adjacent slot, it's blocked
+                if session_subject == subject:
+                    logger.debug(
+                        f"⚠️  Blocked: {class_name}-{division}-{subject} at {day} {slot} "
+                        f"(same subject at {adjacent_slot})"
+                    )
+                    return False
+        
+        return True  # Safe to place here
     
     def add_lecture_to_slot(self, class_name, division, day, slot, lecture):
         """Add a lecture to a class timetable at specific slot"""
@@ -192,18 +279,29 @@ class LectureTimetableGenerator:
         logger.debug(f"Added {class_name}-{division}-{lecture['subject']} L#{lecture['lecture_number']} at {day} {slot}")
         return True
     
-    def generate_lectures(self):
+    def generate(self):
         """
         Main algorithm to generate and fill lecture timetables.
         
-        NEW: Uses ALL available slots:
-        1. Try morning slots first (10:15, 11:15, 12:15)
-        2. If morning full, use afternoon slots (14:15, 15:15, 16:20)
-        3. Maximizes lecture scheduling across full day
+        TWO-TIER SLOT STRATEGY:
+        1. MORNING FIRST (10:15, 11:15, 12:15) - Priority slots, students fresh
+        2. AFTERNOON BACKUP (14:15, 15:15, 16:20) - Only if morning full
+        
+        CONSTRAINT CHECKING:
+        ✓ Are lectures still pending?
+        ✓ Is slot empty in class?
+        ✓ Is faculty free everywhere?
+        ✓ Is it not lunch time?
+        ✓ ✨ NEW: No consecutive same subject?
+        
+        DISTRIBUTION:
+        - Process one lecture at a time per subject
+        - Automatic spreading across week
+        - Queue-based sequential processing
         """
         try:
             logger.info("=" * 80)
-            logger.info("STARTING LECTURE TIMETABLE GENERATION (Using All Slots)")
+            logger.info("STARTING LECTURE TIMETABLE GENERATION (All Slots + No Consecutive)")
             logger.info("=" * 80)
             
             # Step 1: Get lecture assignments (directly from workload)
@@ -224,7 +322,7 @@ class LectureTimetableGenerator:
                 logger.error("No class timetables found!")
                 return {'success': False, 'error': 'No class timetables found'}
             
-            # Step 3: Schedule lectures using ALL slots
+            # Step 3: Schedule lectures
             years_priority = ['SY', 'TY', 'BE']
             divisions = ['A', 'B', 'C']
             
@@ -233,9 +331,11 @@ class LectureTimetableGenerator:
             for day in DAYS:
                 logger.info(f"\n=== Scheduling Lectures for {day} ===")
                 
-                # TRY MORNING SLOTS FIRST
+                # PHASE 1: MORNING SLOTS (Priority)
+                logger.info(f"\n--- MORNING PHASE (Priority Slots) ---")
+                
                 for slot in LECTURE_SLOTS_PRIORITY:
-                    logger.info(f"\n--- {day} {slot} (MORNING) ---")
+                    logger.info(f"\n{day} {slot} (MORNING):")
                     
                     # Sort by priority: SY > TY > BE, then by division, then by subject
                     sorted_keys = sorted(
@@ -252,7 +352,7 @@ class LectureTimetableGenerator:
                         
                         # Check if slot is available in class timetable
                         if not self.is_slot_available(year, division, day, slot):
-                            logger.debug(f"Slot {slot} not available for {year}-{division}")
+                            logger.debug(f"  Slot {slot} not available for {year}-{division}")
                             continue
                         
                         # Take next lecture for this subject
@@ -260,7 +360,12 @@ class LectureTimetableGenerator:
                         
                         # Check if faculty is free
                         if self.faculty_busy(lecture['faculty'], day, slot):
-                            logger.debug(f"Faculty {lecture['faculty']} busy at {day} {slot}")
+                            logger.debug(f"  Faculty {lecture['faculty']} busy at {day} {slot}")
+                            continue
+                        
+                        # ✨ NEW CONSTRAINT: Check consecutive lectures
+                        if not self.is_consecutive_subject_free(year, division, day, slot, subject):
+                            logger.debug(f"  {subject} not allowed (consecutive)")
                             continue
                         
                         # All checks passed - schedule the lecture
@@ -270,14 +375,16 @@ class LectureTimetableGenerator:
                         pending_lectures.pop(0)
                         scheduled_count += 1
                         
-                        logger.info(f"✓ {year}-{division}-{subject} L#{lecture['lecture_number']} by {lecture['faculty']} (MORNING)")
+                        logger.info(f"  ✓ {year}-{division}-{subject} L#{lecture['lecture_number']} by {lecture['faculty']} (MORNING)")
                 
-                # THEN TRY AFTERNOON SLOTS (only if there are still pending lectures)
+                # PHASE 2: AFTERNOON SLOTS (Backup - only if pending)
                 any_pending = any(len(lectures) > 0 for lectures in lecture_assignments.values())
                 
                 if any_pending:
+                    logger.info(f"\n--- AFTERNOON PHASE (Backup Slots) ---")
+                    
                     for slot in AFTERNOON_SLOTS:
-                        logger.info(f"\n--- {day} {slot} (AFTERNOON) ---")
+                        logger.info(f"\n{day} {slot} (AFTERNOON):")
                         
                         sorted_keys = sorted(
                             [k for k in lecture_assignments.keys()],
@@ -292,14 +399,19 @@ class LectureTimetableGenerator:
                             
                             # Check if slot is available
                             if not self.is_slot_available(year, division, day, slot):
-                                logger.debug(f"Slot {slot} not available for {year}-{division}")
+                                logger.debug(f"  Slot {slot} not available for {year}-{division}")
                                 continue
                             
                             lecture = pending_lectures[0]
                             
                             # Check if faculty is free
                             if self.faculty_busy(lecture['faculty'], day, slot):
-                                logger.debug(f"Faculty {lecture['faculty']} busy at {day} {slot}")
+                                logger.debug(f"  Faculty {lecture['faculty']} busy at {day} {slot}")
+                                continue
+                            
+                            # ✨ NEW CONSTRAINT: Check consecutive lectures
+                            if not self.is_consecutive_subject_free(year, division, day, slot, subject):
+                                logger.debug(f"  {subject} not allowed (consecutive)")
                                 continue
                             
                             # Schedule the lecture in afternoon slot
@@ -308,7 +420,7 @@ class LectureTimetableGenerator:
                             pending_lectures.pop(0)
                             scheduled_count += 1
                             
-                            logger.info(f"✓ {year}-{division}-{subject} L#{lecture['lecture_number']} by {lecture['faculty']} (AFTERNOON)")
+                            logger.info(f"  ✓ {year}-{division}-{subject} L#{lecture['lecture_number']} by {lecture['faculty']} (AFTERNOON)")
             
             # Step 4: Save updated timetables
             logger.info(f"\n=== Saving {len(self.class_timetables)} timetables ===")
@@ -339,22 +451,23 @@ class LectureTimetableGenerator:
             
             logger.info("=" * 80)
             logger.info(f"LECTURE GENERATION COMPLETE: {scheduled_count} lectures scheduled")
+            logger.info(f"Constraints: ✓ Faculty, ✓ Slots, ✓ No Consecutive Same Subject")
             logger.info("=" * 80)
             
             return {
                 'success': True,
-                'message': f'Scheduled {scheduled_count} lectures from workload',
+                'message': f'Scheduled {scheduled_count} lectures from workload (with no consecutive same subject)',
                 'lectures_scheduled': scheduled_count,
                 'leftovers': leftovers
             }
         
         except Exception as e:
-            logger.error(f"Error in generate_lectures: {e}", exc_info=True)
+            logger.error(f"Error in generate: {e}", exc_info=True)
             return {'success': False, 'error': str(e)}
 
 
 # Main function to call from app.py
 def generate():
-    """Generate and fill lecture timetables"""
+    """Generate and fill lecture timetables with no consecutive same subject constraint"""
     generator = LectureTimetableGenerator()
-    return generator.generate_lectures()
+    return generator.generate()

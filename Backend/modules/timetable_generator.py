@@ -1,4 +1,3 @@
-# timetable_generator.py - FIXED VERSION (No Same Batch Conflicts)
 # Correctly schedules batches without putting same batch in multiple places
 from datetime import datetime
 from config import db
