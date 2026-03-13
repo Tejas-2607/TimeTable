@@ -105,7 +105,7 @@ export default function ClassStructure() {
                   <h3 className="text-xl font-bold text-blue-600 mb-6">
                     {year === 'SY' ? 'Second year' :
                       year === 'TY' ? 'Third year' :
-                        year === 'Final Year' ? 'Final year' :
+                        year === 'BE' ? 'Final year' :
                           year}
                   </h3>
 
