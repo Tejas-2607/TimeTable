@@ -215,7 +215,7 @@ def regenerate_master_practical_timetable():
 
         # STEP 2: Generate master practical timetable
         logger.info("\n[STEP 2] Generating master practical timetable...")
-        result = timetable_generator.generate({})
+        result = timetable_generator.generate()
 
         if not result:
             logger.error("✗ Timetable generation failed")
