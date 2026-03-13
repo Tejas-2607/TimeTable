@@ -1,5 +1,6 @@
 # lecture_tt_generator.py
 
+
 from datetime import datetime
 from config import db
 import logging
