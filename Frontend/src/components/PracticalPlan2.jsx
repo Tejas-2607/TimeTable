@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Clock, Users as UsersIcon, BookOpen } from 'lucide-react';
-import { getMasterTimetables } from '../services/timetableService';
+import { getMasterTimetables } from '../services/masterTimetableService';
+import { getSessionTimes } from '../services/labSettingsService';
 
 export default function PracticalPlan() {
   const [timetables, setTimetables] = useState([]);
@@ -9,10 +10,11 @@ export default function PracticalPlan() {
   const [error, setError] = useState(null);
 
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-  const timeSlots = ['11:15', '14:15', '16:20'];
+  const [timeSlots, setTimeSlots] = useState(getSessionTimes());
 
   useEffect(() => {
     loadTimetables();
+    setTimeSlots(getSessionTimes());
   }, []);
 
   const loadTimetables = async () => {
@@ -133,8 +135,13 @@ export default function PracticalPlan() {
     // Group labs by year - if multiple timetables exist for same year, merge their labs
     const allLabs = {};
     yearTimetables.forEach(timetable => {
-      if (timetable.schedule && timetable.schedule.labs) {
-        Object.assign(allLabs, timetable.schedule.labs);
+      // In master practical timetable, usually schedule is { day: { slot: [session] } }
+      // But in ViewTimetables logic it was getting timetable.lab_name and timetable.schedule
+      // Let's assume the data structure from getAllLabs in PracticalPlan
+      if (timetable.lab_name && timetable.schedule) {
+          if (!allLabs[timetable.lab_name]) {
+            allLabs[timetable.lab_name] = timetable.schedule;
+          }
       }
     });
 
@@ -159,8 +166,8 @@ export default function PracticalPlan() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
       <div className="max-w-[1600px] mx-auto">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-slate-800 mb-2">Practical Plan</h1>
-          <p className="text-slate-600">View the current year's practical schedule for all classes</p>
+          <h1 className="text-4xl font-bold text-slate-800 mb-2">Practical Plan (Alternate View)</h1>
+          <p className="text-slate-600">Detailed lab-wise session breakdown</p>
         </div>
 
         {error && (

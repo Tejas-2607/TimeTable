@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Calendar, Users, FlaskConical, Grid3x3, Eye, BookOpen } from 'lucide-react';
+import { Menu, X, Calendar, Users, FlaskConical, Grid3x3, Eye, BookOpen, Briefcase } from 'lucide-react';
 
 export default function Sidebar({ onTabChange }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -13,13 +13,13 @@ export default function Sidebar({ onTabChange }) {
     { id: 'labs', label: 'Labs Data', icon: FlaskConical },
     { id: 'structure', label: 'Class Structure', icon: Grid3x3 },
     { id: 'view', label: 'View Timetables', icon: Eye },
-    { id: 'practical', label: 'Practical Plan', icon: BookOpen },
+    { id: 'faculty_timetables', label: 'Faculty Timetables', icon: Briefcase },
   ];
 
   return (
     <div
       className={`${isCollapsed ? 'w-20' : 'w-64'
-        } bg-gradient-to-b from-slate-900 to-slate-950 text-slate-300 min-h-screen transition-all duration-300 flex flex-col shadow-2xl border-r border-slate-800`}
+        } bg-gradient-to-b from-slate-900 to-slate-950 text-slate-300 min-h-screen transition-all duration-300 flex flex-col shadow-2xl border-r border-slate-800 print:hidden`}
     >
       <div className={`p-6 flex items-center border-b border-slate-700 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
         <div className={`overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out ${isCollapsed ? 'max-w-0 opacity-0 hidden' : 'max-w-[200px] opacity-100 flex-1'}`}>

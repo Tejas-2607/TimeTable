@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2, X } from 'lucide-react';
 import { getSubjects } from '../../services/subjectService';
 import { getFaculties } from '../../services/facultyService';
+import { getClassStructure } from '../../services/classStructureService';
 import {
   getFacultyWorkload,
   addFacultyWorkload,
@@ -13,6 +14,7 @@ export default function FacultyAssignment({ data, onDataChange }) {
   const [year, setYear] = useState('sy');
   const [faculties, setFaculties] = useState([]);
   const [subjects, setSubjects] = useState([]);
+  const [classStructures, setClassStructures] = useState(null);
   const [workloads, setWorkloads] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -73,6 +75,16 @@ export default function FacultyAssignment({ data, onDataChange }) {
       const subjectsRes = await getSubjects();
       const subjectsData = subjectsRes.data || subjectsRes;
       setSubjects(subjectsData || {});
+      
+      // Load class structures
+      try {
+        const structureRes = await getClassStructure();
+        const structData = structureRes?.data || structureRes || {};
+        setClassStructures(structData);
+      } catch (err) {
+        console.error('Error loading class structure:', err);
+        setClassStructures(null);
+      }
     } catch (err) {
       console.error('Error loading static data:', err);
       setFaculties([]);
@@ -127,10 +139,34 @@ export default function FacultyAssignment({ data, onDataChange }) {
   };
 
   const getStructureInfo = () => {
-    // Get divisions (A, B, C, D, etc.) - assuming max 4 divisions
-    const divisions = ['A', 'B', 'C', 'D'];
-    // Get batches (Batch 1, Batch 2, Batch 3)
-    const batches = ['Batch 1', 'Batch 2', 'Batch 3'];
+    // Default matching ClassStructure.jsx UI defaults
+    const defaults = {
+      sy: { num_divisions: 2, batches_per_division: 3 },
+      ty: { num_divisions: 2, batches_per_division: 3 },
+      be: { num_divisions: 1, batches_per_division: 3 },
+    };
+
+    let divisionsCount = defaults[year]?.num_divisions || 1;
+    let batchesCount = defaults[year]?.batches_per_division || 3;
+
+    if (classStructures && Object.keys(classStructures).length > 0) {
+      // Possible keys in DB could be 'sy', 'SY', 'be', 'BE', 'Final Year', etc.
+      // We will loop through the actual keys and find a match.
+      const targetYear = year.toLowerCase();
+      const possibleMatches = targetYear === 'be' ? ['be', 'final year'] : [targetYear];
+
+      for (const [key, structure] of Object.entries(classStructures)) {
+        if (possibleMatches.includes(key.toLowerCase())) {
+          divisionsCount = structure.num_divisions || 1;
+          batchesCount = structure.batches_per_division || 3;
+          break; // Found it
+        }
+      }
+    }
+
+    const divisions = Array.from({ length: divisionsCount }, (_, i) => String.fromCharCode(65 + i));
+    const batches = Array.from({ length: batchesCount }, (_, i) => `Batch ${i + 1}`);
+
     return { divisions, batches };
   };
 

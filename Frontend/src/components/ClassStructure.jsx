@@ -103,10 +103,10 @@ export default function ClassStructure() {
                   className="bg-white rounded-xl shadow-md p-6 border border-slate-200"
                 >
                   <h3 className="text-xl font-bold text-blue-600 mb-6">
-                    {year === 'SY' ? 'Second year' :
-                      year === 'TY' ? 'Third year' :
-                        year === 'BE' ? 'Final year' :
-                          year}
+                    {year.toUpperCase() === 'SY' ? 'Second year (SY)' :
+                      year.toUpperCase() === 'TY' ? 'Third year (TY)' :
+                        (year.toUpperCase() === 'BE' || year.toUpperCase() === 'FINAL YEAR') ? 'Final year (BE)' :
+                          year.toUpperCase() === 'FY' ? 'First year (FY)' : year.toUpperCase()}
                   </h3>
 
                   <div className="space-y-4">

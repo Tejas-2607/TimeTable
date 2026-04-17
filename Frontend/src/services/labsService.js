@@ -2,6 +2,7 @@ import api from '../lib/api'; // <-- your axios instance
 
 // ✅ Fetch all labs
 export const getAllLabs = async () => {
+  // api already returns response.data via interceptor
   return await api.get('/labs');
 };
 
@@ -20,5 +21,5 @@ export const updateLab = async (id, labData) => {
 
 // ✅ Delete lab by ID
 export const deleteLab = async (id) => {
-  return await api.delete(`/labs`,  { data: id });
+  return await api.delete(`/labs`, { data: id });
 };

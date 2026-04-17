@@ -3,8 +3,9 @@ import { getClassTimetables } from '../services/classTimetableService';
 import { getMasterTimetables } from '../services/masterTimetableService';
 import {
   Clock, ArrowLeft, Calendar, ChevronRight, BookOpen,
-  Users as UsersIcon, FlaskConical, Layers
+  Users as UsersIcon, FlaskConical, Layers, Printer
 } from 'lucide-react';
+import { getSessionTimes } from '../services/labSettingsService';
 
 export default function ViewTimetables() {
   // views: 'landing' | 'classCards' | 'schedule' | 'practicalTable'
@@ -18,11 +19,12 @@ export default function ViewTimetables() {
 
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
   const timeSlots = ['10:15', '11:15', '12:15', '13:15', '14:15', '15:15', '16:20'];
-  const practicalTimeSlots = ['11:15', '14:15', '16:20'];
+  const [practicalTimeSlots, setPracticalTimeSlots] = useState(getSessionTimes());
 
   // Fetch both datasets on mount
   useEffect(() => {
     loadAllData();
+    setPracticalTimeSlots(getSessionTimes());
   }, []);
 
   const loadAllData = async () => {
@@ -94,8 +96,8 @@ export default function ViewTimetables() {
     return (
       <div className="h-full min-h-[70px] flex flex-col gap-1">
         {sessions.map((session, idx) => (
-          <div key={idx} className="bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 rounded p-2 flex-1">
-            <div className="font-semibold text-blue-900 text-xs mb-1">{session.batch}</div>
+          <div key={idx} className={`border rounded p-2 flex-1 ${session.lab ? 'bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200' : 'bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200'}`}>
+            <div className={`font-semibold text-xs mb-1 ${session.lab ? 'text-emerald-900' : 'text-blue-900'}`}>{session.batch}</div>
             <div className="flex items-start gap-1 text-slate-700 mb-0.5">
               <BookOpen size={11} className="mt-0.5 flex-shrink-0" />
               <span className="font-medium text-xs">{session.subject} — {session.subject_full}</span>
@@ -128,8 +130,8 @@ export default function ViewTimetables() {
     return (
       <div className="h-full min-h-[80px] flex flex-col gap-1">
         {sessions.map((session, idx) => (
-          <div key={idx} className="bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 rounded p-2 flex-1">
-            <div className="font-semibold text-blue-900 text-xs mb-1">
+          <div key={idx} className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 rounded p-2 flex-1">
+            <div className="font-semibold text-emerald-900 text-xs mb-1">
               {session.class} {session.division}-B{session.batch}
             </div>
             <div className="flex items-start gap-1 text-slate-700 mb-1">
@@ -166,28 +168,32 @@ export default function ViewTimetables() {
               </tr>
             </thead>
             <tbody>
-              {timeSlots.map((time, timeIdx) => (
-                <tr key={time} className={timeIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
-                  <td
-                    className="border border-slate-300 px-4 py-3 font-semibold text-slate-800 sticky left-0 z-10 whitespace-nowrap"
-                    style={{ backgroundColor: timeIdx % 2 === 0 ? 'white' : '#f8fafc' }}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <Clock size={14} className="text-slate-500" />
-                      <span>{time}</span>
-                    </div>
-                  </td>
-                  {daysOfWeek.map(day => {
-                    const daySchedule = schedule[day] || {};
-                    const sessions = daySchedule[time] || [];
-                    return (
-                      <td key={`${time}-${day}`} className="border border-slate-300 p-2 min-w-[160px]">
-                        {renderSessionCell(sessions)}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
+              {timeSlots.map((time, timeIdx) => {
+                const isPracticalSlot = practicalTimeSlots.includes(time);
+                return (
+                  <tr key={time} className={timeIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                    <td
+                      className={`border border-slate-300 px-4 py-3 font-semibold sticky left-0 z-10 whitespace-nowrap ${isPracticalSlot ? 'text-blue-700' : 'text-slate-800'}`}
+                      style={{ backgroundColor: timeIdx % 2 === 0 ? 'white' : '#f8fafc' }}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <Clock size={14} className={isPracticalSlot ? 'text-blue-500' : 'text-slate-500'} />
+                        <span>{time}</span>
+                        {isPracticalSlot && <span className="text-[10px] bg-blue-100 px-1 rounded uppercase">Lab</span>}
+                      </div>
+                    </td>
+                    {daysOfWeek.map(day => {
+                      const daySchedule = schedule[day] || {};
+                      const sessions = daySchedule[time] || [];
+                      return (
+                        <td key={`${time}-${day}`} className="border border-slate-300 p-2 min-w-[160px]">
+                          {renderSessionCell(sessions)}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -218,7 +224,7 @@ export default function ViewTimetables() {
                   Lab / Day
                 </th>
                 {daysOfWeek.map(day => (
-                  <th key={day} className="border border-blue-700 px-4 py-3 text-white font-semibold text-center" colSpan={3}>
+                  <th key={day} className="border border-blue-700 px-4 py-3 text-white font-semibold text-center" colSpan={practicalTimeSlots.length}>
                     {day}
                   </th>
                 ))}
@@ -392,23 +398,32 @@ export default function ViewTimetables() {
   const renderScheduleView = () => {
     if (!selectedClass) return null;
     return (
-      <div>
+      <div className="print:px-0">
         <button
           onClick={() => { setSelectedClass(null); setView('classCards'); }}
-          className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium mb-6 transition-colors"
+          className="print:hidden flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium mb-6 transition-colors"
         >
           <ArrowLeft size={18} />
           Back to Timetables
         </button>
 
-        <div className="mb-6">
-          <h3 className="text-2xl font-bold text-slate-800">
-            {selectedClass.class_key}
-            <span className="ml-2 text-base font-normal text-slate-500">— Division {selectedClass.division}</span>
-          </h3>
-          <p className="text-sm text-slate-500 mt-1">
-            Generated on {formatDate(selectedClass.generated_at)} &nbsp;·&nbsp; {selectedClass.total_practicals} practicals assigned
-          </p>
+        <div className="mb-6 flex justify-between items-end">
+          <div>
+            <h3 className="text-2xl font-bold text-slate-800">
+              {selectedClass.class_key}
+              <span className="ml-2 text-base font-normal text-slate-500">— Division {selectedClass.division}</span>
+            </h3>
+            <p className="text-sm text-slate-500 mt-1">
+              Generated on {formatDate(selectedClass.generated_at)} &nbsp;·&nbsp; {selectedClass.total_practicals} practicals assigned
+            </p>
+          </div>
+          <button
+            onClick={() => window.print()}
+            className="print:hidden flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:bg-slate-50 transition-colors"
+          >
+            <Printer size={18} />
+            <span>Download PDF</span>
+          </button>
         </div>
 
         {renderScheduleTable(selectedClass)}
@@ -418,18 +433,27 @@ export default function ViewTimetables() {
 
   // 4. Practical table full view
   const renderPracticalTableView = () => (
-    <div>
+    <div className="print:px-0">
       <button
         onClick={() => setView('classCards')}
-        className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium mb-6 transition-colors"
+        className="print:hidden flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium mb-6 transition-colors"
       >
         <ArrowLeft size={18} />
         Back to Timetables
       </button>
 
-      <div className="mb-6">
-        <h3 className="text-2xl font-bold text-slate-800">Master Practical Plan</h3>
-        <p className="text-sm text-slate-500 mt-1">Lab-wise schedule across all years</p>
+      <div className="mb-6 flex justify-between items-end">
+        <div>
+          <h3 className="text-2xl font-bold text-slate-800">Master Practical Plan</h3>
+          <p className="text-sm text-slate-500 mt-1">Lab-wise schedule across all years</p>
+        </div>
+        <button
+          onClick={() => window.print()}
+          className="print:hidden flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:bg-slate-50 transition-colors"
+        >
+          <Printer size={18} />
+          <span>Download PDF</span>
+        </button>
       </div>
 
       {isPracticalLoading ? (
@@ -460,9 +484,9 @@ export default function ViewTimetables() {
 
   // ============================= ROOT =============================
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8 print:p-0 print:bg-white">
       <div className="max-w-[1800px] mx-auto">
-        <div className="mb-8">
+        <div className="mb-8 print:hidden">
           <h1 className="text-3xl font-bold text-slate-800 tracking-tight">View Timetables</h1>
           <p className="text-slate-500 mt-2">Browse and inspect generated class timetables</p>
         </div>
