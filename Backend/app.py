@@ -21,8 +21,48 @@ from modules import (
     workload_handler,
     class_timetable_handler,
     timetable_generator,
-    lecture_tt_generator
+    lecture_tt_generator,
+    settings_handler,
+    auth_handler,
+    constraints_handler
 )
+from functools import wraps
+
+# ============================================================================
+# AUTH DECORATORS
+# ============================================================================
+
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get('Authorization')
+        if not token:
+            return jsonify({'error': 'Token is missing'}), 401
+        
+        # Remove "Bearer " prefix if present
+        if token.startswith('Bearer '):
+            token = token[7:]
+            
+        payload = auth_handler.verify_token(token)
+        if not payload:
+            return jsonify({'error': 'Token is invalid or expired'}), 401
+        
+        # Add user info to request context
+        request.user = payload
+        return f(*args, **kwargs)
+    
+    return decorated
+
+def role_required(role):
+    def decorator(f):
+        @wraps(f)
+        @token_required
+        def decorated(*args, **kwargs):
+            if request.user.get('role') != role:
+                return jsonify({'error': f'Access denied. {role} role required.'}), 403
+            return f(*args, **kwargs)
+        return decorated
+    return decorator
 
 # ============================================================================
 # HOME ENDPOINT
@@ -44,6 +84,7 @@ def get_faculty():
 
 
 @app.route('/api/faculty', methods=['POST'])
+@role_required('admin')
 def add_faculty():
     """Add a new faculty member"""
     data = request.json or {}
@@ -51,6 +92,7 @@ def add_faculty():
 
 
 @app.route('/api/faculty', methods=['PUT'])
+@role_required('admin')
 def update_faculty():
     """Update a faculty member"""
     data = request.json or {}
@@ -58,6 +100,7 @@ def update_faculty():
 
 
 @app.route('/api/faculty', methods=['DELETE'])
+@role_required('admin')
 def delete_faculty():
     """Delete a faculty member"""
     data = request.json or {}
@@ -75,6 +118,7 @@ def get_labs():
 
 
 @app.route('/api/labs', methods=['POST'])
+@role_required('admin')
 def add_lab():
     """Add a new lab"""
     data = request.json or {}
@@ -82,6 +126,7 @@ def add_lab():
 
 
 @app.route('/api/labs', methods=['PUT'])
+@role_required('admin')
 def update_lab():
     """Update a lab"""
     data = request.json or {}
@@ -89,6 +134,7 @@ def update_lab():
 
 
 @app.route('/api/labs', methods=['DELETE'])
+@role_required('admin')
 def delete_lab():
     """Delete a lab"""
     data = request.json or {}
@@ -96,6 +142,7 @@ def delete_lab():
 
 
 @app.route('/api/confirm_labs', methods=['POST'])
+@role_required('admin')
 def confirm_labs():
     """Confirm labs"""
     data = request.json
@@ -113,6 +160,7 @@ def get_class_structure():
 
 
 @app.route('/api/class_structure', methods=['POST'])
+@role_required('admin')
 def save_class_structure():
     """Save class structure"""
     data = request.json or {}
@@ -124,6 +172,7 @@ def save_class_structure():
 # ============================================================================
 
 @app.route('/api/subjects', methods=['POST'])
+@role_required('admin')
 def save_subjects():
     """Add a new subject"""
     data = request.json
@@ -137,6 +186,7 @@ def get_subjects():
 
 
 @app.route('/api/subjects', methods=['DELETE'])
+@role_required('admin')
 def delete_subject():
     """Delete a subject"""
     data = request.json
@@ -144,6 +194,7 @@ def delete_subject():
 
 
 @app.route('/api/subjects', methods=['PUT'])
+@role_required('admin')
 def update_subject():
     """Update a subject"""
     data = request.json
@@ -155,6 +206,7 @@ def update_subject():
 # ============================================================================
 
 @app.route('/api/faculty_workload', methods=['POST'])
+@role_required('admin')
 def save_workload():
     """Add faculty workload"""
     data = request.json
@@ -168,6 +220,7 @@ def get_faculty_workload():
 
 
 @app.route('/api/faculty_workload', methods=['DELETE'])
+@role_required('admin')
 def delete_faculty_workload():
     """Delete faculty workload"""
     data = request.json
@@ -175,6 +228,7 @@ def delete_faculty_workload():
 
 
 @app.route('/api/faculty_workload', methods=['PUT'])
+@role_required('admin')
 def update_faculty_workload():
     """Update faculty workload"""
     data = request.json
@@ -186,6 +240,7 @@ def update_faculty_workload():
 # ============================================================================
 
 @app.route('/api/regenerate_master_practical_timetable', methods=['POST'])
+@role_required('admin')
 def regenerate_master_practical_timetable():
     """
     MAIN ENDPOINT - Regenerate master practical timetable + lectures.
@@ -292,6 +347,21 @@ def get_all_master_timetables():
     return timetable_handler.get_master_practical_timetable()
 
 
+@app.route('/api/master_timetable/<lab_name>', methods=['DELETE'])
+@role_required('admin')
+def delete_master_timetable(lab_name):
+    """Delete a specific lab's master timetable"""
+    from modules.timetable_handler import master_lab_timetable_collection
+    try:
+        result = master_lab_timetable_collection.delete_one({'lab_name': lab_name})
+        if result.deleted_count > 0:
+            return jsonify({'message': f'Master timetable for {lab_name} deleted successfully'}), 200
+        return jsonify({'error': f'No master timetable found for {lab_name}'}), 404
+    except Exception as e:
+        logger.error(f"Error deleting master timetable: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 # ============================================================================
 # CLASS TIMETABLE ENDPOINTS - Main Endpoint Only
 # ============================================================================
@@ -374,6 +444,90 @@ def get_all_class_timetables_endpoint():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/class_timetable/<class_name>/<division>', methods=['DELETE'])
+@role_required('admin')
+def delete_class_timetable_endpoint(class_name, division):
+    """Delete a specific class-division timetable"""
+    try:
+        from config import db
+        class_timetable_collection = db['class_timetable']
+        
+        result = class_timetable_collection.delete_one({
+            'class': class_name.upper(),
+            'division': division.upper()
+        })
+        
+        if result.deleted_count > 0:
+            return jsonify({'message': f'Timetable for {class_name}-{division} deleted successfully'}), 200
+        return jsonify({'error': f'No timetable found for {class_name}-{division}'}), 404
+        
+    except Exception as e:
+        logger.error(f"Error deleting class timetable: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# ============================================================================
+# SETTINGS ENDPOINTS
+# ============================================================================
+
+@app.route('/api/settings/timings', methods=['GET'])
+def get_timings():
+    """Get department timings and calculated slots"""
+    return jsonify(settings_handler.get_timings())
+
+
+@app.route('/api/settings/timings', methods=['POST'])
+@role_required('admin')
+def save_timings():
+    """Save department timings"""
+    data = request.json or {}
+    return settings_handler.save_timings(data)
+
+
+# ============================================================================
+# AUTHENTICATION ENDPOINTS
+# ============================================================================
+
+@app.route('/api/auth/authenticate', methods=['POST'])
+def authenticate():
+    """Unified login/registration endpoint"""
+    data = request.json or {}
+    return auth_handler.login_or_register(data)
+
+
+# ============================================================================
+# SPECIAL CONSTRAINTS ENDPOINTS
+# ============================================================================
+
+@app.route('/api/constraints', methods=['GET'])
+@token_required
+def get_constraints():
+    """Get constraints filtered by user role"""
+    user_id = request.user.get('sub')
+    role = request.user.get('role')
+    return constraints_handler.get_constraints(user_id=user_id, role=role)
+
+
+@app.route('/api/constraints', methods=['POST'])
+@token_required
+def add_constraint():
+    """Add a new constraint"""
+    data = request.json or {}
+    user_id = request.user.get('sub')
+    user_name = request.user.get('name')
+    role = request.user.get('role')
+    return constraints_handler.add_constraint(data, user_id, user_name, role)
+
+
+@app.route('/api/constraints/<constraint_id>', methods=['DELETE'])
+@token_required
+def delete_constraint(constraint_id):
+    """Delete a constraint"""
+    user_id = request.user.get('sub')
+    role = request.user.get('role')
+    return constraints_handler.delete_constraint(constraint_id, user_id, role)
+
+
 # ============================================================================
 # ERROR HANDLERS
 # ============================================================================
@@ -396,4 +550,4 @@ def internal_error(error):
 
 if __name__ == '__main__':
     logger.info("Starting Flask Timetable API...")
-    app.run(debug=True)
+    app.run(debug=True,port=5001)

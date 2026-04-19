@@ -1,20 +1,23 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Calendar, Users, FlaskConical, Grid3x3, Eye, BookOpen, Briefcase } from 'lucide-react';
+import { useLocation, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { Menu, X, Calendar, Users, FlaskConical, Grid3x3, Eye, Briefcase, LogOut, ShieldAlert } from 'lucide-react';
 
 export default function Sidebar({ onTabChange }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { user, logout } = useAuth();
   const location = useLocation();
   const activeTab = location.pathname.substring(1) || 'generate';
 
   const menuItems = [
-    { id: 'generate', label: 'Generate Timetable', icon: Calendar },
-    { id: 'faculty', label: 'Faculty Data', icon: Users },
-    { id: 'labs', label: 'Labs Data', icon: FlaskConical },
-    { id: 'structure', label: 'Class Structure', icon: Grid3x3 },
+    { id: 'generate', label: 'Generate Timetable', icon: Calendar, role: 'admin' },
+    { id: 'faculty', label: 'Faculty Data', icon: Users, role: 'admin' },
+    { id: 'labs', label: 'Labs Data', icon: FlaskConical, role: 'admin' },
+    { id: 'structure', label: 'Class Structure', icon: Grid3x3, role: 'admin' },
     { id: 'view', label: 'View Timetables', icon: Eye },
     { id: 'faculty_timetables', label: 'Faculty Timetables', icon: Briefcase },
-  ];
+    { id: 'constraints', label: 'Special Constraints', icon: ShieldAlert },
+  ].filter(item => !item.role || user?.role === item.role);
 
   return (
     <div
@@ -62,6 +65,29 @@ export default function Sidebar({ onTabChange }) {
           })}
         </ul>
       </nav>
+
+      {/* User portion */}
+      <div className="p-4 border-t border-slate-800 bg-slate-900/50 backdrop-blur-sm">
+        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} p-2 rounded-xl bg-slate-800/30`}>
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shrink-0 shadow-lg shadow-blue-500/20">
+            {user?.name?.charAt(0).toUpperCase() || 'U'}
+          </div>
+          {!isCollapsed && (
+            <div className="flex-1 min-w-0 overflow-hidden">
+              <p className="text-sm font-semibold text-white truncate">{user?.name || 'User'}</p>
+              <p className="text-[10px] text-slate-500 truncate">{user?.email}</p>
+            </div>
+          )}
+        </div>
+        <button
+          onClick={logout}
+          className={`mt-4 flex items-center gap-3 text-slate-400 hover:text-red-400 transition-colors ${isCollapsed ? 'justify-center w-full px-0' : 'px-4'} py-2 rounded-xl hover:bg-red-400/10`}
+          title={isCollapsed ? 'Logout' : undefined}
+        >
+          <LogOut size={20} />
+          {!isCollapsed && <span className="text-sm font-medium">Logout</span>}
+        </button>
+      </div>
     </div>
   );
 }

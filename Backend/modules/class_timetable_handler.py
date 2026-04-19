@@ -10,13 +10,9 @@ logger = logging.getLogger(__name__)
 master_lab_timetable_collection = db['master_lab_timetable']
 class_timetable_collection      = db['class_timetable']
 
-DAYS       = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-ALL_SLOTS  = ['10:15', '11:15', '12:15', '13:15', '14:15', '15:15', '16:20']
+from modules import settings_handler
 
-# Slots where a practical can START (follow-on slots are derived from these)
-START_SLOTS = {'11:15', '14:15', '16:20'}
-# For 2-hour practicals: the follow-on slot for each start slot
-NEXT_SLOT   = {'11:15': '12:15', '14:15': '15:15'}
+DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 
 
 def _normalise_batch(raw: str) -> str:
@@ -26,15 +22,15 @@ def _normalise_batch(raw: str) -> str:
     return s
 
 
-def _is_two_hour_practical(lab_doc: dict, day: str, slot: str, session: dict) -> bool:
+def _is_two_hour_practical(lab_doc: dict, day: str, slot: str, session: dict, next_slot_map: dict) -> bool:
     """
     Determine if this session at (day, slot) is part of a 2-hour practical
     by checking whether the same batch+subject appears in the follow-on slot
     of the master lab schedule.
     """
-    if slot not in NEXT_SLOT:
+    if slot not in next_slot_map:
         return False
-    next_slot     = NEXT_SLOT[slot]
+    next_slot     = next_slot_map[slot]
     next_sessions = lab_doc.get('schedule', {}).get(day, {}).get(next_slot, [])
     batch   = session.get('batch', '')
     subject = session.get('subject', '')
@@ -57,6 +53,43 @@ def generate_class_timetables() -> dict:
         # (year, division) → day → slot → [entry, …]
         class_schedules: dict = {}
 
+        # Fetch dynamic slots
+        timings = settings_handler.get_timings()
+        all_slots, lec_slots, break_slots = settings_handler.calculate_slots(timings)
+        
+        # START_SLOTS and NEXT_SLOT derived dynamically
+        start_slots = set(lec_slots)
+        next_slot_map = {}
+        for i in range(len(all_slots) - 1):
+            if all_slots[i] in lec_slots and all_slots[i+1] in lec_slots:
+                next_slot_map[all_slots[i]] = all_slots[i+1]
+
+        # PRE-INITIALIZE based on Class Structure
+        from modules.class_structure_handler import class_structure_collection
+        structure_doc = class_structure_collection.find_one({})
+        if structure_doc:
+            for year, data in structure_doc.items():
+                if year == '_id': continue
+                
+                # Handle both formats: dictionary {num_divisions, ...} or list of divs
+                if isinstance(data, dict):
+                    num_divs = data.get('num_divisions', 0)
+                    div_names = [chr(65 + i) for i in range(num_divs)] # A, B, C...
+                    for div in div_names:
+                        key = (year.upper(), div)
+                        class_schedules[key] = {
+                            d: {s: [] for s in all_slots}
+                            for d in DAYS
+                        }
+                elif isinstance(data, list):
+                    for div_info in data:
+                        div = div_info.get('div', 'A')
+                        key = (year.upper(), div)
+                        class_schedules[key] = {
+                            d: {s: [] for s in all_slots}
+                            for d in DAYS
+                        }
+
         for lab_doc in master_sessions:
             lab_name = lab_doc.get('lab_name', 'Unknown')
 
@@ -64,7 +97,7 @@ def generate_class_timetables() -> dict:
                 for slot, sessions in lab_doc.get('schedule', {}).get(day, {}).items():
 
                     # Only process START slots to avoid double-counting
-                    if slot not in START_SLOTS:
+                    if slot not in start_slots:
                         continue
 
                     for session in (sessions or []):
@@ -78,7 +111,7 @@ def generate_class_timetables() -> dict:
                         key = (class_name, division)
                         if key not in class_schedules:
                             class_schedules[key] = {
-                                d: {s: [] for s in ALL_SLOTS}
+                                d: {s: [] for s in all_slots}
                                 for d in DAYS
                             }
 
@@ -96,8 +129,8 @@ def generate_class_timetables() -> dict:
                         class_schedules[key][day][slot].append(dict(entry))
 
                         # Write follow-on slot if this is a 2-hour practical
-                        if _is_two_hour_practical(lab_doc, day, slot, session):
-                            next_slot = NEXT_SLOT[slot]
+                        if _is_two_hour_practical(lab_doc, day, slot, session, next_slot_map):
+                            next_slot = next_slot_map[slot]
                             class_schedules[key][day][next_slot].append(dict(entry))
 
         logger.info(f"Found {len(class_schedules)} class-division groups")

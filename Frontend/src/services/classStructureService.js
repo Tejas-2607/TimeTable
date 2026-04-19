@@ -5,7 +5,7 @@ import api from '../lib/api';
 export const saveClassStructure = async (structureData) => {
   try {
     const response = await api.post('/class_structure', structureData);
-    return response.data;
+    return response;
   } catch (error) {
     console.error('API Error (saveClassStructure):', error);
     throw error;
@@ -16,7 +16,7 @@ export const saveClassStructure = async (structureData) => {
 export const getClassStructure = async () => {
   try {
     const response = await api.get('/class_structure');
-        console.log("Backend Response:", response);
+    console.log("Backend Response:", response);
     return response;
   } catch (error) {
     console.error('API Error (getClassStructure):', error);

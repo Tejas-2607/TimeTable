@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getClassTimetables } from '../services/classTimetableService';
 import { getFaculties } from '../services/facultyService';
+import { useAuth } from '../context/AuthContext';
 import {
   Clock, ArrowLeft, Users, ChevronRight, BookOpen,
   FlaskConical, Briefcase, Printer, Search
@@ -8,11 +9,12 @@ import {
 import { getSessionTimes } from '../services/labSettingsService';
 
 export default function FacultyTimetables() {
-  const [view, setView] = useState('landing'); // 'landing' | 'schedule'
+  const { user } = useAuth();
+  const [view, setView] = useState(user?.role === 'faculty' ? 'schedule' : 'landing'); // 'landing' | 'schedule'
   const [facultyData, setFacultyData] = useState({});
   const [facultyNames, setFacultyNames] = useState([]);
   const [facultyMap, setFacultyMap] = useState({});
-  const [selectedFaculty, setSelectedFaculty] = useState(null);
+  const [selectedFaculty, setSelectedFaculty] = useState(user?.role === 'faculty' ? user.short_name : null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -76,15 +78,15 @@ export default function FacultyTimetables() {
           Object.entries(times).forEach(([time, sessions]) => {
             sessions.forEach(session => {
               if (!session.faculty) return;
-              
+
               const faculties = session.faculty.split(',').map(f => f.trim());
-              
+
               faculties.forEach(fac => {
                 if (!fac) return;
                 if (!extractedData[fac]) extractedData[fac] = {};
                 if (!extractedData[fac][day]) extractedData[fac][day] = {};
                 if (!extractedData[fac][day][time]) extractedData[fac][day][time] = [];
-                
+
                 extractedData[fac][day][time].push({
                   class_key: className,
                   division: division,
@@ -100,7 +102,17 @@ export default function FacultyTimetables() {
       });
 
       setFacultyData(extractedData);
-      setFacultyNames(Object.keys(extractedData).sort());
+
+      let names = Object.keys(extractedData).sort();
+      if (user?.role === 'faculty' && user?.short_name) {
+        // Double check if their name exists in data, if not they might not have a schedule yet
+        if (extractedData[user.short_name]) {
+          names = [user.short_name];
+        } else {
+          names = [];
+        }
+      }
+      setFacultyNames(names);
     } catch (err) {
       console.error('Error extracting faculty timetables:', err);
       setError('Failed to load timetables for faculty.');
@@ -111,7 +123,7 @@ export default function FacultyTimetables() {
 
   const renderSessionCell = (sessions) => {
     if (!sessions || sessions.length === 0) {
-       return (
+      return (
         <div className="h-full min-h-[70px] bg-slate-50 border border-slate-200 rounded p-2 flex items-center justify-center text-xs text-slate-400">
           —
         </div>
@@ -207,7 +219,7 @@ export default function FacultyTimetables() {
           <span className="inline-block w-1.5 h-6 bg-blue-500 rounded-full" />
           Faculty Directory
         </h3>
-        
+
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input
@@ -227,41 +239,41 @@ export default function FacultyTimetables() {
           </div>
         ) : (
           filteredFacultyNames.map((fac) => {
-          let practicalCount = 0;
-          let theoryCount = 0;
-          Object.values(facultyData[fac]).forEach((dayObj) => {
-            Object.values(dayObj).forEach((timeArr) => {
-              timeArr.forEach(session => {
-                if (session.isPractical) practicalCount++;
-                else theoryCount++;
+            let practicalCount = 0;
+            let theoryCount = 0;
+            Object.values(facultyData[fac]).forEach((dayObj) => {
+              Object.values(dayObj).forEach((timeArr) => {
+                timeArr.forEach(session => {
+                  if (session.isPractical) practicalCount++;
+                  else theoryCount++;
+                });
               });
             });
-          });
 
-          return (
-            <button
-              key={fac}
-              onClick={() => { setSelectedFaculty(fac); setView('schedule'); }}
-              className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200 hover:border-blue-300 transition-all duration-300 p-5 text-left cursor-pointer"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
-                  <Briefcase size={20} />
+            return (
+              <button
+                key={fac}
+                onClick={() => { setSelectedFaculty(fac); setView('schedule'); }}
+                className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200 hover:border-blue-300 transition-all duration-300 p-5 text-left cursor-pointer"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+                    <Briefcase size={20} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-lg text-slate-800 group-hover:text-blue-700 transition-colors">
+                      {fac}
+                    </p>
+                    <p className="text-xs text-slate-500 line-clamp-1">{facultyMap[fac] || 'Faculty Member'}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold text-lg text-slate-800 group-hover:text-blue-700 transition-colors">
-                    {fac}
-                  </p>
-                  <p className="text-xs text-slate-500 line-clamp-1">{facultyMap[fac] || 'Faculty Member'}</p>
+                <div className="text-xs text-slate-500 space-y-1 border-t border-slate-100 pt-3">
+                  <p>Theory Sessions: <span className="font-semibold text-slate-700">{theoryCount}</span></p>
+                  <p>Practical Sessions: <span className="font-semibold text-slate-700">{practicalCount}</span></p>
                 </div>
-              </div>
-              <div className="text-xs text-slate-500 space-y-1 border-t border-slate-100 pt-3">
-                <p>Theory Sessions: <span className="font-semibold text-slate-700">{theoryCount}</span></p>
-                <p>Practical Sessions: <span className="font-semibold text-slate-700">{practicalCount}</span></p>
-              </div>
-            </button>
-          )
-        })
+              </button>
+            )
+          })
         )}
       </div>
     </div>
@@ -271,13 +283,15 @@ export default function FacultyTimetables() {
     if (!selectedFaculty) return null;
     return (
       <div className="print:px-0">
-        <button
-          onClick={() => { setSelectedFaculty(null); setView('landing'); }}
-          className="print:hidden flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-800 font-medium mb-6 transition-colors"
-        >
-          <ArrowLeft size={18} />
-          Back to Faculty Directory
-        </button>
+        {user?.role === 'admin' && (
+          <button
+            onClick={() => { setSelectedFaculty(null); setView('landing'); }}
+            className="print:hidden flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-800 font-medium mb-6 transition-colors"
+          >
+            <ArrowLeft size={18} />
+            Back to Faculty Directory
+          </button>
+        )}
 
         <div className="mb-6 flex justify-between items-end">
           <div>
@@ -313,14 +327,14 @@ export default function FacultyTimetables() {
 
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 text-red-700">
-             <p className="font-semibold">Error Loading Timetables</p>
-             <p className="text-sm mt-1">{error}</p>
-             <button
-               onClick={loadFacultyData}
-               className="mt-3 px-4 py-2 bg-red-200 text-red-800 rounded hover:bg-red-300 transition-colors"
-             >
-               Try Again
-             </button>
+            <p className="font-semibold">Error Loading Timetables</p>
+            <p className="text-sm mt-1">{error}</p>
+            <button
+              onClick={loadFacultyData}
+              className="mt-3 px-4 py-2 bg-red-200 text-red-800 rounded hover:bg-red-300 transition-colors"
+            >
+              Try Again
+            </button>
           </div>
         )}
 
@@ -337,11 +351,11 @@ export default function FacultyTimetables() {
               Timetables haven't been generated yet or no faculty assignments were found.
             </p>
             <button
-               onClick={loadFacultyData}
-               className="px-8 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-all shadow-lg hover:shadow-xl"
-             >
-               Refresh
-             </button>
+              onClick={loadFacultyData}
+              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-all shadow-lg hover:shadow-xl"
+            >
+              Refresh
+            </button>
           </div>
         ) : (
           <>

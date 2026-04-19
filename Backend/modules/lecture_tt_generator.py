@@ -8,23 +8,32 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-DAYS              = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-MORNING_SLOTS     = ['10:15', '11:15', '12:15']
-AFTERNOON_SLOTS   = ['14:15', '15:15', '16:20']
-ALL_LECTURE_SLOTS = MORNING_SLOTS + AFTERNOON_SLOTS
-LUNCH_SLOT        = '13:15'
+from modules import class_structure_handler, settings_handler
+
+DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+# Removing static MORNING_SLOTS, AFTERNOON_SLOTS, ALL_LECTURE_SLOTS, LUNCH_SLOT as they are now dynamic
 
 workload_collection        = db['workload']
 faculty_collection         = db['faculty']
 subjects_collection        = db['subjects']
 class_timetable_collection = db['class_timetable']
+constraints_collection     = db['constraints']
 
 
 class LectureTimetableGenerator:
 
     def __init__(self):
+        # ── Dynamic Timings ──────────────────────────────────────────────────
+        timings = settings_handler.get_timings()
+        all_s, lec_s, brk_s = settings_handler.calculate_slots(timings)
+        
+        self.ALL_LECTURE_SLOTS = lec_s
+        self.BREAK_SLOTS = brk_s
+        self.ALL_SLOTS = all_s
+        
         self.class_timetables = {}   # (year, div) → full timetable doc
         self.subject_map      = {}   # short_name → subject doc
+        self.constraints      = []
 
     # ── Data loading ──────────────────────────────────────────────────────────
 
@@ -39,12 +48,18 @@ class LectureTimetableGenerator:
         if not doc:
             logger.warning("No subjects document found!")
             return
-        for yr in ['sy', 'ty', 'be']:
-            for subj in doc.get(yr, []):
+        from modules.class_structure_handler import get_active_years_list
+        years = [y.lower() for y in get_active_years_list()]
+        for yr in years:
+            for subj in doc.get(yr, []) or doc.get(yr.upper(), []):
                 sname = subj.get('short_name', '')
                 if sname:
                     self.subject_map[sname] = subj
         logger.info(f"✓ Loaded {len(self.subject_map)} subjects for lecture lookup")
+
+    def _load_constraints(self):
+        self.constraints = list(constraints_collection.find({}))
+        logger.info(f"✓ Loaded {len(self.constraints)} special constraints")
 
     # ── Assignment preparation ────────────────────────────────────────────────
 
@@ -131,6 +146,12 @@ class LectureTimetableGenerator:
             for sess in tt.get('schedule', {}).get(day, {}).get(slot, []):
                 if sess.get('faculty') == faculty:
                     return True
+        
+        # Check special constraints (preferred_off)
+        for c in self.constraints:
+            if c.get('type') == 'preferred_off' and c.get('faculty_name') == faculty:
+                if c.get('day') == day and c.get('time_slot') == slot:
+                    return True
         return False
 
     def _slot_free(self, year: str, division: str, day: str, slot: str) -> bool:
@@ -191,6 +212,7 @@ class LectureTimetableGenerator:
         try:
             self._load_class_timetables()
             self._load_subject_map()
+            self._load_constraints()
 
             if not self.class_timetables:
                 return {'success': False, 'error': 'No class timetables found'}
@@ -200,15 +222,38 @@ class LectureTimetableGenerator:
                 return {'success': False, 'message': 'No lecture assignments found',
                         'lectures_scheduled': 0}
 
-            year_order      = {'SY': 0, 'TY': 1, 'BE': 2}
             scheduled_count = 0
+
+            # --- PHASE 0: Process Fixed Time Constraints ---
+            for c in self.constraints:
+                if c.get('type') == 'fixed_time':
+                    day = c.get('day')
+                    slot = c.get('time_slot')
+                    year = c.get('year')
+                    division = c.get('division')
+                    subject = c.get('subject')
+                    faculty = c.get('faculty_name')
+
+                    # Find matching lecture assignment
+                    target_key = (year, division, subject)
+                    if target_key in assignments and assignments[target_key]:
+                        # Check if slot is actually free (might be taken by practical)
+                        if self._slot_free(year, division, day, slot) and not self._faculty_busy(faculty, day, slot):
+                            lecture = assignments[target_key].pop(0)
+                            self._place_lecture(year, division, day, slot, lecture)
+                            scheduled_count += 1
+                            logger.info(f"  📌 Scheduled FIXED lecture: {year}-{division} {subject} at {day} {slot}")
+
+            from modules.class_structure_handler import get_active_years_list
+            years = [y.upper() for y in get_active_years_list()]
+            year_order = {yr: idx for idx, yr in enumerate(years)}
 
             for pass_num in range(30):
                 progress = False
 
                 for day in DAYS:
-                    for slot in ALL_LECTURE_SLOTS:
-                        if slot == LUNCH_SLOT:
+                    for slot in self.ALL_LECTURE_SLOTS:
+                        if slot in self.BREAK_SLOTS:
                             continue
 
                         sorted_keys = sorted(
@@ -244,11 +289,9 @@ class LectureTimetableGenerator:
                     break
 
             # ── Save ──────────────────────────────────────────────────────
-            all_slots = ['10:15', '11:15', '12:15', '13:15',
-                         '14:15', '15:15', '16:20']
             for (year, division), tt in self.class_timetables.items():
                 for day in DAYS:
-                    for sl in all_slots:
+                    for sl in self.ALL_SLOTS:
                         tt['schedule'].setdefault(day, {}).setdefault(sl, [])
                 tt['generated_at'] = datetime.now()
                 class_timetable_collection.replace_one(

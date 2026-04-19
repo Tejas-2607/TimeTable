@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
-import { getClassTimetables } from '../services/classTimetableService';
-import { getMasterTimetables } from '../services/masterTimetableService';
+import { getClassTimetables, deleteClassTimetable } from '../services/classTimetableService';
+import { getMasterTimetables, deleteMasterTimetable } from '../services/masterTimetableService';
 import {
   Clock, ArrowLeft, Calendar, ChevronRight, BookOpen,
-  Users as UsersIcon, FlaskConical, Layers, Printer
+  Users as UsersIcon, FlaskConical, Layers, Printer, Trash2, Download, Share2, Filter, GraduationCap
 } from 'lucide-react';
 import { getSessionTimes } from '../services/labSettingsService';
+import { getDepartmentTimings } from '../services/settingsService';
+import { getClassStructure } from '../services/classStructureService';
+import { useAuth } from '../context/AuthContext';
 
 export default function ViewTimetables() {
+  const { user } = useAuth();
   // views: 'landing' | 'classCards' | 'schedule' | 'practicalTable'
   const [view, setView] = useState('landing');
   const [timetables, setTimetables] = useState([]);
@@ -16,16 +20,51 @@ export default function ViewTimetables() {
   const [isLoading, setIsLoading] = useState(true);
   const [isPracticalLoading, setIsPracticalLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [timeSlots, setTimeSlots] = useState([]);
+  const [breakSlots, setBreakSlots] = useState([]);
+  const [classStructures, setClassStructures] = useState(null);
 
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-  const timeSlots = ['10:15', '11:15', '12:15', '13:15', '14:15', '15:15', '16:20'];
   const [practicalTimeSlots, setPracticalTimeSlots] = useState(getSessionTimes());
 
   // Fetch both datasets on mount
   useEffect(() => {
     loadAllData();
+    loadTimings();
+    loadClassStructure();
     setPracticalTimeSlots(getSessionTimes());
   }, []);
+
+  const loadTimings = async () => {
+    try {
+      const data = await getDepartmentTimings();
+      if (data) {
+        setTimeSlots(data.slots || []);
+        setBreakSlots(data.break_slots || []);
+        // Master practical table should only show lecture slots
+        setPracticalTimeSlots(data.lecture_slots || []);
+      }
+    } catch (err) {
+      console.error('Error loading timings:', err);
+    }
+  };
+
+  const loadClassStructure = async () => {
+    try {
+      const res = await getClassStructure();
+      if (res) {
+        const { _id, ...structure } = res;
+        setClassStructures(structure);
+        // Initialize selectedYears with all available years from structure
+        const years = Object.keys(structure);
+        if (years.length > 0) {
+          setSelectedYears(years);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading class structure:', err);
+    }
+  };
 
   const loadAllData = async () => {
     setIsLoading(true);
@@ -170,6 +209,7 @@ export default function ViewTimetables() {
             <tbody>
               {timeSlots.map((time, timeIdx) => {
                 const isPracticalSlot = practicalTimeSlots.includes(time);
+                const isBreak = breakSlots.includes(time);
                 return (
                   <tr key={time} className={timeIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
                     <td
@@ -185,6 +225,15 @@ export default function ViewTimetables() {
                     {daysOfWeek.map(day => {
                       const daySchedule = schedule[day] || {};
                       const sessions = daySchedule[time] || [];
+
+                      if (isBreak) {
+                        return (
+                          <td key={`${time}-${day}`} className="border border-slate-300 bg-slate-100 text-center font-bold text-slate-400 text-xs tracking-widest">
+                            BREAK
+                          </td>
+                        );
+                      }
+
                       return (
                         <td key={`${time}-${day}`} className="border border-slate-300 p-2 min-w-[160px]">
                           {renderSessionCell(sessions)}
@@ -251,7 +300,18 @@ export default function ViewTimetables() {
                 return (
                   <tr key={labName} className={labIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
                     <td className="border border-slate-300 px-4 py-3 font-semibold text-slate-800 sticky left-0 z-10" style={{ backgroundColor: labIdx % 2 === 0 ? 'white' : '#f8fafc' }}>
-                      {labName}
+                      <div className="flex items-center justify-between gap-2 group/lab">
+                        <span>{labName}</span>
+                        {user?.role === 'admin' && (
+                          <button
+                            onClick={(e) => handleDeleteMasterTimetable(e, labName)}
+                            className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-all opacity-0 group-hover/lab:opacity-100"
+                            title={`Delete ${labName} Timetable`}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
                     </td>
                     {daysOfWeek.map(day => {
                       const daySchedule = labSchedule[day] || {};
@@ -311,15 +371,33 @@ export default function ViewTimetables() {
         </button>
       </section>
 
-      {/* Previous Timetables */}
+      {/* Previous Timetables / Classes */}
       <section>
         <h3 className="text-xl font-bold text-slate-700 mb-4 flex items-center gap-2">
-          <span className="inline-block w-1.5 h-6 bg-slate-400 rounded-full" />
-          Previous Timetables
+          <span className="inline-block w-1.5 h-6 bg-blue-500 rounded-full" />
+          Select Class to View
         </h3>
+        <div className="flex flex-wrap gap-2 mb-6">
+          {classStructures ? (
+            Object.keys(classStructures).map(year => (
+              <button
+                key={year}
+                onClick={() => {
+                  setSelectedYears([year]);
+                  setView('classCards');
+                }}
+                className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:border-blue-500 hover:text-blue-600 transition-all shadow-sm"
+              >
+                {year}
+              </button>
+            ))
+          ) : (
+            <p className="text-sm text-slate-400">Loading years...</p>
+          )}
+        </div>
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-10 text-center">
           <Layers size={40} className="mx-auto mb-3 text-slate-300" />
-          <p className="text-slate-400 text-sm">No previous timetables available</p>
+          <p className="text-slate-400 text-sm">Select a category above or click 'Class Timetables'</p>
         </div>
       </section>
     </div>
@@ -344,26 +422,31 @@ export default function ViewTimetables() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {/* Practical Plan Card */}
-          <button
-            onClick={() => setView('practicalTable')}
-            className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200 hover:border-blue-300 transition-all duration-300 p-5 text-left cursor-pointer"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-md shadow-blue-500/20">
-                <FlaskConical size={20} className="text-white" />
+          {user?.role === 'admin' && (
+            <button
+              onClick={() => setView('practicalTable')}
+              className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200 hover:border-blue-300 transition-all duration-300 p-5 text-left cursor-pointer"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-md shadow-blue-500/20">
+                  <FlaskConical size={20} className="text-white" />
+                </div>
+                <div>
+                  <p className="font-bold text-lg text-slate-800 group-hover:text-blue-700 transition-colors">
+                    Master Practical Plan
+                  </p>
+                  <p className="text-xs text-slate-500">Lab-wise schedule</p>
+                </div>
               </div>
-              <div>
-                <p className="font-bold text-lg text-slate-800 group-hover:text-blue-700 transition-colors">
-                  Master Practical Plan
-                </p>
-                <p className="text-xs text-slate-500">Lab-wise schedule</p>
+              <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+                <p className="text-xs text-slate-400">View all lab schedules</p>
+                <ChevronRight size={16} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
               </div>
-            </div>
-            <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-              <p className="text-xs text-slate-400">View all lab schedules</p>
-              <ChevronRight size={16} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
-            </div>
-          </button>
+            </button>
+          )}
+
+          {/* Individual Lab Deletion would happen in a more detailed view if needed, 
+              but for now let's just allow deleting specific class cards below */}
 
           {/* Class-wise Cards */}
           {timetables.map((tt) => (
@@ -376,10 +459,21 @@ export default function ViewTimetables() {
                 <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-blue-500/20">
                   {tt.class_key.split('-')[0]}
                 </div>
-                <div>
-                  <p className="font-bold text-lg text-slate-800 group-hover:text-blue-700 transition-colors">
-                    {tt.class_key}
-                  </p>
+                <div className="flex flex-col flex-1">
+                  <div className="flex justify-between items-start">
+                    <p className="font-bold text-lg text-slate-800 group-hover:text-blue-700 transition-colors">
+                      {tt.class_key}
+                    </p>
+                    {user?.role === 'admin' && (
+                      <button
+                        onClick={(e) => handleDeleteClassTimetable(e, tt)}
+                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                        title="Delete Timetable"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
                   <p className="text-xs text-slate-500">Division {tt.division}</p>
                 </div>
               </div>
@@ -429,6 +523,30 @@ export default function ViewTimetables() {
         {renderScheduleTable(selectedClass)}
       </div>
     );
+  };
+
+  const handleDeleteClassTimetable = async (e, tt) => {
+    e.stopPropagation();
+    if (window.confirm(`Are you sure you want to delete the timetable for ${tt.class_key}?`)) {
+      try {
+        await deleteClassTimetable(tt.class, tt.division);
+        await loadAllData();
+      } catch (err) {
+        alert('Failed to delete timetable.');
+      }
+    }
+  };
+
+  const handleDeleteMasterTimetable = async (e, labName) => {
+    e.stopPropagation();
+    if (window.confirm(`Are you sure you want to delete the master practical plan for ${labName}?`)) {
+      try {
+        await deleteMasterTimetable(labName);
+        await loadAllData();
+      } catch (err) {
+        alert('Failed to delete master practical plan.');
+      }
+    }
   };
 
   // 4. Practical table full view

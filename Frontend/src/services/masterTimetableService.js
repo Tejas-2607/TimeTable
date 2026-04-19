@@ -11,6 +11,17 @@ export const getMasterTimetables = async (filters = {}) => {
   }
 };
 
+// ---------- DELETE MASTER TIMETABLE ----------
+export const deleteMasterTimetable = async (labName) => {
+  try {
+    const res = await api.delete(`/master_timetable/${labName}`);
+    return res;
+  } catch (err) {
+    console.error(`Error deleting master timetable for ${labName}:`, err);
+    throw err;
+  }
+};
+
 // ---------- GET TIMETABLES BY YEAR ----------
 export const getTimetablesByYear = async (year) => {
   try {

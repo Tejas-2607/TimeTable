@@ -6,7 +6,7 @@ export const getSubjects = async () => {
   try {
     const res = await api.get('/subjects');
     console.log(res);
-    
+
     return res;
   } catch (err) {
     console.error("Error fetching subjects:", err);
@@ -18,7 +18,7 @@ export const getSubjects = async () => {
 export const addSubject = async (subjectData) => {
   try {
     const res = await api.post('/subjects', subjectData);
-    return res.data;
+    return res;
   } catch (err) {
     console.error("Error adding subject:", err.response?.data || err);
     throw err;
@@ -29,7 +29,7 @@ export const addSubject = async (subjectData) => {
 export const updateSubject = async (subjectData) => {
   try {
     const res = await api.put('/subjects', subjectData);
-    return res.data;
+    return res;
   } catch (err) {
     console.error("Error updating subject:", err.response?.data || err);
     throw err;
@@ -42,7 +42,7 @@ export const deleteSubject = async (year, id) => {
     const res = await api.delete('/subjects', {
       data: { id, year },
     });
-    return res.data;
+    return res;
   } catch (err) {
     console.error("Error deleting subject:", err.response?.data || err);
     throw err;

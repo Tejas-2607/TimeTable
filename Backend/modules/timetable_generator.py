@@ -8,17 +8,17 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-DAYS              = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-ALL_SLOTS         = ['10:15', '11:15', '12:15', '13:15', '14:15', '15:15', '16:20']
-START_SLOTS       = ['11:15', '14:15', '16:20']
-NEXT_SLOT         = {'11:15': '12:15', '14:15': '15:15'}
-TWO_HR_START_SLOTS = ['11:15', '14:15']
+from modules import class_structure_handler, settings_handler
+
+DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+# Removing static ALL_SLOTS, START_SLOTS, NEXT_SLOT, TWO_HR_START_SLOTS as they are now dynamic
 
 subjects_collection             = db['subjects']
 faculty_collection              = db['faculty']
 workload_collection             = db['workload']
 labs_collection                 = db['labs']
 master_lab_timetable_collection = db['master_lab_timetable']
+constraints_collection         = db['constraints']
 
 
 def _normalise_batch(raw) -> int:
@@ -34,11 +34,31 @@ def _normalise_batch(raw) -> int:
 class TimetableGenerator:
 
     def __init__(self):
+        # ── Dynamic Timings ──────────────────────────────────────────────────
+        timings = settings_handler.get_timings()
+        all_s, lec_s, brk_s = settings_handler.calculate_slots(timings)
+        
+        self.ALL_SLOTS   = all_s
+        self.BREAK_SLOTS = brk_s
+        
+        # START_SLOTS for 2-hr practicals: slots where the NEXT slot is also a lecture slot
+        self.TWO_HR_START_SLOTS = []
+        self.NEXT_SLOT = {}
+        for i in range(len(all_s) - 1):
+            if all_s[i] in lec_s and all_s[i+1] in lec_s:
+                self.TWO_HR_START_SLOTS.append(all_s[i])
+                self.NEXT_SLOT[all_s[i]] = all_s[i+1]
+        
+        # All possible start slots for any practical
+        self.START_SLOTS = lec_s
+        
+        # ── State ───────────────────────────────────────────────────────────
         self.lab_schedule   = {}   # lab_name → day → slot → [sessions]
         self.batch_occupied = {}   # (year, div, batch) → day → slot → bool
         self.faculty_names  = {}
         self.labs_list      = []
         self.subject_map    = {}   # short_name → subject doc
+        self.constraints    = []
 
     # ── Data loading ─────────────────────────────────────────────────────────
 
@@ -51,8 +71,10 @@ class TimetableGenerator:
         doc = subjects_collection.find_one({})
         if not doc:
             return
-        for yr in ['sy', 'ty', 'be']:
-            for subj in doc.get(yr, []):
+        from modules.class_structure_handler import get_active_years_list
+        years = [y.lower() for y in get_active_years_list()]
+        for yr in years:
+            for subj in doc.get(yr, []) or doc.get(yr.upper(), []):
                 sname = subj.get('short_name', '')
                 if sname:
                     self.subject_map[sname] = subj
@@ -63,16 +85,20 @@ class TimetableGenerator:
         self.labs_list = [lab['name'] for lab in labs if lab.get('name')]
         for lab_name in self.labs_list:
             self.lab_schedule[lab_name] = {
-                day: {slot: [] for slot in ALL_SLOTS}
+                day: {slot: [] for slot in self.ALL_SLOTS}
                 for day in DAYS
             }
         logger.info(f"✓ Loaded {len(self.labs_list)} labs")
+
+    def _load_constraints(self):
+        self.constraints = list(constraints_collection.find({}))
+        logger.info(f"✓ Loaded {len(self.constraints)} special constraints")
 
     def _ensure_batch(self, year, division, batch):
         key = (year, division, batch)
         if key not in self.batch_occupied:
             self.batch_occupied[key] = {
-                day: {slot: False for slot in ALL_SLOTS}
+                day: {slot: False for slot in self.ALL_SLOTS}
                 for day in DAYS
             }
 
@@ -136,6 +162,12 @@ class TimetableGenerator:
             for sess in lab_sched.get(day, {}).get(slot, []):
                 if sess.get('faculty') == faculty:
                     return True
+        
+        # Check special constraints (preferred_off)
+        for c in self.constraints:
+            if c.get('type') == 'preferred_off' and c.get('faculty_name') == faculty:
+                if c.get('day') == day and c.get('time_slot') == slot:
+                    return True
         return False
 
     def _batch_slot_free(self, year, division, batch, day, slot) -> bool:
@@ -150,13 +182,33 @@ class TimetableGenerator:
     def _select_lab(self, practical: dict, day: str, slot: str,
                     used_labs: set) -> str | None:
         hrs       = practical['practical_hrs']
-        next_slot = NEXT_SLOT.get(slot) if hrs == 2 else None
+        next_slot = self.NEXT_SLOT.get(slot) if hrs == 2 else None
         required  = practical.get('required_lab')
-        candidates = [required] if required else self.labs_list
+        
+        # If a specific lab is required, only consider that one
+        if required:
+            candidates = [required]
+        else:
+            candidates = self.labs_list
 
         for lab in candidates:
-            if lab not in self.lab_schedule:
+            if not lab:
                 continue
+            
+            # Normalize for matching if needed, but here we expect EXACT match 
+            # with self.lab_schedule keys. We'll add a helper to be sure.
+            if lab not in self.lab_schedule:
+                # Try finding case-insensitively
+                found_lab = None
+                for real_lab in self.lab_schedule.keys():
+                    if real_lab.strip().upper() == lab.strip().upper():
+                        found_lab = real_lab
+                        break
+                if found_lab:
+                    lab = found_lab
+                else:
+                    logger.warning(f"  ⚠️ Required lab '{lab}' not found in registered labs!")
+                    continue
             if lab in used_labs:
                 continue
             if not self._lab_slot_free(lab, day, slot):
@@ -170,8 +222,8 @@ class TimetableGenerator:
                       used_faculty: set, used_labs: set) -> bool:
         year, division, batch = practical['year'], practical['division'], practical['batch']
         faculty, hrs          = practical['faculty'], practical['practical_hrs']
-
-        if hrs == 2 and slot not in TWO_HR_START_SLOTS:
+        
+        if hrs == 2 and slot not in self.TWO_HR_START_SLOTS:
             return False
         if faculty in used_faculty:
             return False
@@ -180,8 +232,20 @@ class TimetableGenerator:
         if not self._batch_slot_free(year, division, batch, day, slot):
             return False
         if hrs == 2:
-            if not self._batch_slot_free(year, division, batch, day, NEXT_SLOT[slot]):
+            if not self._batch_slot_free(year, division, batch, day, self.NEXT_SLOT[slot]):
                 return False
+        
+        # Check special constraints (fixed_time for OTHER subjects/faculty)
+        for c in self.constraints:
+            if c.get('type') == 'fixed_time':
+                if c.get('day') == day and c.get('time_slot') == slot:
+                    # If this slot is fixed for someone else, we can't schedule here
+                    if c.get('year') == year and c.get('division') == division:
+                        if c.get('subject') != practical['subject'] or c.get('faculty_name') != faculty:
+                            return False
+                    if c.get('faculty_name') == faculty and c.get('subject') != practical['subject']:
+                        return False
+
         if self._select_lab(practical, day, slot, used_labs) is None:
             return False
         return True
@@ -210,16 +274,16 @@ class TimetableGenerator:
         # Lab timetable — primary slot
         self.lab_schedule[lab][day][slot].append(dict(session))
         # Lab timetable — follow-on slot (for 2-hr practicals)
-        if hrs == 2 and slot in NEXT_SLOT:
-            self.lab_schedule[lab][day][NEXT_SLOT[slot]].append(dict(session))
+        if hrs == 2 and slot in self.NEXT_SLOT:
+            self.lab_schedule[lab][day][self.NEXT_SLOT[slot]].append(dict(session))
 
         # Mark this batch occupied at both slots
         key = (year, division, batch)
         self.batch_occupied[key][day][slot] = True
-        if hrs == 2 and slot in NEXT_SLOT:
-            self.batch_occupied[key][day][NEXT_SLOT[slot]] = True
-
-        extra = f"+{NEXT_SLOT[slot]}" if hrs == 2 and slot in NEXT_SLOT else ""
+        if hrs == 2 and slot in self.NEXT_SLOT:
+            self.batch_occupied[key][day][self.NEXT_SLOT[slot]] = True
+        
+        extra = f"+{self.NEXT_SLOT[slot]}" if hrs == 2 and slot in self.NEXT_SLOT else ""
         logger.info(f"  ✓ {year}-{division}-B{batch} {practical['subject']} "
                     f"→ {lab} @ {day} {slot}{extra}")
 
@@ -232,6 +296,7 @@ class TimetableGenerator:
 
         try:
             self._load_labs()
+            self._load_constraints()
             assignments = self.prepare_assignments()
 
             if not assignments:
@@ -240,13 +305,51 @@ class TimetableGenerator:
                 return {'success': False, 'error': 'No labs found'}
 
             scheduled_count = 0
-            year_order = {'SY': 0, 'TY': 1, 'BE': 2}
+            
+            # --- PHASE 0: Process Fixed Time Constraints ---
+            for c in self.constraints:
+                if c.get('type') == 'fixed_time':
+                    day = c.get('day')
+                    slot = c.get('time_slot')
+                    year = c.get('year')
+                    division = c.get('division')
+                    subject = c.get('subject')
+                    faculty = c.get('faculty_name')
+
+                    # Find matching practical assignment
+                    key = (year, division, 1) # Simplification: assume batch 1 for fixed lecture/practical pins if not specified
+                    # Actually, better match accurately if possible. 
+                    # For now, let's find the first matching subject in ANY batch of that class
+                    target_key = None
+                    target_idx = None
+                    for k, queue in assignments.items():
+                        if k[0] == year and k[1] == division:
+                            for idx, p in enumerate(queue):
+                                if p['subject'] == subject and p['faculty'] == faculty:
+                                    target_key = k
+                                    target_idx = idx
+                                    break
+                        if target_key: break
+                    
+                    if target_key:
+                        practical = assignments[target_key][target_idx]
+                        # Try to schedule at the fixed slot
+                        lab = self._select_lab(practical, day, slot, set()) # No labs used yet in Phase 0
+                        if lab:
+                            self._write_session(practical, day, slot, lab)
+                            assignments[target_key].pop(target_idx)
+                            scheduled_count += 1
+                            logger.info(f"  📌 Scheduled FIXED constraint: {year}-{division} {subject} at {day} {slot}")
+
+            from modules.class_structure_handler import get_active_years_list
+            years = [y.upper() for y in get_active_years_list()]
+            year_order = {yr: idx for idx, yr in enumerate(years)}
 
             for pass_num in range(30):
                 progress = False
-
+                
                 for day in DAYS:
-                    for slot in START_SLOTS:
+                    for slot in self.START_SLOTS:
                         sorted_keys = sorted(
                             [k for k in assignments if assignments[k]],
                             key=lambda k: (year_order.get(k[0], 9), k[1], k[2])

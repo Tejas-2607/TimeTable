@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Trash2, Edit2, X } from 'lucide-react';
 import { getSubjects } from '../../services/subjectService';
 import { getFaculties } from '../../services/facultyService';
@@ -11,7 +12,8 @@ import {
 } from '../../services/workloadService';
 
 export default function FacultyAssignment({ data, onDataChange }) {
-  const [year, setYear] = useState('sy');
+  const navigate = useNavigate();
+  const [year, setYear] = useState('');
   const [faculties, setFaculties] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [classStructures, setClassStructures] = useState(null);
@@ -75,12 +77,18 @@ export default function FacultyAssignment({ data, onDataChange }) {
       const subjectsRes = await getSubjects();
       const subjectsData = subjectsRes.data || subjectsRes;
       setSubjects(subjectsData || {});
-      
+
       // Load class structures
       try {
         const structureRes = await getClassStructure();
         const structData = structureRes?.data || structureRes || {};
-        setClassStructures(structData);
+        const { _id, ...structure } = structData;
+        setClassStructures(structure);
+        // Set default year if empty
+        const years = Object.keys(structure);
+        if (years.length > 0 && !year) {
+          setYear(years[0]);
+        }
       } catch (err) {
         console.error('Error loading class structure:', err);
         setClassStructures(null);
@@ -137,30 +145,16 @@ export default function FacultyAssignment({ data, onDataChange }) {
     const yearSubjectsArray = subjects[yearKey];
     return Array.isArray(yearSubjectsArray) ? yearSubjectsArray : [];
   };
-
   const getStructureInfo = () => {
-    // Default matching ClassStructure.jsx UI defaults
-    const defaults = {
-      sy: { num_divisions: 2, batches_per_division: 3 },
-      ty: { num_divisions: 2, batches_per_division: 3 },
-      be: { num_divisions: 1, batches_per_division: 3 },
-    };
-
-    let divisionsCount = defaults[year]?.num_divisions || 1;
-    let batchesCount = defaults[year]?.batches_per_division || 3;
+    let divisionsCount = 1;
+    let batchesCount = 3;
 
     if (classStructures && Object.keys(classStructures).length > 0) {
-      // Possible keys in DB could be 'sy', 'SY', 'be', 'BE', 'Final Year', etc.
-      // We will loop through the actual keys and find a match.
-      const targetYear = year.toLowerCase();
-      const possibleMatches = targetYear === 'be' ? ['be', 'final year'] : [targetYear];
-
-      for (const [key, structure] of Object.entries(classStructures)) {
-        if (possibleMatches.includes(key.toLowerCase())) {
-          divisionsCount = structure.num_divisions || 1;
-          batchesCount = structure.batches_per_division || 3;
-          break; // Found it
-        }
+      const yearKey = Object.keys(classStructures).find(k => k.toLowerCase() === year.toLowerCase()) || year;
+      const structure = classStructures[yearKey];
+      if (structure) {
+        divisionsCount = structure.num_divisions || 1;
+        batchesCount = structure.batches_per_division || 3;
       }
     }
 
@@ -256,16 +250,7 @@ export default function FacultyAssignment({ data, onDataChange }) {
   };
 
   const getYearLabel = (yearCode) => {
-    switch (yearCode) {
-      case 'sy':
-        return '2nd Year (SY)';
-      case 'ty':
-        return '3rd Year (TY)';
-      case 'be':
-        return 'Final Year (BE)';
-      default:
-        return yearCode;
-    }
+    return yearCode.toUpperCase();
   };
 
   const getSubjectTypeLabel = (type) => {
@@ -310,17 +295,36 @@ export default function FacultyAssignment({ data, onDataChange }) {
             onChange={(e) => setYear(e.target.value)}
             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
           >
-            <option value="sy">{getYearLabel('sy')}</option>
-            <option value="ty">{getYearLabel('ty')}</option>
-            <option value="be">{getYearLabel('be')}</option>
+            {classStructures && Object.keys(classStructures).map((yr) => (
+              <option key={yr} value={yr}>
+                {getYearLabel(yr)}
+              </option>
+            ))}
           </select>
         </div>
         {!showForm && (
           <div className="flex items-end">
             <button
-              onClick={() => setShowForm(true)}
+              onClick={() => {
+                if (faculties.length === 0) {
+                  if (confirm("⚠️ No faculty data found. Would you like to go to the Faculty management page to add some?")) {
+                    navigate('/faculty');
+                  }
+                  return;
+                }
+                if (yearSubjects.length === 0) {
+                  if (confirm(`⚠️ No subjects found for ${getYearLabel(year)}. Would you like to go back to Step 2 to add some?`)) {
+                    // We can't easily "go back" to a step if this is a sub-component, 
+                    // but we can trigger a parent change if we had the prop.
+                    // For now, just alert.
+                    alert("Please go back to 'Step 2: Enter Subjects' to add subjects for this year.");
+                  }
+                  return;
+                }
+                setShowForm(true);
+              }}
               className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              disabled={loading || yearSubjects.length === 0 || faculties.length === 0}
+              disabled={loading}
             >
               <Plus size={20} />
               Add Assignment

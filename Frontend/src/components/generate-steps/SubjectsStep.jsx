@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2, X } from 'lucide-react';
 import { getSubjects, addSubject, updateSubject, deleteSubject } from '../../services/subjectService';
 import { getAllLabs } from '../../services/labsService';
+import { getClassStructure } from '../../services/classStructureService';
 
 export default function SubjectsStep({ data, onDataChange }) {
-  const [year, setYear] = useState('sy');
+  const [year, setYear] = useState('');
   const [subjects, setSubjects] = useState([]);
   const [labs, setLabs] = useState([]);
+  const [classStructure, setClassStructure] = useState({});
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -20,14 +22,34 @@ export default function SubjectsStep({ data, onDataChange }) {
     required_labs: '',
   });
 
-  // Load labs only once on mount
+  // Load labs and class structure on mount
   useEffect(() => {
     loadLabs();
+    loadStructure();
   }, []);
+
+  const loadStructure = async () => {
+    try {
+      const res = await getClassStructure();
+      if (res && Object.keys(res).length > 0) {
+        const { _id, ...structure } = res;
+        setClassStructure(structure);
+        // Set default year if empty
+        const years = Object.keys(structure);
+        if (years.length > 0) {
+          setYear(years[0]);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading class structure:', err);
+    }
+  };
 
   // Load subjects when year changes
   useEffect(() => {
-    loadSubjects();
+    if (year) {
+      loadSubjects();
+    }
   }, [year]);
 
   const loadSubjects = async () => {
@@ -97,8 +119,14 @@ export default function SubjectsStep({ data, onDataChange }) {
 
     try {
       setLoading(true);
+      if (formData.hrs_per_week_practical > 0 && formData.practical_type === 'Specific Lab' && !formData.required_labs) {
+        alert("Please select a 'Required Lab' for subjects needing a Specific Lab.");
+        setLoading(false);
+        return;
+      }
+
       const subjectData = {
-        year,
+        year: year.toUpperCase(),
         name: formData.name,
         short_name: formData.short_name,
         hrs_per_week_lec: parseInt(formData.hrs_per_week_lec),
@@ -154,16 +182,7 @@ export default function SubjectsStep({ data, onDataChange }) {
   };
 
   const getYearLabel = (yearCode) => {
-    switch (yearCode) {
-      case 'sy':
-        return '2nd Year (SY)';
-      case 'ty':
-        return '3rd Year (TY)';
-      case 'be':
-        return 'Final Year (BE)';
-      default:
-        return yearCode;
-    }
+    return yearCode.toUpperCase();
   };
 
   const getPracticalTypeLabel = (type) => {
@@ -196,15 +215,23 @@ export default function SubjectsStep({ data, onDataChange }) {
             onChange={(e) => setYear(e.target.value)}
             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
           >
-            <option value="sy">{getYearLabel('sy')}</option>
-            <option value="ty">{getYearLabel('ty')}</option>
-            <option value="be">{getYearLabel('be')}</option>
+            {Object.keys(classStructure).map((yr) => (
+              <option key={yr} value={yr}>
+                {getYearLabel(yr)}
+              </option>
+            ))}
           </select>
         </div>
         {!showForm && (
           <div className="flex items-end">
             <button
-              onClick={() => setShowForm(true)}
+              onClick={() => {
+                if (!classStructure || Object.keys(classStructure).length === 0) {
+                  alert("⚠️ No class structure defined. Please set up the 'Class Structure' configuration FIRST before adding subjects.");
+                  return;
+                }
+                setShowForm(true);
+              }}
               className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               disabled={loading}
             >
@@ -339,7 +366,7 @@ export default function SubjectsStep({ data, onDataChange }) {
                           <div className="mt-3 pl-6 space-y-2 bg-white p-3 rounded border border-slate-200">
                             <div>
                               <label className="block text-sm font-medium text-slate-700 mb-2">
-                                Required Lab
+                                Required Lab <span className="text-red-500">*</span>
                               </label>
                               <select
                                 value={formData.required_labs}

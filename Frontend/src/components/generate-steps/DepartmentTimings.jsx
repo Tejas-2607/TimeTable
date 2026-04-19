@@ -1,29 +1,37 @@
 import { useState, useEffect } from 'react';
-import { storage } from '../../lib/storage';
 import { Plus, Trash2 } from 'lucide-react';
+import { getDepartmentTimings, saveDepartmentTimings } from '../../services/settingsService';
 
 export default function DepartmentTimings({ data, onDataChange }) {
   const [formData, setFormData] = useState({
     lecture_duration: 60,
-    day_start_time: '09:15',
+    day_start_time: '10:15',
     day_end_time: '17:20',
-    breaks: [{ name: 'Lunch', start_time: '12:15', duration: 65 }],
+    breaks: [{ name: 'Lunch', start_time: '13:15', duration: 60 }],
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     loadTimings();
   }, []);
 
-  const loadTimings = () => {
-    const timings = storage.departmentTimings.get();
-
-    if (timings) {
-      setFormData({
-        lecture_duration: timings.lecture_duration,
-        day_start_time: timings.day_start_time,
-        day_end_time: timings.day_end_time,
-        breaks: timings.breaks || [],
-      });
+  const loadTimings = async () => {
+    try {
+      setLoading(true);
+      const timings = await getDepartmentTimings();
+      if (timings) {
+        setFormData({
+          lecture_duration: timings.lecture_duration || 60,
+          day_start_time: timings.day_start_time || '10:15',
+          day_end_time: timings.day_end_time || '17:20',
+          breaks: timings.breaks || [],
+        });
+        onDataChange('timings', timings);
+      }
+    } catch (err) {
+      console.error('Error loading timings:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -54,10 +62,18 @@ export default function DepartmentTimings({ data, onDataChange }) {
     }));
   };
 
-  const handleSave = () => {
-    storage.departmentTimings.upsert(formData);
-    onDataChange('timings', formData);
-    alert('Timings saved successfully!');
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      await saveDepartmentTimings(formData);
+      onDataChange('timings', formData);
+      alert('Timings saved successfully to backend!');
+    } catch (err) {
+      console.error('Error saving timings:', err);
+      alert('Failed to save timings. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

@@ -48,3 +48,20 @@ def get_class_structure():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500  
+
+
+def get_active_years_list():
+    """
+    Returns a list of year keys from the class structure collection.
+    Example: ['SY', 'TY', 'BE']
+    """
+    try:
+        structure = class_structure_collection.find_one({})
+        if not structure:
+            return ['SY', 'TY', 'BE']  # Fallback
+        
+        # Filter out internal MongoDB fields
+        years = [k for k in structure.keys() if k != '_id']
+        return sorted(years)
+    except Exception:
+        return ['SY', 'TY', 'BE']

@@ -27,8 +27,11 @@ def save_subjects(data):
             if field not in data:
                 return jsonify({"error": f"Missing required field: '{field}'"}), 400
 
-        year = data.get('year').lower()
-        valid_years = ['sy', 'ty', 'be']
+        year = data.get('year').upper()
+        
+        # Get dynamic years from class_structure
+        from modules.class_structure_handler import get_active_years_list
+        valid_years = [y.upper() for y in get_active_years_list()]
         
         if year not in valid_years:
             return jsonify({"error": f"Invalid year. Must be one of: {', '.join(valid_years)}"}), 400
@@ -66,12 +69,9 @@ def save_subjects(data):
             )
             message = f"Subject '{data.get('name')}' added to {year.upper()}"
         else:
-            # Create new document with all three years
-            new_doc = {
-                "sy": [],
-                "ty": [],
-                "be": []
-            }
+            # Create new document with all years from structure
+            from modules.class_structure_handler import get_active_years_list
+            new_doc = {yr.upper(): [] for yr in get_active_years_list()}
             new_doc[year] = [subject_obj]
             subjects_collection.insert_one(new_doc)
             message = f"Subjects collection created and '{data.get('name')}' added to {year.upper()}"
@@ -90,16 +90,22 @@ def get_subjects():
     try:
         subjects_doc = subjects_collection.find_one({})
         
-        if not subjects_doc:
-            return jsonify({"sy": [], "ty": [], "be": []}), 200
+        from modules.class_structure_handler import get_active_years_list
+        years = [y.lower() for y in get_active_years_list()]
+        return jsonify({yr: [] for yr in years}), 200
         
         # Remove MongoDB _id from response
         subjects_doc.pop('_id', None)
         
         # Ensure all years exist in document
-        for yr in ['sy', 'ty', 'be']:
-            if yr not in subjects_doc:
-                subjects_doc[yr] = []
+        from modules.class_structure_handler import get_active_years_list
+        for yr in get_active_years_list():
+            yr_upper = yr.upper()
+            if yr_upper not in subjects_doc:
+                subjects_doc[yr_upper] = []
+            # also handle lowercase if it exists
+            if yr.lower() in subjects_doc and yr.lower() != yr_upper:
+                subjects_doc[yr_upper].extend(subjects_doc.pop(yr.lower()))
         
         # Always return all subjects — ignore 'year' parameter
         return jsonify(subjects_doc), 200
@@ -130,8 +136,9 @@ def update_subject(data):
         if not subject_id or not year:
             return jsonify({"error": "Missing 'id' or 'year'"}), 400
         
-        valid_years = ['sy', 'ty', 'be']
-        if year not in valid_years:
+        from modules.class_structure_handler import get_active_years_list
+        valid_years = [y.upper() for y in get_active_years_list()]
+        if year.upper() not in valid_years:
             return jsonify({"error": f"Invalid year. Must be one of: {', '.join(valid_years)}"}), 400
         
         # Get existing subjects document
@@ -194,8 +201,9 @@ def delete_subject(data):
         if not subject_id or not year:
             return jsonify({"error": "Missing 'id' or 'year'"}), 400
         
-        valid_years = ['sy', 'ty', 'be']
-        if year not in valid_years:
+        from modules.class_structure_handler import get_active_years_list
+        valid_years = [y.upper() for y in get_active_years_list()]
+        if year.upper() not in valid_years:
             return jsonify({"error": f"Invalid year. Must be one of: {', '.join(valid_years)}"}), 400
         
         # Remove subject with the specified ID from the year array
