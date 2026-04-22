@@ -58,6 +58,10 @@ def delete_faculty(data):
         return jsonify({"error": "Missing _id"}), 400
 
     try:
+        # Validate ObjectId
+        if not ObjectId.is_valid(faculty_id):
+            return jsonify({"error": f"Invalid ID format: '{faculty_id}'"}), 400
+            
         # Convert string ID to ObjectId
         object_id = ObjectId(faculty_id)
         
@@ -78,6 +82,10 @@ def update_faculty(data):
         return jsonify({"error": "Missing _id or updates"}), 400
 
     try:
+        # Validate ObjectId
+        if not ObjectId.is_valid(faculty_id):
+            return jsonify({"error": f"Invalid ID format: '{faculty_id}'"}), 400
+
         # Convert string ID to ObjectId
         object_id = ObjectId(faculty_id)
         

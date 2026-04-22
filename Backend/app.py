@@ -11,6 +11,11 @@ app = Flask(__name__)
 # Enable CORS for all routes
 CORS(app)
 
+# Load config
+import config
+app.config.from_object(config)
+
+
 # Import all handlers
 from modules import (
     faculty_handler,
@@ -24,8 +29,20 @@ from modules import (
     lecture_tt_generator,
     settings_handler,
     auth_handler,
-    constraints_handler
+    constraints_handler,
+    notification_handler
 )
+
+# Initialize Mail and Scheduler
+notification_handler.mail.init_app(app)
+notification_handler.scheduler.init_app(app)
+notification_handler.scheduler.start()
+
+# Add background job if not already added
+@notification_handler.scheduler.task('interval', id='do_check_reminders', minutes=1, misfire_grace_time=900)
+def check_reminders_job():
+    notification_handler.check_and_send_reminders()
+
 from functools import wraps
 
 # ============================================================================
@@ -312,7 +329,7 @@ def regenerate_master_practical_timetable():
         status_code      = 201
         response_message = "Timetable regenerated successfully!"
         if leftovers:
-            unscheduled = sum(len(v) for v in leftovers.values())
+            unscheduled = sum(leftovers.values())
             response_message = (f"Timetable generated, but {unscheduled} practical "
                                 f"session(s) could not be scheduled.")
             status_code = 206

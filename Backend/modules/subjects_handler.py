@@ -91,24 +91,38 @@ def get_subjects():
         subjects_doc = subjects_collection.find_one({})
         
         from modules.class_structure_handler import get_active_years_list
-        years = [y.lower() for y in get_active_years_list()]
-        return jsonify({yr: [] for yr in years}), 200
+        active_years = get_active_years_list() # e.g., ['SY', 'TY', 'BE'] or ['sy', 'ty', 'be']
+        
+        if not subjects_doc:
+            return jsonify({yr: [] for yr in active_years}), 200
         
         # Remove MongoDB _id from response
         subjects_doc.pop('_id', None)
         
-        # Ensure all years exist in document
-        from modules.class_structure_handler import get_active_years_list
-        for yr in get_active_years_list():
-            yr_upper = yr.upper()
-            if yr_upper not in subjects_doc:
-                subjects_doc[yr_upper] = []
-            # also handle lowercase if it exists
-            if yr.lower() in subjects_doc and yr.lower() != yr_upper:
-                subjects_doc[yr_upper].extend(subjects_doc.pop(yr.lower()))
+        # Prepare normalized response
+        response_data = {}
         
-        # Always return all subjects — ignore 'year' parameter
-        return jsonify(subjects_doc), 200
+        # Populate with data from DB
+        for yr in active_years:
+            yr_upper = yr.upper()
+            yr_lower = yr.lower()
+            
+            # Combine subjects from both upper and lower case keys if they both exist (safety)
+            combined_subjects = subjects_doc.get(yr_upper, []) + subjects_doc.get(yr_lower, [])
+            
+            # Remove duplicates by short_name
+            seen = set()
+            unique_subjects = []
+            for s in combined_subjects:
+                short_name = s.get('short_name')
+                if short_name and short_name not in seen:
+                    unique_subjects.append(s)
+                    seen.add(short_name)
+            
+            # Use the EXACT casing from active_years for the response key
+            response_data[yr] = unique_subjects
+        
+        return jsonify(response_data), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -146,8 +160,20 @@ def update_subject(data):
         if not subjects_doc:
             return jsonify({"error": "No subjects found"}), 404
         
-        # Find the subject in the specified year
-        year_subjects = subjects_doc.get(year, [])
+        # Find the subject in the specified year (try both cases)
+        year_upper = year.upper()
+        year_lower = year.lower()
+        
+        found_year = None
+        if year_upper in subjects_doc:
+            found_year = year_upper
+        elif year_lower in subjects_doc:
+            found_year = year_lower
+        
+        if not found_year:
+            return jsonify({"error": f"Year '{year}' not found in subjects"}), 404
+            
+        year_subjects = subjects_doc.get(found_year, [])
         subject_index = None
         for idx, subject in enumerate(year_subjects):
             if subject.get('_id') == subject_id:
@@ -155,7 +181,7 @@ def update_subject(data):
                 break
         
         if subject_index is None:
-            return jsonify({"error": f"Subject with ID '{subject_id}' not found in {year.upper()}"}), 404
+            return jsonify({"error": f"Subject with ID '{subject_id}' not found in {found_year}"}), 404
         
         # Prepare updated subject object
         updated_subject = {
@@ -173,7 +199,7 @@ def update_subject(data):
             updated_subject['required_labs'] = data.get('required_labs')
         
         # Update the subject at the specific index
-        update_field = f"{year}.{subject_index}"
+        update_field = f"{found_year}.{subject_index}"
         subjects_collection.update_one(
             {"_id": subjects_doc["_id"]},
             {"$set": {update_field: updated_subject}}
@@ -206,11 +232,20 @@ def delete_subject(data):
         if year.upper() not in valid_years:
             return jsonify({"error": f"Invalid year. Must be one of: {', '.join(valid_years)}"}), 400
         
-        # Remove subject with the specified ID from the year array
+        # Remove subject with the specified ID from the year array (check both cases)
+        year_upper = year.upper()
+        year_lower = year.lower()
+        
         result = subjects_collection.update_one(
             {},
-            {"$pull": {year: {"_id": subject_id}}}
+            {"$pull": {year_upper: {"_id": subject_id}}}
         )
+        
+        if result.modified_count == 0:
+            result = subjects_collection.update_one(
+                {},
+                {"$pull": {year_lower: {"_id": subject_id}}}
+            )
         
         if result.modified_count > 0:
             return jsonify({"message": f"Subject deleted successfully from {year.upper()}"}), 200

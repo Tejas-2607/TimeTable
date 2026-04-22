@@ -64,19 +64,28 @@ def generate_class_timetables() -> dict:
             if all_slots[i] in lec_slots and all_slots[i+1] in lec_slots:
                 next_slot_map[all_slots[i]] = all_slots[i+1]
 
-        # PRE-INITIALIZE based on Class Structure
+        # PRE-INITIALIZE based on Class Structure + Workload Filter
         from modules.class_structure_handler import class_structure_collection
         structure_doc = class_structure_collection.find_one({})
+        
+        # Get years that actually have workloads to avoid empty boxes
+        workload_col = db['workload']
+        years_with_workload = set(workload_col.distinct('year'))
+        years_with_workload = {y.upper() for y in years_with_workload}
+
         if structure_doc:
             for year, data in structure_doc.items():
                 if year == '_id': continue
+                upper_year = year.upper()
+                if upper_year not in years_with_workload:
+                    continue
                 
                 # Handle both formats: dictionary {num_divisions, ...} or list of divs
                 if isinstance(data, dict):
                     num_divs = data.get('num_divisions', 0)
                     div_names = [chr(65 + i) for i in range(num_divs)] # A, B, C...
                     for div in div_names:
-                        key = (year.upper(), div)
+                        key = (upper_year, div)
                         class_schedules[key] = {
                             d: {s: [] for s in all_slots}
                             for d in DAYS
@@ -84,7 +93,7 @@ def generate_class_timetables() -> dict:
                 elif isinstance(data, list):
                     for div_info in data:
                         div = div_info.get('div', 'A')
-                        key = (year.upper(), div)
+                        key = (upper_year, div)
                         class_schedules[key] = {
                             d: {s: [] for s in all_slots}
                             for d in DAYS
@@ -101,7 +110,8 @@ def generate_class_timetables() -> dict:
                         continue
 
                     for session in (sessions or []):
-                        class_name = session.get('class')
+                        # Handle both 'class' and 'year' for backward/forward compatibility
+                        class_name = session.get('class') or session.get('year')
                         division   = session.get('division')
                         if not class_name or not division:
                             logger.warning(
@@ -125,22 +135,19 @@ def generate_class_timetables() -> dict:
                             'type':         'practical',
                         }
 
-                        # Write primary slot (always)
+                        # Write session as is (timetable_generator already expanded sessions across slots)
                         class_schedules[key][day][slot].append(dict(entry))
-
-                        # Write follow-on slot if this is a 2-hour practical
-                        if _is_two_hour_practical(lab_doc, day, slot, session, next_slot_map):
-                            next_slot = next_slot_map[slot]
-                            class_schedules[key][day][next_slot].append(dict(entry))
 
         logger.info(f"Found {len(class_schedules)} class-division groups")
 
         timetables_created = 0
         for (class_name, division), schedule in class_schedules.items():
+            # Count practicals in PRIMARY slots only (avoid double-counting 2-hr sessions)
             total_practicals = sum(
                 1
-                for d in schedule.values()
-                for slot_sessions in d.values()
+                for d_name, d_slots in schedule.items()
+                for sl, slot_sessions in d_slots.items()
+                if sl in start_slots          # only primary start slots
                 for s in slot_sessions
                 if s.get('type') == 'practical'
             )

@@ -23,6 +23,7 @@ export default function ViewTimetables() {
   const [timeSlots, setTimeSlots] = useState([]);
   const [breakSlots, setBreakSlots] = useState([]);
   const [classStructures, setClassStructures] = useState(null);
+  const [selectedYears, setSelectedYears] = useState([]);
 
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
   const [practicalTimeSlots, setPracticalTimeSlots] = useState(getSessionTimes());
@@ -423,7 +424,7 @@ export default function ViewTimetables() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {/* Practical Plan Card */}
           {user?.role === 'admin' && (
-            <button
+            <div
               onClick={() => setView('practicalTable')}
               className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200 hover:border-blue-300 transition-all duration-300 p-5 text-left cursor-pointer"
             >
@@ -442,7 +443,7 @@ export default function ViewTimetables() {
                 <p className="text-xs text-slate-400">View all lab schedules</p>
                 <ChevronRight size={16} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
               </div>
-            </button>
+            </div>
           )}
 
           {/* Individual Lab Deletion would happen in a more detailed view if needed, 
@@ -450,7 +451,7 @@ export default function ViewTimetables() {
 
           {/* Class-wise Cards */}
           {timetables.map((tt) => (
-            <button
+            <div
               key={tt._id}
               onClick={() => { setSelectedClass(tt); setView('schedule'); }}
               className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200 hover:border-blue-300 transition-all duration-300 p-5 text-left cursor-pointer"
@@ -481,7 +482,7 @@ export default function ViewTimetables() {
                 <p>Total Practicals: <span className="font-semibold text-slate-600">{tt.total_practicals}</span></p>
                 <p>Generated: {formatDate(tt.generated_at)}</p>
               </div>
-            </button>
+            </div>
           ))}
         </div>
       </section>

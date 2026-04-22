@@ -141,8 +141,10 @@ export default function FacultyAssignment({ data, onDataChange }) {
 
   const getYearSubjects = () => {
     if (!subjects || typeof subjects !== 'object') return [];
-    const yearKey = year.toLowerCase();
-    const yearSubjectsArray = subjects[yearKey];
+    // Try uppercase first (API returns uppercase keys like SY, TY), then lowercase
+    const yearKeyUpper = year.toUpperCase();
+    const yearKeyLower = year.toLowerCase();
+    const yearSubjectsArray = subjects[yearKeyUpper] || subjects[yearKeyLower] || [];
     return Array.isArray(yearSubjectsArray) ? yearSubjectsArray : [];
   };
   const getStructureInfo = () => {

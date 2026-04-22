@@ -1,0 +1,474 @@
+nohup: ignoring input
+INFO:apscheduler.scheduler:Scheduler started
+INFO:apscheduler.scheduler:Added job "check_reminders_job" to job store "default"
+ * Serving Flask app 'app.py'
+ * Debug mode: off
+INFO:werkzeug:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+INFO:werkzeug:[33mPress CTRL+C to quit[0m
+/home/hp/TimeTable/Backend/.venv/lib/python3.12/site-packages/jwt/api_jwt.py:147: InsecureKeyLengthWarning: The HMAC key is 20 bytes long, which is below the minimum recommended length of 32 bytes for SHA256. See RFC 7518 Section 3.2.
+  return self._jws.encode(
+INFO:werkzeug:127.0.0.1 - - [19/Apr/2026 22:55:40] "POST /api/auth/authenticate HTTP/1.1" 200 -
+/home/hp/TimeTable/Backend/.venv/lib/python3.12/site-packages/jwt/api_jwt.py:365: InsecureKeyLengthWarning: The HMAC key is 20 bytes long, which is below the minimum recommended length of 32 bytes for SHA256. See RFC 7518 Section 3.2.
+  decoded = self.decode_complete(
+INFO:app:================================================================================
+INFO:app:STARTING COMPLETE TIMETABLE GENERATION
+INFO:app:================================================================================
+INFO:app:
+[STEP 1] Deleting existing timetables...
+INFO:app:✓ Deleted 0 lab timetables, 0 class timetables
+INFO:app:
+[STEP 2] Generating master practical timetable...
+INFO:modules.timetable_generator:================================================================================
+INFO:modules.timetable_generator:STARTING PRACTICAL TIMETABLE GENERATION
+INFO:modules.timetable_generator:================================================================================
+INFO:modules.timetable_generator:✓ Loaded 4 labs
+INFO:modules.timetable_generator:✓ Loaded 4 special constraints
+INFO:modules.timetable_generator:✓ Loaded 11 faculty
+INFO:modules.timetable_generator:✓ Loaded 17 subjects
+INFO:modules.timetable_generator:Reading 27 workload entries…
+INFO:modules.timetable_generator:  Skipping FY-A-MATHS: no practicals needed
+INFO:modules.timetable_generator:  Skipping FY-A-CS: no practicals needed
+INFO:modules.timetable_generator:  Skipping FY-B-MATHS: no practicals needed
+INFO:modules.timetable_generator:  Skipping FY-B-CS: no practicals needed
+INFO:modules.timetable_generator:  Skipping SY-A-CN: no practicals needed
+INFO:modules.timetable_generator:  Skipping SY-A-DM: no practicals needed
+INFO:modules.timetable_generator:  Skipping SY-B-CN: no practicals needed
+INFO:modules.timetable_generator:  Skipping SY-B-DM: no practicals needed
+INFO:modules.timetable_generator:  Skipping TY-A-SE: no practicals needed
+INFO:modules.timetable_generator:  Skipping TY-A-AI: no practicals needed
+INFO:modules.timetable_generator:  Skipping BE-A-CC: no practicals needed
+INFO:modules.timetable_generator:  Skipping BE-A-PM: no practicals needed
+INFO:modules.timetable_generator:✓ 12 batch-queues, 30 practical sessions to schedule
+INFO:modules.timetable_generator:   BE-A-B1: ['NS(S1)']
+INFO:modules.timetable_generator:   BE-A-B2: ['NS(S1)']
+INFO:modules.timetable_generator:   FY-A-B1: ['PF(S1)', 'BE(S1)', 'CO(S1)']
+INFO:modules.timetable_generator:   FY-A-B2: ['PF(S1)', 'BE(S1)', 'CO(S1)']
+INFO:modules.timetable_generator:   FY-B-B1: ['PF(S1)', 'BE(S1)', 'CO(S1)']
+INFO:modules.timetable_generator:   FY-B-B2: ['PF(S1)', 'BE(S1)', 'CO(S1)']
+INFO:modules.timetable_generator:   SY-A-B1: ['DS(S1)', 'DBMS(S1)', 'OS(S1)']
+INFO:modules.timetable_generator:   SY-A-B2: ['DS(S1)', 'DBMS(S1)', 'OS(S1)']
+INFO:modules.timetable_generator:   SY-B-B1: ['DS(S1)', 'DBMS(S1)', 'OS(S1)']
+INFO:modules.timetable_generator:   SY-B-B2: ['DS(S1)', 'DBMS(S1)', 'OS(S1)']
+INFO:modules.timetable_generator:   TY-A-B1: ['ML(S1)', 'CD(S1)']
+INFO:modules.timetable_generator:   TY-A-B2: ['ML(S1)', 'CD(S1)']
+INFO:modules.timetable_generator:  ✓ BE-A-B1 NS → Network Lab @ Monday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ FY-A-B1 PF → Computer Lab 1 @ Monday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ FY-A-B2 BE → Electronics Lab @ Monday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ FY-B-B1 CO → Computer Lab 2 @ Monday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ BE-A-B2 NS → Network Lab @ Monday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ FY-A-B1 BE → Electronics Lab @ Monday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ FY-A-B2 PF → Computer Lab 1 @ Monday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ FY-B-B2 CO → Computer Lab 2 @ Monday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ FY-A-B1 CO → Computer Lab 1 @ Monday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ FY-B-B1 BE → Electronics Lab @ Monday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ SY-A-B1 DBMS → Computer Lab 2 @ Monday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ SY-A-B2 OS → Network Lab @ Monday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ FY-A-B2 CO → Computer Lab 1 @ Tuesday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ FY-B-B2 BE → Electronics Lab @ Tuesday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ SY-A-B1 OS → Computer Lab 2 @ Tuesday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ TY-A-B1 CD → Network Lab @ Tuesday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ FY-B-B1 PF → Computer Lab 1 @ Tuesday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ SY-A-B2 DBMS → Computer Lab 2 @ Tuesday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ SY-B-B1 OS → Network Lab @ Tuesday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ FY-B-B2 PF → Computer Lab 1 @ Tuesday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ SY-B-B1 DBMS → Computer Lab 2 @ Tuesday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ SY-B-B2 OS → Network Lab @ Tuesday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ SY-B-B1 DS → Computer Lab 1 @ Wednesday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ SY-B-B2 DBMS → Computer Lab 2 @ Wednesday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ TY-A-B2 CD → Network Lab @ Wednesday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ SY-A-B1 DS → Computer Lab 1 @ Wednesday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ TY-A-B1 ML → Computer Lab 2 @ Wednesday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ SY-A-B2 DS → Computer Lab 1 @ Wednesday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ TY-A-B2 ML → Computer Lab 2 @ Wednesday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ SY-B-B2 DS → Computer Lab 1 @ Thursday 09:15+10:15
+INFO:modules.timetable_generator:Pass 1: 0 remaining
+INFO:modules.timetable_generator:✅ All done after 1 pass(es).
+INFO:modules.timetable_generator:✓ Saved lab: Computer Lab 1
+INFO:modules.timetable_generator:✓ Saved lab: Computer Lab 2
+INFO:modules.timetable_generator:✓ Saved lab: Network Lab
+INFO:modules.timetable_generator:✓ Saved lab: Electronics Lab
+INFO:modules.timetable_generator:✅ All practicals scheduled!
+INFO:modules.timetable_generator:DONE: 30 sessions scheduled
+INFO:app:
+[STEP 3] Building class timetables from master lab timetable...
+INFO:modules.class_timetable_handler:Starting class timetable generation…
+INFO:modules.class_timetable_handler:Deleted 0 existing class timetables
+INFO:modules.class_timetable_handler:Found 6 class-division groups
+INFO:modules.class_timetable_handler:Created FY-A (12 practical slot-entries)
+INFO:modules.class_timetable_handler:Created FY-B (12 practical slot-entries)
+INFO:modules.class_timetable_handler:Created SY-A (12 practical slot-entries)
+INFO:modules.class_timetable_handler:Created SY-B (12 practical slot-entries)
+INFO:modules.class_timetable_handler:Created TY-A (8 practical slot-entries)
+INFO:modules.class_timetable_handler:Created BE-A (4 practical slot-entries)
+INFO:modules.class_timetable_handler:✅ Created 6 class timetables
+INFO:app:✓ Generated 6 class timetables
+INFO:app:
+[STEP 4] Generating lecture timetable...
+INFO:modules.lecture_tt_generator:================================================================================
+INFO:modules.lecture_tt_generator:STARTING LECTURE TIMETABLE GENERATION
+INFO:modules.lecture_tt_generator:================================================================================
+INFO:modules.lecture_tt_generator:✓ Loaded 6 class timetables
+INFO:modules.lecture_tt_generator:✓ Loaded 17 subjects for lecture lookup
+INFO:modules.lecture_tt_generator:✓ Loaded 4 special constraints
+INFO:modules.lecture_tt_generator:Reading 27 workload entries…
+INFO:modules.lecture_tt_generator:✓ 27 subjects, 83 lecture slots to fill
+INFO:modules.lecture_tt_generator:   BE-A-CC: 3 lectures
+INFO:modules.lecture_tt_generator:   BE-A-NS: 3 lectures
+INFO:modules.lecture_tt_generator:   BE-A-PM: 2 lectures
+INFO:modules.lecture_tt_generator:   FY-A-BE: 3 lectures
+INFO:modules.lecture_tt_generator:   FY-A-CO: 3 lectures
+INFO:modules.lecture_tt_generator:   FY-A-CS: 2 lectures
+INFO:modules.lecture_tt_generator:   FY-A-MATHS: 4 lectures
+INFO:modules.lecture_tt_generator:   FY-A-PF: 3 lectures
+INFO:modules.lecture_tt_generator:   FY-B-BE: 3 lectures
+INFO:modules.lecture_tt_generator:   FY-B-CO: 3 lectures
+INFO:modules.lecture_tt_generator:   FY-B-CS: 2 lectures
+INFO:modules.lecture_tt_generator:   FY-B-MATHS: 4 lectures
+INFO:modules.lecture_tt_generator:   FY-B-PF: 3 lectures
+INFO:modules.lecture_tt_generator:   SY-A-CN: 3 lectures
+INFO:modules.lecture_tt_generator:   SY-A-DBMS: 3 lectures
+INFO:modules.lecture_tt_generator:   SY-A-DM: 3 lectures
+INFO:modules.lecture_tt_generator:   SY-A-DS: 4 lectures
+INFO:modules.lecture_tt_generator:   SY-A-OS: 3 lectures
+INFO:modules.lecture_tt_generator:   SY-B-CN: 3 lectures
+INFO:modules.lecture_tt_generator:   SY-B-DBMS: 3 lectures
+INFO:modules.lecture_tt_generator:   SY-B-DM: 3 lectures
+INFO:modules.lecture_tt_generator:   SY-B-DS: 4 lectures
+INFO:modules.lecture_tt_generator:   SY-B-OS: 3 lectures
+INFO:modules.lecture_tt_generator:   TY-A-AI: 3 lectures
+INFO:modules.lecture_tt_generator:   TY-A-CD: 3 lectures
+INFO:modules.lecture_tt_generator:   TY-A-ML: 4 lectures
+INFO:modules.lecture_tt_generator:   TY-A-SE: 3 lectures
+INFO:modules.lecture_tt_generator:  📌 Scheduled FIXED lecture: SY-A OS at Wednesday 09:15
+INFO:modules.lecture_tt_generator:Stable after 2 pass(es).
+INFO:modules.lecture_tt_generator:✓ Saved FY-A
+INFO:modules.lecture_tt_generator:✓ Saved FY-B
+INFO:modules.lecture_tt_generator:✓ Saved SY-A
+INFO:modules.lecture_tt_generator:✓ Saved SY-B
+INFO:modules.lecture_tt_generator:✓ Saved TY-A
+INFO:modules.lecture_tt_generator:✓ Saved BE-A
+WARNING:modules.lecture_tt_generator:⚠️  Unscheduled lectures: {'FY-B-MATHS': ['L#4'], 'FY-B-PF': ['L#3'], 'SY-A-DS': ['L#3', 'L#4'], 'SY-B-DS': ['L#4'], 'TY-A-ML': ['L#4']}
+INFO:modules.lecture_tt_generator:DONE: 77 lectures scheduled
+INFO:app:✓ Scheduled 77 lectures
+INFO:app:
+================================================================================
+INFO:app:✅ COMPLETE TIMETABLE GENERATION FINISHED
+INFO:app:================================================================================
+INFO:werkzeug:127.0.0.1 - - [19/Apr/2026 22:55:40] "[35m[1mPOST /api/regenerate_master_practical_timetable HTTP/1.1[0m" 201 -
+INFO:werkzeug:127.0.0.1 - - [19/Apr/2026 22:55:40] "GET /api/subjects HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Apr/2026 22:55:40] "GET /api/faculty HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Apr/2026 22:55:40] "GET /api/labs HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Apr/2026 22:55:40] "GET /api/class_structure HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Apr/2026 22:55:41] "POST /api/auth/authenticate HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Apr/2026 22:55:41] "[31m[1mPOST /api/subjects HTTP/1.1[0m" 400 -
+INFO:werkzeug:127.0.0.1 - - [19/Apr/2026 22:55:41] "POST /api/auth/authenticate HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Apr/2026 22:55:41] "[31m[1mPOST /api/subjects HTTP/1.1[0m" 400 -
+INFO:werkzeug:127.0.0.1 - - [19/Apr/2026 22:55:41] "POST /api/auth/authenticate HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Apr/2026 22:55:41] "[31m[1mPOST /api/subjects HTTP/1.1[0m" 409 -
+INFO:werkzeug:127.0.0.1 - - [19/Apr/2026 22:55:42] "POST /api/auth/authenticate HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Apr/2026 22:55:42] "[31m[1mPOST /api/subjects HTTP/1.1[0m" 400 -
+INFO:werkzeug:127.0.0.1 - - [19/Apr/2026 22:55:42] "POST /api/auth/authenticate HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Apr/2026 22:55:42] "[31m[1mPOST /api/faculty HTTP/1.1[0m" 400 -
+INFO:werkzeug:127.0.0.1 - - [19/Apr/2026 22:55:42] "POST /api/auth/authenticate HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Apr/2026 22:55:42] "[31m[1mDELETE /api/faculty HTTP/1.1[0m" 400 -
+INFO:werkzeug:127.0.0.1 - - [19/Apr/2026 22:55:42] "POST /api/auth/authenticate HTTP/1.1" 200 -
+INFO:app:================================================================================
+INFO:app:STARTING COMPLETE TIMETABLE GENERATION
+INFO:app:================================================================================
+INFO:app:
+[STEP 1] Deleting existing timetables...
+INFO:app:✓ Deleted 4 lab timetables, 6 class timetables
+INFO:app:
+[STEP 2] Generating master practical timetable...
+INFO:modules.timetable_generator:================================================================================
+INFO:modules.timetable_generator:STARTING PRACTICAL TIMETABLE GENERATION
+INFO:modules.timetable_generator:================================================================================
+INFO:modules.timetable_generator:✓ Loaded 4 labs
+INFO:modules.timetable_generator:✓ Loaded 4 special constraints
+INFO:modules.timetable_generator:✓ Loaded 11 faculty
+INFO:modules.timetable_generator:✓ Loaded 17 subjects
+INFO:modules.timetable_generator:Reading 27 workload entries…
+INFO:modules.timetable_generator:  Skipping FY-A-MATHS: no practicals needed
+INFO:modules.timetable_generator:  Skipping FY-A-CS: no practicals needed
+INFO:modules.timetable_generator:  Skipping FY-B-MATHS: no practicals needed
+INFO:modules.timetable_generator:  Skipping FY-B-CS: no practicals needed
+INFO:modules.timetable_generator:  Skipping SY-A-CN: no practicals needed
+INFO:modules.timetable_generator:  Skipping SY-A-DM: no practicals needed
+INFO:modules.timetable_generator:  Skipping SY-B-CN: no practicals needed
+INFO:modules.timetable_generator:  Skipping SY-B-DM: no practicals needed
+INFO:modules.timetable_generator:  Skipping TY-A-SE: no practicals needed
+INFO:modules.timetable_generator:  Skipping TY-A-AI: no practicals needed
+INFO:modules.timetable_generator:  Skipping BE-A-CC: no practicals needed
+INFO:modules.timetable_generator:  Skipping BE-A-PM: no practicals needed
+INFO:modules.timetable_generator:✓ 12 batch-queues, 30 practical sessions to schedule
+INFO:modules.timetable_generator:   BE-A-B1: ['NS(S1)']
+INFO:modules.timetable_generator:   BE-A-B2: ['NS(S1)']
+INFO:modules.timetable_generator:   FY-A-B1: ['PF(S1)', 'BE(S1)', 'CO(S1)']
+INFO:modules.timetable_generator:   FY-A-B2: ['PF(S1)', 'BE(S1)', 'CO(S1)']
+INFO:modules.timetable_generator:   FY-B-B1: ['PF(S1)', 'BE(S1)', 'CO(S1)']
+INFO:modules.timetable_generator:   FY-B-B2: ['PF(S1)', 'BE(S1)', 'CO(S1)']
+INFO:modules.timetable_generator:   SY-A-B1: ['DS(S1)', 'DBMS(S1)', 'OS(S1)']
+INFO:modules.timetable_generator:   SY-A-B2: ['DS(S1)', 'DBMS(S1)', 'OS(S1)']
+INFO:modules.timetable_generator:   SY-B-B1: ['DS(S1)', 'DBMS(S1)', 'OS(S1)']
+INFO:modules.timetable_generator:   SY-B-B2: ['DS(S1)', 'DBMS(S1)', 'OS(S1)']
+INFO:modules.timetable_generator:   TY-A-B1: ['ML(S1)', 'CD(S1)']
+INFO:modules.timetable_generator:   TY-A-B2: ['ML(S1)', 'CD(S1)']
+INFO:modules.timetable_generator:  ✓ BE-A-B1 NS → Network Lab @ Monday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ FY-A-B1 PF → Computer Lab 1 @ Monday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ FY-A-B2 BE → Electronics Lab @ Monday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ FY-B-B1 CO → Computer Lab 2 @ Monday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ BE-A-B2 NS → Network Lab @ Monday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ FY-A-B1 BE → Electronics Lab @ Monday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ FY-A-B2 PF → Computer Lab 1 @ Monday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ FY-B-B2 CO → Computer Lab 2 @ Monday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ FY-A-B1 CO → Computer Lab 1 @ Monday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ FY-B-B1 BE → Electronics Lab @ Monday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ SY-A-B1 DBMS → Computer Lab 2 @ Monday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ SY-A-B2 OS → Network Lab @ Monday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ FY-A-B2 CO → Computer Lab 1 @ Tuesday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ FY-B-B2 BE → Electronics Lab @ Tuesday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ SY-A-B1 OS → Computer Lab 2 @ Tuesday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ TY-A-B1 CD → Network Lab @ Tuesday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ FY-B-B1 PF → Computer Lab 1 @ Tuesday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ SY-A-B2 DBMS → Computer Lab 2 @ Tuesday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ SY-B-B1 OS → Network Lab @ Tuesday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ FY-B-B2 PF → Computer Lab 1 @ Tuesday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ SY-B-B1 DBMS → Computer Lab 2 @ Tuesday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ SY-B-B2 OS → Network Lab @ Tuesday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ SY-B-B1 DS → Computer Lab 1 @ Wednesday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ SY-B-B2 DBMS → Computer Lab 2 @ Wednesday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ TY-A-B2 CD → Network Lab @ Wednesday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ SY-A-B1 DS → Computer Lab 1 @ Wednesday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ TY-A-B1 ML → Computer Lab 2 @ Wednesday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ SY-A-B2 DS → Computer Lab 1 @ Wednesday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ TY-A-B2 ML → Computer Lab 2 @ Wednesday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ SY-B-B2 DS → Computer Lab 1 @ Thursday 09:15+10:15
+INFO:modules.timetable_generator:Pass 1: 0 remaining
+INFO:modules.timetable_generator:✅ All done after 1 pass(es).
+INFO:modules.timetable_generator:✓ Saved lab: Computer Lab 1
+INFO:modules.timetable_generator:✓ Saved lab: Computer Lab 2
+INFO:modules.timetable_generator:✓ Saved lab: Network Lab
+INFO:modules.timetable_generator:✓ Saved lab: Electronics Lab
+INFO:modules.timetable_generator:✅ All practicals scheduled!
+INFO:modules.timetable_generator:DONE: 30 sessions scheduled
+INFO:app:
+[STEP 3] Building class timetables from master lab timetable...
+INFO:modules.class_timetable_handler:Starting class timetable generation…
+INFO:modules.class_timetable_handler:Deleted 0 existing class timetables
+INFO:modules.class_timetable_handler:Found 6 class-division groups
+INFO:modules.class_timetable_handler:Created FY-A (12 practical slot-entries)
+INFO:modules.class_timetable_handler:Created FY-B (12 practical slot-entries)
+INFO:modules.class_timetable_handler:Created SY-A (12 practical slot-entries)
+INFO:modules.class_timetable_handler:Created SY-B (12 practical slot-entries)
+INFO:modules.class_timetable_handler:Created TY-A (8 practical slot-entries)
+INFO:modules.class_timetable_handler:Created BE-A (4 practical slot-entries)
+INFO:modules.class_timetable_handler:✅ Created 6 class timetables
+INFO:app:✓ Generated 6 class timetables
+INFO:app:
+[STEP 4] Generating lecture timetable...
+INFO:modules.lecture_tt_generator:================================================================================
+INFO:modules.lecture_tt_generator:STARTING LECTURE TIMETABLE GENERATION
+INFO:modules.lecture_tt_generator:================================================================================
+INFO:modules.lecture_tt_generator:✓ Loaded 6 class timetables
+INFO:modules.lecture_tt_generator:✓ Loaded 17 subjects for lecture lookup
+INFO:modules.lecture_tt_generator:✓ Loaded 4 special constraints
+INFO:modules.lecture_tt_generator:Reading 27 workload entries…
+INFO:modules.lecture_tt_generator:✓ 27 subjects, 83 lecture slots to fill
+INFO:modules.lecture_tt_generator:   BE-A-CC: 3 lectures
+INFO:modules.lecture_tt_generator:   BE-A-NS: 3 lectures
+INFO:modules.lecture_tt_generator:   BE-A-PM: 2 lectures
+INFO:modules.lecture_tt_generator:   FY-A-BE: 3 lectures
+INFO:modules.lecture_tt_generator:   FY-A-CO: 3 lectures
+INFO:modules.lecture_tt_generator:   FY-A-CS: 2 lectures
+INFO:modules.lecture_tt_generator:   FY-A-MATHS: 4 lectures
+INFO:modules.lecture_tt_generator:   FY-A-PF: 3 lectures
+INFO:modules.lecture_tt_generator:   FY-B-BE: 3 lectures
+INFO:modules.lecture_tt_generator:   FY-B-CO: 3 lectures
+INFO:modules.lecture_tt_generator:   FY-B-CS: 2 lectures
+INFO:modules.lecture_tt_generator:   FY-B-MATHS: 4 lectures
+INFO:modules.lecture_tt_generator:   FY-B-PF: 3 lectures
+INFO:modules.lecture_tt_generator:   SY-A-CN: 3 lectures
+INFO:modules.lecture_tt_generator:   SY-A-DBMS: 3 lectures
+INFO:modules.lecture_tt_generator:   SY-A-DM: 3 lectures
+INFO:modules.lecture_tt_generator:   SY-A-DS: 4 lectures
+INFO:modules.lecture_tt_generator:   SY-A-OS: 3 lectures
+INFO:modules.lecture_tt_generator:   SY-B-CN: 3 lectures
+INFO:modules.lecture_tt_generator:   SY-B-DBMS: 3 lectures
+INFO:modules.lecture_tt_generator:   SY-B-DM: 3 lectures
+INFO:modules.lecture_tt_generator:   SY-B-DS: 4 lectures
+INFO:modules.lecture_tt_generator:   SY-B-OS: 3 lectures
+INFO:modules.lecture_tt_generator:   TY-A-AI: 3 lectures
+INFO:modules.lecture_tt_generator:   TY-A-CD: 3 lectures
+INFO:modules.lecture_tt_generator:   TY-A-ML: 4 lectures
+INFO:modules.lecture_tt_generator:   TY-A-SE: 3 lectures
+INFO:modules.lecture_tt_generator:  📌 Scheduled FIXED lecture: SY-A OS at Wednesday 09:15
+INFO:modules.lecture_tt_generator:Stable after 2 pass(es).
+INFO:modules.lecture_tt_generator:✓ Saved FY-A
+INFO:modules.lecture_tt_generator:✓ Saved FY-B
+INFO:modules.lecture_tt_generator:✓ Saved SY-A
+INFO:modules.lecture_tt_generator:✓ Saved SY-B
+INFO:modules.lecture_tt_generator:✓ Saved TY-A
+INFO:modules.lecture_tt_generator:✓ Saved BE-A
+WARNING:modules.lecture_tt_generator:⚠️  Unscheduled lectures: {'FY-B-MATHS': ['L#4'], 'FY-B-PF': ['L#3'], 'SY-A-DS': ['L#3', 'L#4'], 'SY-B-DS': ['L#4'], 'TY-A-ML': ['L#4']}
+INFO:modules.lecture_tt_generator:DONE: 77 lectures scheduled
+INFO:app:✓ Scheduled 77 lectures
+INFO:app:
+================================================================================
+INFO:app:✅ COMPLETE TIMETABLE GENERATION FINISHED
+INFO:app:================================================================================
+INFO:werkzeug:127.0.0.1 - - [19/Apr/2026 22:55:42] "[35m[1mPOST /api/regenerate_master_practical_timetable HTTP/1.1[0m" 201 -
+INFO:werkzeug:127.0.0.1 - - [19/Apr/2026 22:55:42] "POST /api/auth/authenticate HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [19/Apr/2026 22:55:43] "[31m[1mPOST /api/faculty_workload HTTP/1.1[0m" 400 -
+INFO:werkzeug:127.0.0.1 - - [19/Apr/2026 22:56:05] "POST /api/auth/authenticate HTTP/1.1" 200 -
+INFO:app:================================================================================
+INFO:app:STARTING COMPLETE TIMETABLE GENERATION
+INFO:app:================================================================================
+INFO:app:
+[STEP 1] Deleting existing timetables...
+INFO:app:✓ Deleted 4 lab timetables, 6 class timetables
+INFO:app:
+[STEP 2] Generating master practical timetable...
+INFO:modules.timetable_generator:================================================================================
+INFO:modules.timetable_generator:STARTING PRACTICAL TIMETABLE GENERATION
+INFO:modules.timetable_generator:================================================================================
+INFO:modules.timetable_generator:✓ Loaded 4 labs
+INFO:modules.timetable_generator:✓ Loaded 4 special constraints
+INFO:modules.timetable_generator:✓ Loaded 11 faculty
+INFO:modules.timetable_generator:✓ Loaded 17 subjects
+INFO:modules.timetable_generator:Reading 27 workload entries…
+INFO:modules.timetable_generator:  Skipping FY-A-MATHS: no practicals needed
+INFO:modules.timetable_generator:  Skipping FY-A-CS: no practicals needed
+INFO:modules.timetable_generator:  Skipping FY-B-MATHS: no practicals needed
+INFO:modules.timetable_generator:  Skipping FY-B-CS: no practicals needed
+INFO:modules.timetable_generator:  Skipping SY-A-CN: no practicals needed
+INFO:modules.timetable_generator:  Skipping SY-A-DM: no practicals needed
+INFO:modules.timetable_generator:  Skipping SY-B-CN: no practicals needed
+INFO:modules.timetable_generator:  Skipping SY-B-DM: no practicals needed
+INFO:modules.timetable_generator:  Skipping TY-A-SE: no practicals needed
+INFO:modules.timetable_generator:  Skipping TY-A-AI: no practicals needed
+INFO:modules.timetable_generator:  Skipping BE-A-CC: no practicals needed
+INFO:modules.timetable_generator:  Skipping BE-A-PM: no practicals needed
+INFO:modules.timetable_generator:✓ 12 batch-queues, 30 practical sessions to schedule
+INFO:modules.timetable_generator:   BE-A-B1: ['NS(S1)']
+INFO:modules.timetable_generator:   BE-A-B2: ['NS(S1)']
+INFO:modules.timetable_generator:   FY-A-B1: ['PF(S1)', 'BE(S1)', 'CO(S1)']
+INFO:modules.timetable_generator:   FY-A-B2: ['PF(S1)', 'BE(S1)', 'CO(S1)']
+INFO:modules.timetable_generator:   FY-B-B1: ['PF(S1)', 'BE(S1)', 'CO(S1)']
+INFO:modules.timetable_generator:   FY-B-B2: ['PF(S1)', 'BE(S1)', 'CO(S1)']
+INFO:modules.timetable_generator:   SY-A-B1: ['DS(S1)', 'DBMS(S1)', 'OS(S1)']
+INFO:modules.timetable_generator:   SY-A-B2: ['DS(S1)', 'DBMS(S1)', 'OS(S1)']
+INFO:modules.timetable_generator:   SY-B-B1: ['DS(S1)', 'DBMS(S1)', 'OS(S1)']
+INFO:modules.timetable_generator:   SY-B-B2: ['DS(S1)', 'DBMS(S1)', 'OS(S1)']
+INFO:modules.timetable_generator:   TY-A-B1: ['ML(S1)', 'CD(S1)']
+INFO:modules.timetable_generator:   TY-A-B2: ['ML(S1)', 'CD(S1)']
+INFO:modules.timetable_generator:  ✓ BE-A-B1 NS → Network Lab @ Monday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ FY-A-B1 PF → Computer Lab 1 @ Monday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ FY-A-B2 BE → Electronics Lab @ Monday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ FY-B-B1 CO → Computer Lab 2 @ Monday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ BE-A-B2 NS → Network Lab @ Monday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ FY-A-B1 BE → Electronics Lab @ Monday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ FY-A-B2 PF → Computer Lab 1 @ Monday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ FY-B-B2 CO → Computer Lab 2 @ Monday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ FY-A-B1 CO → Computer Lab 1 @ Monday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ FY-B-B1 BE → Electronics Lab @ Monday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ SY-A-B1 DBMS → Computer Lab 2 @ Monday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ SY-A-B2 OS → Network Lab @ Monday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ FY-A-B2 CO → Computer Lab 1 @ Tuesday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ FY-B-B2 BE → Electronics Lab @ Tuesday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ SY-A-B1 OS → Computer Lab 2 @ Tuesday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ TY-A-B1 CD → Network Lab @ Tuesday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ FY-B-B1 PF → Computer Lab 1 @ Tuesday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ SY-A-B2 DBMS → Computer Lab 2 @ Tuesday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ SY-B-B1 OS → Network Lab @ Tuesday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ FY-B-B2 PF → Computer Lab 1 @ Tuesday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ SY-B-B1 DBMS → Computer Lab 2 @ Tuesday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ SY-B-B2 OS → Network Lab @ Tuesday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ SY-B-B1 DS → Computer Lab 1 @ Wednesday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ SY-B-B2 DBMS → Computer Lab 2 @ Wednesday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ TY-A-B2 CD → Network Lab @ Wednesday 09:15+10:15
+INFO:modules.timetable_generator:  ✓ SY-A-B1 DS → Computer Lab 1 @ Wednesday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ TY-A-B1 ML → Computer Lab 2 @ Wednesday 11:15+12:15
+INFO:modules.timetable_generator:  ✓ SY-A-B2 DS → Computer Lab 1 @ Wednesday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ TY-A-B2 ML → Computer Lab 2 @ Wednesday 14:15+15:15
+INFO:modules.timetable_generator:  ✓ SY-B-B2 DS → Computer Lab 1 @ Thursday 09:15+10:15
+INFO:modules.timetable_generator:Pass 1: 0 remaining
+INFO:modules.timetable_generator:✅ All done after 1 pass(es).
+INFO:modules.timetable_generator:✓ Saved lab: Computer Lab 1
+INFO:modules.timetable_generator:✓ Saved lab: Computer Lab 2
+INFO:modules.timetable_generator:✓ Saved lab: Network Lab
+INFO:modules.timetable_generator:✓ Saved lab: Electronics Lab
+INFO:modules.timetable_generator:✅ All practicals scheduled!
+INFO:modules.timetable_generator:DONE: 30 sessions scheduled
+INFO:app:
+[STEP 3] Building class timetables from master lab timetable...
+INFO:modules.class_timetable_handler:Starting class timetable generation…
+INFO:modules.class_timetable_handler:Deleted 0 existing class timetables
+INFO:modules.class_timetable_handler:Found 6 class-division groups
+INFO:modules.class_timetable_handler:Created FY-A (12 practical slot-entries)
+INFO:modules.class_timetable_handler:Created FY-B (12 practical slot-entries)
+INFO:modules.class_timetable_handler:Created SY-A (12 practical slot-entries)
+INFO:modules.class_timetable_handler:Created SY-B (12 practical slot-entries)
+INFO:modules.class_timetable_handler:Created TY-A (8 practical slot-entries)
+INFO:modules.class_timetable_handler:Created BE-A (4 practical slot-entries)
+INFO:modules.class_timetable_handler:✅ Created 6 class timetables
+INFO:app:✓ Generated 6 class timetables
+INFO:app:
+[STEP 4] Generating lecture timetable...
+INFO:modules.lecture_tt_generator:================================================================================
+INFO:modules.lecture_tt_generator:STARTING LECTURE TIMETABLE GENERATION
+INFO:modules.lecture_tt_generator:================================================================================
+INFO:modules.lecture_tt_generator:✓ Loaded 6 class timetables
+INFO:modules.lecture_tt_generator:✓ Loaded 17 subjects for lecture lookup
+INFO:modules.lecture_tt_generator:✓ Loaded 4 special constraints
+INFO:modules.lecture_tt_generator:Reading 27 workload entries…
+INFO:modules.lecture_tt_generator:✓ 27 subjects, 83 lecture slots to fill
+INFO:modules.lecture_tt_generator:   BE-A-CC: 3 lectures
+INFO:modules.lecture_tt_generator:   BE-A-NS: 3 lectures
+INFO:modules.lecture_tt_generator:   BE-A-PM: 2 lectures
+INFO:modules.lecture_tt_generator:   FY-A-BE: 3 lectures
+INFO:modules.lecture_tt_generator:   FY-A-CO: 3 lectures
+INFO:modules.lecture_tt_generator:   FY-A-CS: 2 lectures
+INFO:modules.lecture_tt_generator:   FY-A-MATHS: 4 lectures
+INFO:modules.lecture_tt_generator:   FY-A-PF: 3 lectures
+INFO:modules.lecture_tt_generator:   FY-B-BE: 3 lectures
+INFO:modules.lecture_tt_generator:   FY-B-CO: 3 lectures
+INFO:modules.lecture_tt_generator:   FY-B-CS: 2 lectures
+INFO:modules.lecture_tt_generator:   FY-B-MATHS: 4 lectures
+INFO:modules.lecture_tt_generator:   FY-B-PF: 3 lectures
+INFO:modules.lecture_tt_generator:   SY-A-CN: 3 lectures
+INFO:modules.lecture_tt_generator:   SY-A-DBMS: 3 lectures
+INFO:modules.lecture_tt_generator:   SY-A-DM: 3 lectures
+INFO:modules.lecture_tt_generator:   SY-A-DS: 4 lectures
+INFO:modules.lecture_tt_generator:   SY-A-OS: 3 lectures
+INFO:modules.lecture_tt_generator:   SY-B-CN: 3 lectures
+INFO:modules.lecture_tt_generator:   SY-B-DBMS: 3 lectures
+INFO:modules.lecture_tt_generator:   SY-B-DM: 3 lectures
+INFO:modules.lecture_tt_generator:   SY-B-DS: 4 lectures
+INFO:modules.lecture_tt_generator:   SY-B-OS: 3 lectures
+INFO:modules.lecture_tt_generator:   TY-A-AI: 3 lectures
+INFO:modules.lecture_tt_generator:   TY-A-CD: 3 lectures
+INFO:modules.lecture_tt_generator:   TY-A-ML: 4 lectures
+INFO:modules.lecture_tt_generator:   TY-A-SE: 3 lectures
+INFO:modules.lecture_tt_generator:  📌 Scheduled FIXED lecture: SY-A OS at Wednesday 09:15
+INFO:modules.lecture_tt_generator:Stable after 2 pass(es).
+INFO:modules.lecture_tt_generator:✓ Saved FY-A
+INFO:modules.lecture_tt_generator:✓ Saved FY-B
+INFO:modules.lecture_tt_generator:✓ Saved SY-A
+INFO:modules.lecture_tt_generator:✓ Saved SY-B
+INFO:modules.lecture_tt_generator:✓ Saved TY-A
+INFO:modules.lecture_tt_generator:✓ Saved BE-A
+WARNING:modules.lecture_tt_generator:⚠️  Unscheduled lectures: {'FY-B-MATHS': ['L#4'], 'FY-B-PF': ['L#3'], 'SY-A-DS': ['L#3', 'L#4'], 'SY-B-DS': ['L#4'], 'TY-A-ML': ['L#4']}
+INFO:modules.lecture_tt_generator:DONE: 77 lectures scheduled
+INFO:app:✓ Scheduled 77 lectures
+INFO:app:
+================================================================================
+INFO:app:✅ COMPLETE TIMETABLE GENERATION FINISHED
+INFO:app:================================================================================
+INFO:werkzeug:127.0.0.1 - - [19/Apr/2026 22:56:06] "[35m[1mPOST /api/regenerate_master_practical_timetable HTTP/1.1[0m" 201 -
+INFO:apscheduler.executors.default:Running job "check_reminders_job (trigger: interval[0:01:00], next run at: 2026-04-19 22:56:33 IST)" (scheduled at 2026-04-19 22:56:33.217722+05:30)
+INFO:modules.notification_handler:Notification Check: Sunday at 23:01 (Now: 22:56)
+INFO:apscheduler.executors.default:Job "check_reminders_job (trigger: interval[0:01:00], next run at: 2026-04-19 22:57:33 IST)" executed successfully
+INFO:apscheduler.executors.default:Running job "check_reminders_job (trigger: interval[0:01:00], next run at: 2026-04-19 22:58:33 IST)" (scheduled at 2026-04-19 22:57:33.217722+05:30)
+INFO:modules.notification_handler:Notification Check: Sunday at 23:02 (Now: 22:57)
+INFO:apscheduler.executors.default:Job "check_reminders_job (trigger: interval[0:01:00], next run at: 2026-04-19 22:58:33 IST)" executed successfully

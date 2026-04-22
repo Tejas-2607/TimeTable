@@ -5,10 +5,7 @@ import datetime
 from flask import jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson import ObjectId
-from config import db
-
-# Configuration
-SECRET_KEY = 'your_secret_key_here' # In production, use environment variable
+from config import db, SECRET_KEY
 faculty_collection = db['faculty']
 
 def login_or_register(data):
