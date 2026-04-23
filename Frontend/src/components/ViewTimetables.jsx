@@ -333,12 +333,17 @@ export default function ViewTimetables() {
 
   // 1. Landing view — 4 main cards
   const renderLanding = () => (
-    <div className="space-y-10">
-      <section>
-        <h3 className="text-xl font-bold text-slate-700 mb-6 flex items-center gap-2">
-          <span className="inline-block w-1.5 h-6 bg-blue-500 rounded-full" />
-          Timetable Dashboard
-        </h3>
+    <div className="space-y-6">
+      <section className="bg-white/40 backdrop-blur-md rounded-3xl p-8 border border-white/50 shadow-xl shadow-slate-200/50">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h3 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+              <span className="w-2 h-8 bg-gradient-to-b from-blue-500 to-indigo-600 rounded-full" />
+              Timetable Dashboard
+            </h3>
+            <p className="text-slate-500 mt-1 ml-5">Select a category to view consolidated schedules</p>
+          </div>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* 1. Master Practical Plan */}
           <button
@@ -431,18 +436,35 @@ export default function ViewTimetables() {
       </section>
 
       {/* Stats/Info Section */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div className="bg-slate-100/50 rounded-2xl p-6 border border-slate-200">
-           <p className="text-slate-500 text-sm font-medium mb-1 uppercase tracking-wider">Total Sessions</p>
-           <p className="text-3xl font-bold text-slate-800">{timetables.reduce((acc, curr) => acc + (curr.total_practicals || 0), 0)} Practicals</p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-emerald-100/50 shadow-sm flex items-center gap-3">
+           <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
+             <FlaskConical size={20} />
+           </div>
+           <div>
+             <p className="text-slate-400 text-[10px] font-semibold uppercase tracking-wider">Total Sessions</p>
+             <p className="text-xl font-bold text-slate-800">{timetables.reduce((acc, curr) => acc + (curr.total_practicals || 0), 0)} <span className="text-xs font-medium text-slate-500">Practs</span></p>
+           </div>
         </div>
-        <div className="bg-slate-100/50 rounded-2xl p-6 border border-slate-200">
-           <p className="text-slate-500 text-sm font-medium mb-1 uppercase tracking-wider">Last Generated</p>
-           <p className="text-3xl font-bold text-slate-800">{latestDate.split(',')[0]}</p>
+
+        <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-blue-100/50 shadow-sm flex items-center gap-3">
+           <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+             <Clock size={20} />
+           </div>
+           <div>
+             <p className="text-slate-400 text-[10px] font-semibold uppercase tracking-wider">Last Gen</p>
+             <p className="text-xl font-bold text-slate-800">{latestDate.split(',')[0]}</p>
+           </div>
         </div>
-        <div className="bg-slate-100/50 rounded-2xl p-6 border border-slate-200">
-           <p className="text-slate-500 text-sm font-medium mb-1 uppercase tracking-wider">Classes Covered</p>
-           <p className="text-3xl font-bold text-slate-800">{timetables.length}</p>
+
+        <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-indigo-100/50 shadow-sm flex items-center gap-3">
+           <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
+             <UsersIcon size={20} />
+           </div>
+           <div>
+             <p className="text-slate-400 text-[10px] font-semibold uppercase tracking-wider">Classes</p>
+             <p className="text-xl font-bold text-slate-800">{timetables.length} <span className="text-xs font-medium text-slate-500">Divs</span></p>
+           </div>
         </div>
       </div>
     </div>
@@ -589,11 +611,10 @@ export default function ViewTimetables() {
 
   // ============================= ROOT =============================
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8 print:p-0 print:bg-white">
-      <div className="max-w-[1800px] mx-auto">
-        <div className="mb-8 print:hidden">
-          <h1 className="text-3xl font-bold text-slate-800 tracking-tight">View Timetables</h1>
-          <p className="text-slate-500 mt-2">Browse and inspect generated class timetables</p>
+    <div className="h-full bg-gradient-to-br from-slate-50 to-slate-100 p-6 print:p-0 print:bg-white overflow-hidden flex flex-col">
+      <div className="max-w-[1600px] mx-auto w-full flex-1 flex flex-col min-h-0">
+        <div className="mb-6 print:hidden shrink-0">
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">View Timetables</h1>
         </div>
 
         {error && (
