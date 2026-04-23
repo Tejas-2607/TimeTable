@@ -1,15 +1,40 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { getClassTimetables } from '../services/classTimetableService';
 import { getMasterTimetables } from '../services/masterTimetableService';
 import {
   Clock, ArrowLeft, Calendar, ChevronRight, BookOpen,
-  Users as UsersIcon, FlaskConical, Layers, Printer
+  Users as UsersIcon, FlaskConical, Layers, Printer,
+  Briefcase, Grid3x3
 } from 'lucide-react';
 
 
+import FacultyTimetables from './FacultyTimetables';
+import LabTimetables from './LabTimetables';
+
 export default function ViewTimetables() {
-  // views: 'landing' | 'classCards' | 'schedule' | 'practicalTable'
+  const navigate = useNavigate();
+  const { tab } = useParams();
+
+  // views: 'landing' | 'classCards' | 'schedule' | 'practicalTable' | 'faculty' | 'labs'
   const [view, setView] = useState('landing');
+
+  // Map URL tabs to internal view states
+  useEffect(() => {
+    if (!tab) {
+        setView('landing');
+        setSelectedClass(null);
+    } else if (tab === 'classes') {
+        // If we are in 'schedule' view but navigate to 'classes', it means we are going back to the list
+        setView('classCards');
+    } else if (tab === 'practical') {
+        setView('practicalTable');
+    } else if (tab === 'faculty') {
+        setView('faculty');
+    } else if (tab === 'labs') {
+        setView('labs');
+    }
+  }, [tab]);
   const [timetables, setTimetables] = useState([]);
   const [practicalData, setPracticalData] = useState(null);
   const [selectedClass, setSelectedClass] = useState(null);
@@ -306,52 +331,120 @@ export default function ViewTimetables() {
 
   // ============================= VIEWS =============================
 
-  // 1. Landing view — single card for latest timetable
+  // 1. Landing view — 4 main cards
   const renderLanding = () => (
     <div className="space-y-10">
-      {/* Latest Timetable */}
       <section>
-        <h3 className="text-xl font-bold text-slate-700 mb-4 flex items-center gap-2">
+        <h3 className="text-xl font-bold text-slate-700 mb-6 flex items-center gap-2">
           <span className="inline-block w-1.5 h-6 bg-blue-500 rounded-full" />
-          Latest Timetable
+          Timetable Dashboard
         </h3>
-        <button
-          onClick={() => setView('classCards')}
-          className="group w-full max-w-md bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200 hover:border-blue-300 transition-all duration-300 p-6 text-left cursor-pointer"
-        >
-          <div className="flex items-center justify-between">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* 1. Master Practical Plan */}
+          <button
+            onClick={() => navigate('/view/practical')}
+            className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200 hover:border-emerald-300 transition-all duration-300 p-6 text-left cursor-pointer"
+          >
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-md shadow-blue-500/20">
-                <Calendar size={28} className="text-white" />
+              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                <FlaskConical size={32} className="text-white" />
               </div>
               <div>
-                <p className="font-bold text-lg text-slate-800 group-hover:text-blue-700 transition-colors">
-                  Class Timetables
+                <p className="font-bold text-xl text-slate-800 group-hover:text-emerald-700 transition-colors">
+                  Master Practical Plan
                 </p>
-                <p className="text-sm text-slate-500 mt-0.5">
-                  {timetables.length} class{timetables.length !== 1 ? 'es' : ''} generated
-                </p>
-                <p className="text-xs text-slate-400 mt-1">
-                  {latestDate}
-                </p>
+                <p className="text-sm text-slate-500 mt-1">Lab-wise schedule across all years</p>
               </div>
             </div>
-            <ChevronRight size={22} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
-          </div>
-        </button>
-      </section>
+            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-xs font-medium text-slate-400 group-hover:text-emerald-500">View lab allocations</span>
+              <ChevronRight size={18} className="text-slate-300 group-hover:text-emerald-500 transition-transform group-hover:translate-x-1" />
+            </div>
+          </button>
 
-      {/* Previous Timetables */}
-      <section>
-        <h3 className="text-xl font-bold text-slate-700 mb-4 flex items-center gap-2">
-          <span className="inline-block w-1.5 h-6 bg-slate-400 rounded-full" />
-          Previous Timetables
-        </h3>
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-10 text-center">
-          <Layers size={40} className="mx-auto mb-3 text-slate-300" />
-          <p className="text-slate-400 text-sm">No previous timetables available</p>
+          {/* 2. Class Timetables */}
+          <button
+            onClick={() => navigate('/view/classes')}
+            className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200 hover:border-blue-300 transition-all duration-300 p-6 text-left cursor-pointer"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <Calendar size={32} className="text-white" />
+              </div>
+              <div>
+                <p className="font-bold text-xl text-slate-800 group-hover:text-blue-700 transition-colors">
+                  Class Timetables
+                </p>
+                <p className="text-sm text-slate-500 mt-1">{timetables.length} classes generated</p>
+              </div>
+            </div>
+            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-xs font-medium text-slate-400 group-hover:text-blue-500">Browse by class/div</span>
+              <ChevronRight size={18} className="text-slate-300 group-hover:text-blue-500 transition-transform group-hover:translate-x-1" />
+            </div>
+          </button>
+
+          {/* 3. Faculty Timetables */}
+          <button
+            onClick={() => navigate('/view/faculty')}
+            className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200 hover:border-indigo-300 transition-all duration-300 p-6 text-left cursor-pointer"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <Briefcase size={32} className="text-white" />
+              </div>
+              <div>
+                <p className="font-bold text-xl text-slate-800 group-hover:text-indigo-700 transition-colors">
+                  Faculty Timetables
+                </p>
+                <p className="text-sm text-slate-500 mt-1">Personal schedules for all staff</p>
+              </div>
+            </div>
+            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-xs font-medium text-slate-400 group-hover:text-indigo-500">Search by name</span>
+              <ChevronRight size={18} className="text-slate-300 group-hover:text-indigo-500 transition-transform group-hover:translate-x-1" />
+            </div>
+          </button>
+
+          {/* 4. Lab Timetables */}
+          <button
+            onClick={() => navigate('/view/labs')}
+            className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200 hover:border-teal-300 transition-all duration-300 p-6 text-left cursor-pointer"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/20">
+                <Grid3x3 size={32} className="text-white" />
+              </div>
+              <div>
+                <p className="font-bold text-xl text-slate-800 group-hover:text-teal-700 transition-colors">
+                  Lab Timetables
+                </p>
+                <p className="text-sm text-slate-500 mt-1">Consolidated schedules for laboratories</p>
+              </div>
+            </div>
+            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-xs font-medium text-slate-400 group-hover:text-teal-500">View lab directory</span>
+              <ChevronRight size={18} className="text-slate-300 group-hover:text-teal-500 transition-transform group-hover:translate-x-1" />
+            </div>
+          </button>
         </div>
       </section>
+
+      {/* Stats/Info Section */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="bg-slate-100/50 rounded-2xl p-6 border border-slate-200">
+           <p className="text-slate-500 text-sm font-medium mb-1 uppercase tracking-wider">Total Sessions</p>
+           <p className="text-3xl font-bold text-slate-800">{timetables.reduce((acc, curr) => acc + (curr.total_practicals || 0), 0)} Practicals</p>
+        </div>
+        <div className="bg-slate-100/50 rounded-2xl p-6 border border-slate-200">
+           <p className="text-slate-500 text-sm font-medium mb-1 uppercase tracking-wider">Last Generated</p>
+           <p className="text-3xl font-bold text-slate-800">{latestDate.split(',')[0]}</p>
+        </div>
+        <div className="bg-slate-100/50 rounded-2xl p-6 border border-slate-200">
+           <p className="text-slate-500 text-sm font-medium mb-1 uppercase tracking-wider">Classes Covered</p>
+           <p className="text-3xl font-bold text-slate-800">{timetables.length}</p>
+        </div>
+      </div>
     </div>
   );
 
@@ -359,42 +452,20 @@ export default function ViewTimetables() {
   const renderClassCards = () => (
     <div className="space-y-10">
       <button
-        onClick={() => setView('landing')}
+        onClick={() => navigate('/view')}
         className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
       >
         <ArrowLeft size={18} />
-        Back to Timetables
+        Back to Dashboard
       </button>
 
       <section>
         <h3 className="text-xl font-bold text-slate-700 mb-4 flex items-center gap-2">
           <span className="inline-block w-1.5 h-6 bg-blue-500 rounded-full" />
-          Timetables
+          Class Timetables
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {/* Practical Plan Card */}
-          <button
-            onClick={() => setView('practicalTable')}
-            className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200 hover:border-blue-300 transition-all duration-300 p-5 text-left cursor-pointer"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-md shadow-blue-500/20">
-                <FlaskConical size={20} className="text-white" />
-              </div>
-              <div>
-                <p className="font-bold text-lg text-slate-800 group-hover:text-blue-700 transition-colors">
-                  Master Practical Plan
-                </p>
-                <p className="text-xs text-slate-500">Lab-wise schedule</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-              <p className="text-xs text-slate-400">View all lab schedules</p>
-              <ChevronRight size={16} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
-            </div>
-          </button>
-
           {/* Class-wise Cards */}
           {timetables.map((tt) => (
             <button
@@ -430,11 +501,15 @@ export default function ViewTimetables() {
     return (
       <div className="print:px-0">
         <button
-          onClick={() => { setSelectedClass(null); setView('classCards'); }}
+          onClick={() => {
+            setSelectedClass(null);
+            setView('classCards'); // Force internal state change to be safe
+            navigate('/view/classes');
+          }}
           className="print:hidden flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium mb-6 transition-colors"
         >
           <ArrowLeft size={18} />
-          Back to Timetables
+          Back to Class List
         </button>
 
         <div className="mb-6 flex justify-between items-end">
@@ -465,11 +540,11 @@ export default function ViewTimetables() {
   const renderPracticalTableView = () => (
     <div className="print:px-0">
       <button
-        onClick={() => setView('classCards')}
+        onClick={() => navigate('/view')}
         className="print:hidden flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium mb-6 transition-colors"
       >
         <ArrowLeft size={18} />
-        Back to Timetables
+        Back to Dashboard
       </button>
 
       <div className="mb-6 flex justify-between items-end">
@@ -559,6 +634,12 @@ export default function ViewTimetables() {
             {view === 'classCards' && renderClassCards()}
             {view === 'schedule' && renderScheduleView()}
             {view === 'practicalTable' && renderPracticalTableView()}
+            {view === 'faculty' && (
+              <FacultyTimetables isSubComponent={true} onBackToDashboard={() => navigate('/view')} />
+            )}
+            {view === 'labs' && (
+              <LabTimetables isSubComponent={true} onBackToDashboard={() => navigate('/view')} />
+            )}
           </>
         )}
       </div>

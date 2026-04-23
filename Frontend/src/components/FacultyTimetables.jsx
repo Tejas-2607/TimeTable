@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 
 
-export default function FacultyTimetables() {
+export default function FacultyTimetables({ isSubComponent = false, onBackToDashboard = null }) {
   const [view, setView] = useState('landing'); // 'landing' | 'schedule'
   const [facultyData, setFacultyData] = useState({});
   const [facultyNames, setFacultyNames] = useState([]);
@@ -118,8 +118,8 @@ export default function FacultyTimetables() {
     return (
       <div className="h-full min-h-[70px] flex flex-col gap-1">
         {sessions.map((session, idx) => (
-          <div key={idx} className={`border rounded p-2 flex-1 ${session.isPractical ? 'bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200' : 'bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200'}`}>
-            <div className={`font-semibold text-xs mb-1 ${session.isPractical ? 'text-emerald-900' : 'text-blue-900'}`}>
+          <div key={idx} className={`border rounded p-2 flex-1 ${session.isPractical ? 'bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200' : 'bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-200'}`}>
+            <div className={`font-semibold text-xs mb-1 ${session.isPractical ? 'text-emerald-900' : 'text-indigo-900'}`}>
               {session.class_key} (Div {session.division})
               {session.batch && session.batch !== 'All' ? ` - ${session.batch}` : ''}
             </div>
@@ -146,12 +146,12 @@ export default function FacultyTimetables() {
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-gradient-to-r from-blue-600 to-cyan-600">
-                <th className="border border-blue-700 px-4 py-3 text-white font-semibold text-left sticky left-0 bg-gradient-to-r from-blue-600 to-cyan-600 z-10">
+              <tr className="bg-gradient-to-r from-indigo-600 to-purple-600">
+                <th className="border border-indigo-700 px-4 py-3 text-white font-semibold text-left sticky left-0 bg-gradient-to-r from-indigo-600 to-purple-600 z-10">
                   Time / Day
                 </th>
                 {daysOfWeek.map(day => (
-                  <th key={day} className="border border-blue-700 px-3 py-3 text-white font-semibold text-center">
+                  <th key={day} className="border border-indigo-700 px-3 py-3 text-white font-semibold text-center">
                     {day}
                   </th>
                 ))}
@@ -199,9 +199,18 @@ export default function FacultyTimetables() {
 
   const renderLanding = () => (
     <div className="space-y-6">
+      {isSubComponent && onBackToDashboard && (
+        <button
+          onClick={onBackToDashboard}
+          className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium mb-2 transition-colors"
+        >
+          <ArrowLeft size={18} />
+          Back to Dashboard
+        </button>
+      )}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
         <h3 className="text-xl font-bold text-slate-700 flex items-center gap-2">
-          <span className="inline-block w-1.5 h-6 bg-blue-500 rounded-full" />
+          <span className="inline-block w-1.5 h-6 bg-indigo-500 rounded-full" />
           Faculty Directory
         </h3>
         
@@ -212,7 +221,7 @@ export default function FacultyTimetables() {
             placeholder="Search faculty..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all shadow-sm"
+            className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all shadow-sm"
           />
         </div>
       </div>
@@ -239,14 +248,14 @@ export default function FacultyTimetables() {
             <button
               key={fac}
               onClick={() => { setSelectedFaculty(fac); setView('schedule'); }}
-              className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200 hover:border-blue-300 transition-all duration-300 p-5 text-left cursor-pointer"
+              className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200 hover:border-indigo-300 transition-all duration-300 p-5 text-left cursor-pointer"
             >
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+                <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
                   <Briefcase size={20} />
                 </div>
                 <div>
-                  <p className="font-bold text-lg text-slate-800 group-hover:text-blue-700 transition-colors">
+                  <p className="font-bold text-lg text-slate-800 group-hover:text-indigo-700 transition-colors">
                     {fac}
                   </p>
                   <p className="text-xs text-slate-500 line-clamp-1">{facultyMap[fac] || 'Faculty Member'}</p>
@@ -301,12 +310,14 @@ export default function FacultyTimetables() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8 print:p-0 print:bg-white">
-      <div className="max-w-[1800px] mx-auto">
-        <div className="mb-8 print:hidden">
-          <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Faculty Timetables</h1>
-          <p className="text-slate-500 mt-2">Individual, consolidated schedules for all faculty members</p>
-        </div>
+    <div className={isSubComponent ? "" : "min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8 print:p-0 print:bg-white"}>
+      <div className={isSubComponent ? "" : "max-w-[1800px] mx-auto"}>
+        {!isSubComponent && (
+          <div className="mb-8 print:hidden">
+            <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Faculty Timetables</h1>
+            <p className="text-slate-500 mt-2">Individual, consolidated schedules for all faculty members</p>
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 text-red-700">

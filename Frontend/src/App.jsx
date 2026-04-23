@@ -24,8 +24,7 @@ function App() {
             <Route path="/labs" element={<LabsData />} />
             <Route path="/structure" element={<ClassStructure />} />
             <Route path="/view" element={<ViewTimetables />} />
-            <Route path="/faculty_timetables" element={<FacultyTimetables />} />
-            <Route path="/lab_timetables" element={<LabTimetables />} />
+            <Route path="/view/:tab" element={<ViewTimetables />} />
           </Routes>
         </main>
       </div>

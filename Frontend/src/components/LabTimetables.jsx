@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { getSessionTimes } from '../services/labSettingsService';
 
-export default function LabTimetables() {
+export default function LabTimetables({ isSubComponent = false, onBackToDashboard = null }) {
   const [view, setView] = useState('landing'); // 'landing' | 'schedule'
   const [labData, setLabData] = useState({});    // { labShortName: { day: { time: [sessions] } } }
   const [labNames, setLabNames] = useState([]);  // list of lab short_names found in timetables
@@ -198,6 +198,15 @@ export default function LabTimetables() {
   // ─── Landing Page ─────────────────────────────────────────────────────────────
   const renderLanding = () => (
     <div className="space-y-6">
+      {isSubComponent && onBackToDashboard && (
+        <button
+          onClick={onBackToDashboard}
+          className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium mb-2 transition-colors"
+        >
+          <ArrowLeft size={18} />
+          Back to Dashboard
+        </button>
+      )}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
         <h3 className="text-xl font-bold text-slate-700 flex items-center gap-2">
           <span className="inline-block w-1.5 h-6 bg-emerald-500 rounded-full" />
@@ -295,12 +304,14 @@ export default function LabTimetables() {
 
   // ─── Root Render ──────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8 print:p-0 print:bg-white">
-      <div className="max-w-[1800px] mx-auto">
-        <div className="mb-8 print:hidden">
-          <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Lab Timetables</h1>
-          <p className="text-slate-500 mt-2">Individual, consolidated schedules for all laboratories</p>
-        </div>
+    <div className={isSubComponent ? "" : "min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8 print:p-0 print:bg-white"}>
+      <div className={isSubComponent ? "" : "max-w-[1800px] mx-auto"}>
+        {!isSubComponent && (
+          <div className="mb-8 print:hidden">
+            <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Lab Timetables</h1>
+            <p className="text-slate-500 mt-2">Individual, consolidated schedules for all laboratories</p>
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 text-red-700">
