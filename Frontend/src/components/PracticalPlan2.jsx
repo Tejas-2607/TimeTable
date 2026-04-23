@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Clock, Users as UsersIcon, BookOpen } from 'lucide-react';
 import { getMasterTimetables } from '../services/masterTimetableService';
-import { getSessionTimes } from '../services/labSettingsService';
+
 
 export default function PracticalPlan() {
   const [timetables, setTimetables] = useState([]);
@@ -10,11 +10,10 @@ export default function PracticalPlan() {
   const [error, setError] = useState(null);
 
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-  const [timeSlots, setTimeSlots] = useState(getSessionTimes());
+  const [timeSlots, setTimeSlots] = useState([]);
 
   useEffect(() => {
     loadTimetables();
-    setTimeSlots(getSessionTimes());
   }, []);
 
   const loadTimetables = async () => {
@@ -32,6 +31,21 @@ export default function PracticalPlan() {
         const firstYear = timetablesData[0].year;
         setSelectedYear(firstYear);
       }
+
+      // Dynamically extract time slots from the actual data
+      const parseTime = t => {
+        const [hh, mm = '0'] = t.split(':');
+        return parseInt(hh) * 60 + parseInt(mm);
+      };
+      const slotSet = new Set();
+      timetablesData.forEach(tt => {
+        const sched = tt.schedule || {};
+        Object.values(sched).forEach(dayObj => {
+          Object.keys(dayObj).forEach(t => slotSet.add(t));
+        });
+      });
+      const sorted = Array.from(slotSet).sort((a, b) => parseTime(a) - parseTime(b));
+      setTimeSlots(sorted);
     } catch (err) {
       console.error('Error loading timetables:', err);
       setError('Failed to load practical plan. Please try again.');

@@ -14,6 +14,7 @@ export default function Sidebar({ onTabChange }) {
     { id: 'structure', label: 'Class Structure', icon: Grid3x3 },
     { id: 'view', label: 'View Timetables', icon: Eye },
     { id: 'faculty_timetables', label: 'Faculty Timetables', icon: Briefcase },
+    { id: 'lab_timetables', label: 'Lab Timetables', icon: FlaskConical },
   ];
 
   return (

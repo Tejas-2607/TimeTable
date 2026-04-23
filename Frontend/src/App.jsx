@@ -7,6 +7,7 @@ import LabsData from './components/LabsData';
 import ClassStructure from './components/ClassStructure';
 import ViewTimetables from './components/ViewTimetables';
 import FacultyTimetables from './components/FacultyTimetables';
+import LabTimetables from './components/LabTimetables';
 
 function App() {
   const [activeTab, setActiveTab] = useState('generate');
@@ -24,6 +25,7 @@ function App() {
             <Route path="/structure" element={<ClassStructure />} />
             <Route path="/view" element={<ViewTimetables />} />
             <Route path="/faculty_timetables" element={<FacultyTimetables />} />
+            <Route path="/lab_timetables" element={<LabTimetables />} />
           </Routes>
         </main>
       </div>

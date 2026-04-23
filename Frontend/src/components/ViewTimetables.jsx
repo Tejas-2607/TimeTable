@@ -5,7 +5,7 @@ import {
   Clock, ArrowLeft, Calendar, ChevronRight, BookOpen,
   Users as UsersIcon, FlaskConical, Layers, Printer
 } from 'lucide-react';
-import { getSessionTimes } from '../services/labSettingsService';
+
 
 export default function ViewTimetables() {
   // views: 'landing' | 'classCards' | 'schedule' | 'practicalTable'
@@ -18,13 +18,12 @@ export default function ViewTimetables() {
   const [error, setError] = useState(null);
 
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-  const timeSlots = ['10:15', '11:15', '12:15', '13:15', '14:15', '15:15', '16:20'];
-  const [practicalTimeSlots, setPracticalTimeSlots] = useState(getSessionTimes());
+  const [timeSlots, setTimeSlots] = useState([]);
+  const [practicalTimeSlots, setPracticalTimeSlots] = useState([]);
 
   // Fetch both datasets on mount
   useEffect(() => {
     loadAllData();
-    setPracticalTimeSlots(getSessionTimes());
   }, []);
 
   const loadAllData = async () => {
@@ -37,6 +36,21 @@ export default function ViewTimetables() {
       const res = await getClassTimetables();
       const data = res.timetables || res.data?.timetables || [];
       setTimetables(data);
+
+      // Dynamically extract all unique time slots from the actual schedule data
+      const parseTime = t => {
+        const [hh, mm = '0'] = t.split(':');
+        return parseInt(hh) * 60 + parseInt(mm);
+      };
+      const slotSet = new Set();
+      data.forEach(tt => {
+        const sched = tt.schedule || {};
+        Object.values(sched).forEach(dayObj => {
+          Object.keys(dayObj).forEach(t => slotSet.add(t));
+        });
+      });
+      const sorted = Array.from(slotSet).sort((a, b) => parseTime(a) - parseTime(b));
+      setTimeSlots(sorted);
     } catch (err) {
       console.error('Error loading class timetables:', err);
       setError('Failed to load class timetables.');
@@ -50,6 +64,23 @@ export default function ViewTimetables() {
       const res = await getMasterTimetables();
       const data = res.timetables || res.data?.timetables || [];
       setPracticalData({ timetables: data });
+
+      // Extract practical time slots from master timetable data
+      const parseTime = t => {
+        const [hh, mm = '0'] = t.split(':');
+        return parseInt(hh) * 60 + parseInt(mm);
+      };
+      const pSlotSet = new Set();
+      data.forEach(tt => {
+        const sched = tt.schedule || {};
+        Object.values(sched).forEach(dayObj => {
+          Object.keys(dayObj).forEach(t => pSlotSet.add(t));
+        });
+      });
+      if (pSlotSet.size > 0) {
+        const sorted = Array.from(pSlotSet).sort((a, b) => parseTime(a) - parseTime(b));
+        setPracticalTimeSlots(sorted);
+      }
     } catch (err) {
       console.warn('Could not load practical data:', err);
       setPracticalData(null);
@@ -179,7 +210,6 @@ export default function ViewTimetables() {
                       <div className="flex items-center gap-1.5">
                         <Clock size={14} className={isPracticalSlot ? 'text-blue-500' : 'text-slate-500'} />
                         <span>{time}</span>
-                        {isPracticalSlot && <span className="text-[10px] bg-blue-100 px-1 rounded uppercase">Lab</span>}
                       </div>
                     </td>
                     {daysOfWeek.map(day => {
@@ -219,23 +249,23 @@ export default function ViewTimetables() {
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-gradient-to-r from-blue-600 to-cyan-600">
-                <th className="border border-blue-700 px-4 py-3 text-white font-semibold text-left sticky left-0 bg-gradient-to-r from-blue-600 to-cyan-600 z-10">
+              <tr className="bg-gradient-to-r from-emerald-600 to-teal-600">
+                <th className="border border-emerald-700 px-4 py-3 text-white font-semibold text-left sticky left-0 bg-gradient-to-r from-emerald-600 to-teal-600 z-10">
                   Lab / Day
                 </th>
                 {daysOfWeek.map(day => (
-                  <th key={day} className="border border-blue-700 px-4 py-3 text-white font-semibold text-center" colSpan={practicalTimeSlots.length}>
+                  <th key={day} className="border border-emerald-700 px-4 py-3 text-white font-semibold text-center" colSpan={practicalTimeSlots.length}>
                     {day}
                   </th>
                 ))}
               </tr>
-              <tr className="bg-blue-500">
-                <th className="border border-blue-600 px-4 py-2 text-white text-sm font-medium sticky left-0 bg-blue-500 z-10">
-                  Session
+              <tr className="bg-emerald-500">
+                <th className="border border-emerald-600 px-4 py-2 text-white text-sm font-medium sticky left-0 bg-emerald-500 z-10">
+                  Time
                 </th>
                 {daysOfWeek.map(day => (
                   practicalTimeSlots.map(time => (
-                    <th key={`${day}-${time}`} className="border border-blue-600 px-2 py-2 text-white text-xs font-medium">
+                    <th key={`${day}-${time}`} className="border border-emerald-600 px-2 py-2 text-white text-xs font-medium">
                       <div className="flex items-center justify-center gap-1">
                         <Clock size={12} />
                         <span>{time}</span>
@@ -258,7 +288,7 @@ export default function ViewTimetables() {
                       return practicalTimeSlots.map(time => {
                         const sessions = daySchedule[time] || [];
                         return (
-                          <td key={`${labName}-${day}-${time}`} className="border border-slate-300 p-2">
+                          <td key={`${labName}-${day}-${time}`} className="border border-slate-300 p-2 min-w-[140px]">
                             {renderPracticalSessionCell(sessions)}
                           </td>
                         );

@@ -5,7 +5,7 @@ import {
   Clock, ArrowLeft, Users, ChevronRight, BookOpen,
   FlaskConical, Briefcase, Printer, Search
 } from 'lucide-react';
-import { getSessionTimes } from '../services/labSettingsService';
+
 
 export default function FacultyTimetables() {
   const [view, setView] = useState('landing'); // 'landing' | 'schedule'
@@ -18,8 +18,7 @@ export default function FacultyTimetables() {
   const [error, setError] = useState(null);
 
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-  const baseTimeSlots = ['10:15', '11:15', '12:15', '13:15', '14:15', '15:15', '16:20'];
-  const [allTimeSlots, setAllTimeSlots] = useState(baseTimeSlots);
+  const [allTimeSlots, setAllTimeSlots] = useState([]);
 
   useEffect(() => {
     loadFacultyData();
@@ -48,23 +47,21 @@ export default function FacultyTimetables() {
       });
       setFacultyMap(fMap);
 
-      // Need to include all found practical times
-      const practicalTimes = getSessionTimes();
-      const practicalSet = new Set(practicalTimes);
-      const combinedTimeSlots = [...baseTimeSlots];
-      practicalTimes.forEach(t => {
-        if (!combinedTimeSlots.includes(t)) {
-          combinedTimeSlots.push(t);
-        }
+      // Collect all unique time slots from the actual data
+      const timeSlotsSet = new Set();
+
+      classTimetables.forEach((ct) => {
+        const sched = ct.schedule || {};
+        Object.values(sched).forEach(dayObj => {
+          Object.keys(dayObj).forEach(t => timeSlotsSet.add(t));
+        });
       });
-      // Try to sort them simply (assuming HH:mm format)
-      combinedTimeSlots.sort((a, b) => {
-        const parseTime = (t) => {
-          let [hh, mm] = t.split('.').join(':').split(':');
-          return parseInt(hh) * 60 + parseInt(mm);
-        };
-        return parseTime(a) - parseTime(b);
-      });
+
+      const parseTime = (t) => {
+        const [hh, mm = '0'] = t.split('.').join(':').split(':');
+        return parseInt(hh) * 60 + parseInt(mm);
+      };
+      const combinedTimeSlots = Array.from(timeSlotsSet).sort((a, b) => parseTime(a) - parseTime(b));
       setAllTimeSlots(combinedTimeSlots);
 
       classTimetables.forEach((ct) => {
@@ -91,7 +88,7 @@ export default function FacultyTimetables() {
                   subject: session.subject,
                   batch: session.batch,
                   lab: session.lab,
-                  isPractical: practicalSet.has(time) || !!session.lab
+                  isPractical: !!session.lab
                 });
               });
             });
