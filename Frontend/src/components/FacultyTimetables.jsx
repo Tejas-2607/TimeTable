@@ -1,23 +1,32 @@
-import { useState, useEffect } from 'react';
-import { getClassTimetables } from '../services/classTimetableService';
-import { getFaculties } from '../services/facultyService';
+import { useState, useEffect } from "react";
+import { getClassTimetables } from "../services/classTimetableService";
+import { getFaculties } from "../services/facultyService";
 import {
-  Clock, ArrowLeft, Users, ChevronRight, BookOpen,
-  FlaskConical, Briefcase, Printer, Search
-} from 'lucide-react';
+  Clock,
+  ArrowLeft,
+  Users,
+  ChevronRight,
+  BookOpen,
+  FlaskConical,
+  Briefcase,
+  Printer,
+  Search,
+} from "lucide-react";
 
-
-export default function FacultyTimetables({ isSubComponent = false, onBackToDashboard = null }) {
-  const [view, setView] = useState('landing'); // 'landing' | 'schedule'
+export default function FacultyTimetables({
+  isSubComponent = false,
+  onBackToDashboard = null,
+}) {
+  const [view, setView] = useState("landing"); // 'landing' | 'schedule'
   const [facultyData, setFacultyData] = useState({});
   const [facultyNames, setFacultyNames] = useState([]);
   const [facultyMap, setFacultyMap] = useState({});
   const [selectedFaculty, setSelectedFaculty] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+  const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
   const [allTimeSlots, setAllTimeSlots] = useState([]);
 
   useEffect(() => {
@@ -31,7 +40,7 @@ export default function FacultyTimetables({ isSubComponent = false, onBackToDash
       // Fetch both timetables and faculty details
       const [res, facRes] = await Promise.all([
         getClassTimetables(),
-        getFaculties().catch(() => []) // Fallback to avoid complete failure if this API is down
+        getFaculties().catch(() => []), // Fallback to avoid complete failure if this API is down
       ]);
 
       const classTimetables = res.timetables || res.data?.timetables || [];
@@ -40,7 +49,7 @@ export default function FacultyTimetables({ isSubComponent = false, onBackToDash
       // Map short names to full titles/names
       const fMap = {};
       const facultiesList = facRes || facRes.data || [];
-      facultiesList.forEach(f => {
+      facultiesList.forEach((f) => {
         if (f.short_name) {
           fMap[f.short_name] = `${f.title} ${f.name}`;
         }
@@ -52,16 +61,18 @@ export default function FacultyTimetables({ isSubComponent = false, onBackToDash
 
       classTimetables.forEach((ct) => {
         const sched = ct.schedule || {};
-        Object.values(sched).forEach(dayObj => {
-          Object.keys(dayObj).forEach(t => timeSlotsSet.add(t));
+        Object.values(sched).forEach((dayObj) => {
+          Object.keys(dayObj).forEach((t) => timeSlotsSet.add(t));
         });
       });
 
       const parseTime = (t) => {
-        const [hh, mm = '0'] = t.split('.').join(':').split(':');
+        const [hh, mm = "0"] = t.split(".").join(":").split(":");
         return parseInt(hh) * 60 + parseInt(mm);
       };
-      const combinedTimeSlots = Array.from(timeSlotsSet).sort((a, b) => parseTime(a) - parseTime(b));
+      const combinedTimeSlots = Array.from(timeSlotsSet).sort(
+        (a, b) => parseTime(a) - parseTime(b),
+      );
       setAllTimeSlots(combinedTimeSlots);
 
       classTimetables.forEach((ct) => {
@@ -71,24 +82,25 @@ export default function FacultyTimetables({ isSubComponent = false, onBackToDash
 
         Object.entries(schedule).forEach(([day, times]) => {
           Object.entries(times).forEach(([time, sessions]) => {
-            sessions.forEach(session => {
+            sessions.forEach((session) => {
               if (!session.faculty) return;
-              
-              const faculties = session.faculty.split(',').map(f => f.trim());
-              
-              faculties.forEach(fac => {
+
+              const faculties = session.faculty.split(",").map((f) => f.trim());
+
+              faculties.forEach((fac) => {
                 if (!fac) return;
                 if (!extractedData[fac]) extractedData[fac] = {};
                 if (!extractedData[fac][day]) extractedData[fac][day] = {};
-                if (!extractedData[fac][day][time]) extractedData[fac][day][time] = [];
-                
+                if (!extractedData[fac][day][time])
+                  extractedData[fac][day][time] = [];
+
                 extractedData[fac][day][time].push({
                   class_key: className,
                   division: division,
                   subject: session.subject,
                   batch: session.batch,
                   lab: session.lab,
-                  isPractical: !!session.lab
+                  isPractical: !!session.lab,
                 });
               });
             });
@@ -99,8 +111,8 @@ export default function FacultyTimetables({ isSubComponent = false, onBackToDash
       setFacultyData(extractedData);
       setFacultyNames(Object.keys(extractedData).sort());
     } catch (err) {
-      console.error('Error extracting faculty timetables:', err);
-      setError('Failed to load timetables for faculty.');
+      console.error("Error extracting faculty timetables:", err);
+      setError("Failed to load timetables for faculty.");
     } finally {
       setIsLoading(false);
     }
@@ -108,7 +120,7 @@ export default function FacultyTimetables({ isSubComponent = false, onBackToDash
 
   const renderSessionCell = (sessions) => {
     if (!sessions || sessions.length === 0) {
-       return (
+      return (
         <div className="h-full min-h-[70px] bg-slate-50 border border-slate-200 rounded p-2 flex items-center justify-center text-xs text-slate-400">
           —
         </div>
@@ -118,10 +130,17 @@ export default function FacultyTimetables({ isSubComponent = false, onBackToDash
     return (
       <div className="h-full min-h-[70px] flex flex-col gap-1">
         {sessions.map((session, idx) => (
-          <div key={idx} className={`border rounded p-2 flex-1 ${session.isPractical ? 'bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200' : 'bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-200'}`}>
-            <div className={`font-semibold text-xs mb-1 ${session.isPractical ? 'text-emerald-900' : 'text-indigo-900'}`}>
+          <div
+            key={idx}
+            className={`border rounded p-2 flex-1 ${session.isPractical ? "bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200" : "bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-200"}`}
+          >
+            <div
+              className={`font-semibold text-xs mb-1 ${session.isPractical ? "text-emerald-900" : "text-indigo-900"}`}
+            >
               {session.class_key} (Div {session.division})
-              {session.batch && session.batch !== 'All' ? ` - ${session.batch}` : ''}
+              {session.batch && session.batch !== "All"
+                ? ` - ${session.batch}`
+                : ""}
             </div>
             <div className="flex items-start gap-1 text-slate-700 mb-0.5">
               <BookOpen size={11} className="mt-0.5 flex-shrink-0" />
@@ -150,8 +169,11 @@ export default function FacultyTimetables({ isSubComponent = false, onBackToDash
                 <th className="border border-indigo-700 px-4 py-3 text-white font-semibold text-left sticky left-0 bg-gradient-to-r from-indigo-600 to-purple-600 z-10">
                   Time / Day
                 </th>
-                {daysOfWeek.map(day => (
-                  <th key={day} className="border border-indigo-700 px-3 py-3 text-white font-semibold text-center">
+                {daysOfWeek.map((day) => (
+                  <th
+                    key={day}
+                    className="border border-indigo-700 px-3 py-3 text-white font-semibold text-center"
+                  >
                     {day}
                   </th>
                 ))}
@@ -160,21 +182,30 @@ export default function FacultyTimetables({ isSubComponent = false, onBackToDash
             <tbody>
               {allTimeSlots.map((time, timeIdx) => {
                 return (
-                  <tr key={time} className={timeIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                  <tr
+                    key={time}
+                    className={timeIdx % 2 === 0 ? "bg-white" : "bg-slate-50"}
+                  >
                     <td
                       className="border border-slate-300 px-4 py-3 font-semibold text-slate-800 sticky left-0 z-10 whitespace-nowrap"
-                      style={{ backgroundColor: timeIdx % 2 === 0 ? 'white' : '#f8fafc' }}
+                      style={{
+                        backgroundColor:
+                          timeIdx % 2 === 0 ? "white" : "#f8fafc",
+                      }}
                     >
                       <div className="flex items-center gap-1.5">
                         <Clock size={14} className="text-slate-500" />
                         <span>{time}</span>
                       </div>
                     </td>
-                    {daysOfWeek.map(day => {
+                    {daysOfWeek.map((day) => {
                       const daySchedule = schedule[day] || {};
                       const sessions = daySchedule[time] || [];
                       return (
-                        <td key={`${time}-${day}`} className="border border-slate-300 p-2 min-w-[160px]">
+                        <td
+                          key={`${time}-${day}`}
+                          className="border border-slate-300 p-2 min-w-[160px]"
+                        >
                           {renderSessionCell(sessions)}
                         </td>
                       );
@@ -189,10 +220,10 @@ export default function FacultyTimetables({ isSubComponent = false, onBackToDash
     );
   };
 
-  const filteredFacultyNames = facultyNames.filter(fac => {
+  const filteredFacultyNames = facultyNames.filter((fac) => {
     const searchLower = searchQuery.toLowerCase();
     const matchesShort = fac.toLowerCase().includes(searchLower);
-    const fullName = facultyMap[fac] || '';
+    const fullName = facultyMap[fac] || "";
     const matchesFull = fullName.toLowerCase().includes(searchLower);
     return matchesShort || matchesFull;
   });
@@ -213,9 +244,12 @@ export default function FacultyTimetables({ isSubComponent = false, onBackToDash
           <span className="inline-block w-1.5 h-6 bg-indigo-500 rounded-full" />
           Faculty Directory
         </h3>
-        
+
         <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            size={18}
+          />
           <input
             type="text"
             placeholder="Search faculty..."
@@ -233,41 +267,56 @@ export default function FacultyTimetables({ isSubComponent = false, onBackToDash
           </div>
         ) : (
           filteredFacultyNames.map((fac) => {
-          let practicalCount = 0;
-          let theoryCount = 0;
-          Object.values(facultyData[fac]).forEach((dayObj) => {
-            Object.values(dayObj).forEach((timeArr) => {
-              timeArr.forEach(session => {
-                if (session.isPractical) practicalCount++;
-                else theoryCount++;
+            let practicalCount = 0;
+            let theoryCount = 0;
+            Object.values(facultyData[fac]).forEach((dayObj) => {
+              Object.values(dayObj).forEach((timeArr) => {
+                timeArr.forEach((session) => {
+                  if (session.isPractical) practicalCount++;
+                  else theoryCount++;
+                });
               });
             });
-          });
 
-          return (
-            <button
-              key={fac}
-              onClick={() => { setSelectedFaculty(fac); setView('schedule'); }}
-              className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200 hover:border-indigo-300 transition-all duration-300 p-5 text-left cursor-pointer"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
-                  <Briefcase size={20} />
+            return (
+              <button
+                key={fac}
+                onClick={() => {
+                  setSelectedFaculty(fac);
+                  setView("schedule");
+                }}
+                className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200 hover:border-indigo-300 transition-all duration-300 p-5 text-left cursor-pointer"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+                    <Briefcase size={20} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-lg text-slate-800 group-hover:text-indigo-700 transition-colors">
+                      {fac}
+                    </p>
+                    <p className="text-xs text-slate-500 line-clamp-1">
+                      {facultyMap[fac] || "Faculty Member"}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold text-lg text-slate-800 group-hover:text-indigo-700 transition-colors">
-                    {fac}
+                <div className="text-xs text-slate-500 space-y-1 border-t border-slate-100 pt-3">
+                  <p>
+                    Theory Sessions:{" "}
+                    <span className="font-semibold text-slate-700">
+                      {theoryCount}
+                    </span>
                   </p>
-                  <p className="text-xs text-slate-500 line-clamp-1">{facultyMap[fac] || 'Faculty Member'}</p>
+                  <p>
+                    Practical Sessions:{" "}
+                    <span className="font-semibold text-slate-700">
+                      {practicalCount}
+                    </span>
+                  </p>
                 </div>
-              </div>
-              <div className="text-xs text-slate-500 space-y-1 border-t border-slate-100 pt-3">
-                <p>Theory Sessions: <span className="font-semibold text-slate-700">{theoryCount}</span></p>
-                <p>Practical Sessions: <span className="font-semibold text-slate-700">{practicalCount}</span></p>
-              </div>
-            </button>
-          )
-        })
+              </button>
+            );
+          })
         )}
       </div>
     </div>
@@ -278,7 +327,10 @@ export default function FacultyTimetables({ isSubComponent = false, onBackToDash
     return (
       <div className="print:px-0">
         <button
-          onClick={() => { setSelectedFaculty(null); setView('landing'); }}
+          onClick={() => {
+            setSelectedFaculty(null);
+            setView("landing");
+          }}
           className="print:hidden flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-800 font-medium mb-6 transition-colors"
         >
           <ArrowLeft size={18} />
@@ -288,8 +340,12 @@ export default function FacultyTimetables({ isSubComponent = false, onBackToDash
         <div className="mb-6 flex justify-between items-end">
           <div>
             <h3 className="text-2xl font-bold text-slate-800">
-              {facultyMap[selectedFaculty] ? `${facultyMap[selectedFaculty]} (${selectedFaculty})` : selectedFaculty}
-              <span className="ml-2 text-base font-normal text-slate-500">— Personal Timetable</span>
+              {facultyMap[selectedFaculty]
+                ? `${facultyMap[selectedFaculty]} (${selectedFaculty})`
+                : selectedFaculty}
+              <span className="ml-2 text-base font-normal text-slate-500">
+                — Personal Timetable
+              </span>
             </h3>
             <p className="text-sm text-slate-500 mt-1">
               Consolidated view of all assigned theory and practical sessions
@@ -310,25 +366,30 @@ export default function FacultyTimetables({ isSubComponent = false, onBackToDash
   };
 
   return (
-    <div className={isSubComponent ? "" : "min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8 print:p-0 print:bg-white"}>
-      <div className={isSubComponent ? "" : "max-w-[1800px] mx-auto"}>
+    <div className="bg-white rounded-xl shadow-lg border border-slate-200">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse" />
         {!isSubComponent && (
           <div className="mb-8 print:hidden">
-            <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Faculty Timetables</h1>
-            <p className="text-slate-500 mt-2">Individual, consolidated schedules for all faculty members</p>
+            <h1 className="text-3xl font-bold text-slate-800 tracking-tight">
+              Faculty Timetables
+            </h1>
+            <p className="text-slate-500 mt-2">
+              Individual, consolidated schedules for all faculty members
+            </p>
           </div>
         )}
 
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 text-red-700">
-             <p className="font-semibold">Error Loading Timetables</p>
-             <p className="text-sm mt-1">{error}</p>
-             <button
-               onClick={loadFacultyData}
-               className="mt-3 px-4 py-2 bg-red-200 text-red-800 rounded hover:bg-red-300 transition-colors"
-             >
-               Try Again
-             </button>
+            <p className="font-semibold">Error Loading Timetables</p>
+            <p className="text-sm mt-1">{error}</p>
+            <button
+              onClick={loadFacultyData}
+              className="mt-3 px-4 py-2 bg-red-200 text-red-800 rounded hover:bg-red-300 transition-colors"
+            >
+              Try Again
+            </button>
           </div>
         )}
 
@@ -340,21 +401,24 @@ export default function FacultyTimetables({ isSubComponent = false, onBackToDash
         ) : facultyNames.length === 0 && !error ? (
           <div className="bg-white rounded-xl shadow-md p-12 text-center">
             <Users size={48} className="mx-auto mb-4 text-slate-400" />
-            <h2 className="text-2xl font-semibold text-slate-800 mb-4">No Faculty Data Found</h2>
+            <h2 className="text-2xl font-semibold text-slate-800 mb-4">
+              No Faculty Data Found
+            </h2>
             <p className="text-slate-600 mb-6">
-              Timetables haven't been generated yet or no faculty assignments were found.
+              Timetables haven't been generated yet or no faculty assignments
+              were found.
             </p>
             <button
-               onClick={loadFacultyData}
-               className="px-8 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-all shadow-lg hover:shadow-xl"
-             >
-               Refresh
-             </button>
+              onClick={loadFacultyData}
+              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-all shadow-lg hover:shadow-xl"
+            >
+              Refresh
+            </button>
           </div>
         ) : (
           <>
-            {view === 'landing' && renderLanding()}
-            {view === 'schedule' && renderScheduleView()}
+            {view === "landing" && renderLanding()}
+            {view === "schedule" && renderScheduleView()}
           </>
         )}
       </div>
