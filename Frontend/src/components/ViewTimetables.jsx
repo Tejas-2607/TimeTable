@@ -3,6 +3,10 @@ import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { getClassTimetables } from "../services/classTimetableService";
 import { getMasterTimetables } from "../services/masterTimetableService";
 import {
+  exportClassTimetable,
+  exportMasterPractical,
+} from "../lib/excelExport"; //[cite: 2]
+import {
   Clock,
   ArrowLeft,
   Calendar,
@@ -668,11 +672,10 @@ export default function ViewTimetables() {
             </p>
           </div>
           <button
-            onClick={() => window.print()}
+            onClick={() => exportClassTimetable(selectedClass, timeSlots)} //[cite: 2]
             className="print:hidden flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:bg-slate-50 transition-colors"
           >
-            <Printer size={18} />
-            <span>Download PDF</span>
+            <span>Download CSV</span>
           </button>
         </div>
 
@@ -702,11 +705,12 @@ export default function ViewTimetables() {
           </p>
         </div>
         <button
-          onClick={() => window.print()}
+          onClick={() =>
+            exportMasterPractical(getAllLabs(), practicalTimeSlots)
+          } //[cite: 2]
           className="print:hidden flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:bg-slate-50 transition-colors"
         >
-          <Printer size={18} />
-          <span>Download PDF</span>
+          <span>Download CSV (All Labs)</span>
         </button>
       </div>
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { getClassTimetables } from "../services/classTimetableService";
 import { getFaculties } from "../services/facultyService";
+import { exportFacultyTimetable } from "../lib/excelExport";
 import {
   Clock,
   ArrowLeft,
@@ -352,11 +353,17 @@ export default function FacultyTimetables({
             </p>
           </div>
           <button
-            onClick={() => window.print()}
+            onClick={() =>
+              exportFacultyTimetable(
+                selectedFaculty,
+                facultyData[selectedFaculty],
+                allTimeSlots,
+              )
+            } //
             className="print:hidden flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:bg-slate-50 transition-colors"
           >
-            <Printer size={18} />
-            <span>Download PDF</span>
+            <Briefcase size={18} />
+            <span>Download CSV</span>
           </button>
         </div>
 
