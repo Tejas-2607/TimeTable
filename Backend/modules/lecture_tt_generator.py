@@ -1,6 +1,5 @@
 # lecture_tt_generator.py
 
-
 from datetime import datetime
 from config import db
 import logging
@@ -10,9 +9,12 @@ logger = logging.getLogger(__name__)
 
 DAYS              = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 MORNING_SLOTS     = ['10:15', '11:15', '12:15']
-AFTERNOON_SLOTS   = ['14:15', '15:15', '16:20']
+AFTERNOON_SLOTS   = ['14:15', '15:15', '16:20', '17:20']
 ALL_LECTURE_SLOTS = MORNING_SLOTS + AFTERNOON_SLOTS
 LUNCH_SLOT        = '13:15'
+
+
+ROUND_ROBIN_CYCLE = ['SY', 'SY', 'TY', 'TY', 'BE']
 
 workload_collection        = db['workload']
 faculty_collection         = db['faculty']
@@ -23,14 +25,16 @@ class_timetable_collection = db['class_timetable']
 class LectureTimetableGenerator:
 
     def __init__(self):
-        self.class_timetables = {}   # (year, div) → full timetable doc
-        self.subject_map      = {}   # short_name → subject doc
+        self.class_timetables        = {}   # (year, div) → full timetable doc
+        self.subject_map             = {}   # short_name → subject doc
+        self._warned_missing_keys    = set()  # LG-02 FIX: suppress repeated warnings
 
     # ── Data loading ──────────────────────────────────────────────────────────
 
     def _load_class_timetables(self):
         for tt in class_timetable_collection.find({}):
-            key = (tt['class'], tt['division'])
+            # LG-02 FIX: normalise to uppercase so 'sy'/'SY' mismatches are caught
+            key = (tt['class'].upper(), tt['division'].upper())
             self.class_timetables[key] = tt
         logger.info(f"✓ Loaded {len(self.class_timetables)} class timetables")
 
@@ -48,15 +52,21 @@ class LectureTimetableGenerator:
 
     # ── Assignment preparation ────────────────────────────────────────────────
 
-    def prepare_lecture_assignments(self) -> dict:
+    def prepare_lecture_assignments(self) -> tuple[dict, list]:
         """
-        Returns {(year, div, subject): [lecture_dict, …]} with one entry per
-        required lecture-hour per week.
+        Returns:
+            assignments : {(year, div, subject): [lecture_dict, …]}
+            unresolved  : [{'year', 'division', 'subject'}, …]  — LG-03 FIX
 
         theory_hrs is read from subjects.hrs_per_week_lec (authoritative).
         Falls back to workload.theory_hrs only when subject not found.
+        Subjects whose theory_hrs resolves to 0 through all fallbacks are
+        collected in `unresolved` and returned to the caller instead of being
+        silently dropped.
         """
-        assignments = {}
+        assignments: dict = {}
+        unresolved:  list = []   # LG-03 FIX
+
         try:
             faculties = list(faculty_collection.find(
                 {}, {'_id': 1, 'name': 1, 'short_name': 1}))
@@ -69,8 +79,10 @@ class LectureTimetableGenerator:
             logger.info(f"Reading {len(workloads)} workload entries…")
 
             for w in workloads:
+                # LG-02 FIX: normalise year and division to uppercase here so
+                # they always match the uppercase keys in self.class_timetables
                 year         = (w.get('year') or '').strip().upper()
-                division     = w.get('division', 'A')
+                division     = w.get('division', 'A').strip().upper()
                 subject      = w.get('subject', '')
                 subject_full = w.get('subject_full', subject)
                 faculty_id   = str(w.get('faculty_id', ''))
@@ -92,9 +104,17 @@ class LectureTimetableGenerator:
                                 f"{year}-{division}-{subject} (not found in subjects)")
                             break
 
+                # LG-03 FIX: collect unresolved instead of silently dropping
                 if theory_hrs == 0:
                     logger.warning(
-                        f"No theory_hrs for {year}-{division}-{subject}, skipping")
+                        f"No theory_hrs for {year}-{division}-{subject}, "
+                        f"adding to unresolved_subjects")
+                    unresolved.append({
+                        'year':     year,
+                        'division': division,
+                        'subject':  subject,
+                        'faculty':  faculty_name,
+                    })
                     continue
 
                 key = (year, division, subject)
@@ -117,11 +137,22 @@ class LectureTimetableGenerator:
             logger.info(f"✓ {len(assignments)} subjects, {total} lecture slots to fill")
             for k in sorted(assignments):
                 logger.info(f"   {k[0]}-{k[1]}-{k[2]}: {len(assignments[k])} lectures")
-            return assignments
+
+            if unresolved:
+                skipped_labels = [
+                    "{}-{}-{}".format(u['year'], u['division'], u['subject'])
+                    for u in unresolved
+                ]
+                logger.warning(
+                    f"⚠️  {len(unresolved)} subject(s) had no resolvable theory_hrs "
+                    f"and were skipped: {skipped_labels}"
+                )
+
+            return assignments, unresolved
 
         except Exception as e:
             logger.error(f"prepare_lecture_assignments error: {e}", exc_info=True)
-            return {}
+            return {}, []
 
     # ── Constraint helpers ────────────────────────────────────────────────────
 
@@ -134,8 +165,16 @@ class LectureTimetableGenerator:
         return False
 
     def _slot_free(self, year: str, division: str, day: str, slot: str) -> bool:
-        key = (year, division)
+        # LG-02 FIX: normalise lookup key to uppercase; log a warning once if missing
+        key = (year.upper(), division.upper())
         if key not in self.class_timetables:
+            if key not in self._warned_missing_keys:
+                logger.warning(
+                    f"No class timetable found for {year}-{division}. "
+                    f"All lecture slots will appear busy for this class. "
+                    f"Check year/division spelling and case in workload data."
+                )
+                self._warned_missing_keys.add(key)
             return False
         return len(
             self.class_timetables[key]['schedule'].get(day, {}).get(slot, [])
@@ -147,27 +186,46 @@ class LectureTimetableGenerator:
         '12:15': ['11:15'],
         '14:15': ['15:15'],
         '15:15': ['14:15', '16:20'],
-        '16:20': ['15:15'],
+        '16:20': ['15:15', '17:20'],
+        '17:20': ['16:20'],
     }
 
     def _consecutive_ok(self, year: str, division: str, day: str,
-                        slot: str, subject: str) -> bool:
-        """Return True if placing subject at slot doesn't create a back-to-back."""
-        tt = self.class_timetables.get((year, division))
+                        slot: str, subject: str, faculty: str) -> bool:
+        """
+        Return True if placing this lecture at (day, slot) does not create an
+        undesirable back-to-back situation.
+
+        Rules enforced:
+          1. Same subject must not appear in an adjacent slot for this class
+             (no two DS lectures at 10:15 and 11:15 for the same class).
+          2. Same faculty must not appear in an adjacent slot FOR THIS SAME CLASS
+             (the faculty gets no break within the class).
+
+        What is intentionally NOT blocked:
+          - Faculty teaching a different class in an adjacent slot. This is normal
+            scheduling (e.g. faculty teaches TY-A at 10:15 and SY-B at 11:15).
+            Blocking this was the root cause of VM's lectures being completely
+            unschedulable because VM's practicals occupied adjacent slots in
+            multiple classes simultaneously.
+        """
+        tt = self.class_timetables.get((year.upper(), division.upper()))
         if not tt:
             return True
         day_sched = tt['schedule'].get(day, {})
         for adj in self._ADJACENT.get(slot, []):
             for sess in day_sched.get(adj, []):
                 if sess.get('subject') == subject:
-                    return False
+                    return False   # same subject back-to-back for this class
+                if sess.get('faculty') == faculty:
+                    return False   # same faculty back-to-back within this class
         return True
 
     # ── Write helper ──────────────────────────────────────────────────────────
 
     def _place_lecture(self, year: str, division: str, day: str,
                        slot: str, lecture: dict):
-        key = (year, division)
+        key = (year.upper(), division.upper())
         tt  = self.class_timetables[key]
         schedule = tt.setdefault('schedule', {})
         schedule.setdefault(day, {}).setdefault(slot, []).append({
@@ -180,6 +238,58 @@ class LectureTimetableGenerator:
         })
         logger.debug(f"  ✓ {year}-{division} {lecture['subject']} "
                      f"L#{lecture['lecture_number']} → {day} {slot}")
+
+    # ── Round-robin key ordering (LG-01 FIX) ─────────────────────────────────
+
+    @staticmethod
+    def _build_round_robin_order(pending_keys: list) -> list:
+        """
+        Returns pending_keys reordered using the ROUND_ROBIN_CYCLE pattern:
+        SY, SY, TY, TY, BE  (repeating).
+
+        Mirrors the identical logic in TimetableGenerator so both schedulers
+        use the same fairness policy.
+        """
+        by_year: dict = {}
+        for k in pending_keys:
+            yr = k[0]
+            by_year.setdefault(yr, []).append(k)
+        for yr in by_year:
+            by_year[yr].sort(key=lambda k: (k[1], k[2]))  # division, subject alphabetically
+
+        pointers: dict = {yr: 0 for yr in by_year}
+
+        ordered = []
+        total = len(pending_keys)
+        cycle_pos = 0
+
+        while len(ordered) < total:
+            found = False
+            for _ in range(len(ROUND_ROBIN_CYCLE)):
+                yr = ROUND_ROBIN_CYCLE[cycle_pos % len(ROUND_ROBIN_CYCLE)]
+                cycle_pos += 1
+                if yr not in by_year:
+                    continue
+                idx = pointers[yr]
+                if idx >= len(by_year[yr]):
+                    continue
+                ordered.append(by_year[yr][idx])
+                pointers[yr] += 1
+                found = True
+                break
+
+            if not found:
+                # Remaining keys belong to a year not represented in the cycle
+                # (e.g. only BE keys left when cycle has no more BE slots before
+                # exhausting SY/TY turns). Append them all now.
+                cycle_pos += 1
+                for yr, keys in by_year.items():
+                    while pointers[yr] < len(keys):
+                        ordered.append(keys[pointers[yr]])
+                        pointers[yr] += 1
+                break
+
+        return ordered
 
     # ── Main scheduling loop ──────────────────────────────────────────────────
 
@@ -195,12 +305,17 @@ class LectureTimetableGenerator:
             if not self.class_timetables:
                 return {'success': False, 'error': 'No class timetables found'}
 
-            assignments = self.prepare_lecture_assignments()
-            if not assignments:
-                return {'success': False, 'message': 'No lecture assignments found',
-                        'lectures_scheduled': 0}
+            # LG-03 FIX: unpack the tuple — assignments + unresolved subjects
+            assignments, unresolved_subjects = self.prepare_lecture_assignments()
 
-            year_order      = {'SY': 0, 'TY': 1, 'BE': 2}
+            if not assignments:
+                return {
+                    'success':             False,
+                    'message':             'No lecture assignments found',
+                    'lectures_scheduled':  0,
+                    'unresolved_subjects': unresolved_subjects,
+                }
+
             scheduled_count = 0
 
             for pass_num in range(30):
@@ -211,23 +326,26 @@ class LectureTimetableGenerator:
                         if slot == LUNCH_SLOT:
                             continue
 
-                        sorted_keys = sorted(
-                            [(y, d, s) for (y, d, s) in assignments
-                             if assignments[(y, d, s)]],
-                            key=lambda k: (year_order.get(k[0], 9), k[1], k[2])
-                        )
+                        # LG-01 FIX: use round-robin ordering instead of fixed year_order
+                        pending_keys = [(y, d, s) for (y, d, s) in assignments
+                                        if assignments[(y, d, s)]]
+                        ordered_keys = self._build_round_robin_order(pending_keys)
 
-                        for year, division, subject in sorted_keys:
+                        for year, division, subject in ordered_keys:
                             pending = assignments[(year, division, subject)]
                             if not pending:
                                 continue
                             lecture = pending[0]
 
+                            # LG-02 FIX: _slot_free normalises key internally
                             if not self._slot_free(year, division, day, slot):
                                 continue
                             if self._faculty_busy(lecture['faculty'], day, slot):
                                 continue
-                            if not self._consecutive_ok(year, division, day, slot, subject):
+                            # LG-04 FIX: pass faculty to _consecutive_ok
+                            if not self._consecutive_ok(
+                                    year, division, day, slot,
+                                    subject, lecture['faculty']):
                                 continue
 
                             self._place_lecture(year, division, day, slot, lecture)
@@ -244,11 +362,13 @@ class LectureTimetableGenerator:
                     break
 
             # ── Save ──────────────────────────────────────────────────────
-            all_slots = ['10:15', '11:15', '12:15', '13:15',
-                         '14:15', '15:15', '16:20']
+            # Use ALL_LECTURE_SLOTS + LUNCH_SLOT so the scaffold always matches
+            # whatever slots are defined at the top of this file.
+            # Previously this was a hardcoded list that didn't include 17:20.
+            save_slots = sorted(set(ALL_LECTURE_SLOTS + [LUNCH_SLOT]))
             for (year, division), tt in self.class_timetables.items():
                 for day in DAYS:
-                    for sl in all_slots:
+                    for sl in save_slots:
                         tt['schedule'].setdefault(day, {}).setdefault(sl, [])
                 tt['generated_at'] = datetime.now()
                 class_timetable_collection.replace_one(
@@ -266,13 +386,22 @@ class LectureTimetableGenerator:
             else:
                 logger.info("✅ All lectures successfully scheduled!")
 
+            if unresolved_subjects:
+                logger.warning(
+                    f"⚠️  {len(unresolved_subjects)} subject(s) had no theory_hrs "
+                    f"and were excluded from scheduling entirely."
+                )
+
             logger.info(f"DONE: {scheduled_count} lectures scheduled")
 
             return {
-                'success':            True,
-                'message':            f'Scheduled {scheduled_count} lectures',
-                'lectures_scheduled': scheduled_count,
-                'leftovers':          leftovers,
+                'success':             True,
+                'message':             f'Scheduled {scheduled_count} lectures',
+                'lectures_scheduled':  scheduled_count,
+                'leftovers':           leftovers,
+                # LG-03 FIX: expose unresolved subjects so the API caller can
+                # show them in the UI rather than leaving the user confused
+                'unresolved_subjects': unresolved_subjects,
             }
 
         except Exception as e:

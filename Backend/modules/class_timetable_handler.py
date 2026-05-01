@@ -10,27 +10,40 @@ logger = logging.getLogger(__name__)
 master_lab_timetable_collection = db['master_lab_timetable']
 class_timetable_collection      = db['class_timetable']
 
-DAYS       = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-ALL_SLOTS  = ['10:15', '11:15', '12:15', '13:15', '14:15', '15:15', '16:20']
-
-# Slots where a practical can START (follow-on slots are derived from these)
+DAYS        = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+ALL_SLOTS   = ['10:15', '11:15', '12:15', '13:15', '14:15', '15:15', '16:20', '17:20']
 START_SLOTS = {'11:15', '14:15', '16:20'}
-# For 2-hour practicals: the follow-on slot for each start slot
 NEXT_SLOT   = {'11:15': '12:15', '14:15': '15:15'}
 
 
-def _normalise_batch(raw: str) -> str:
+# CH-02 FIX: return int, not string "Batch N".
+# timetable_generator.py stores batches as int (1, 2, 3).
+# class_timetable_handler was returning "Batch 1" — inconsistent across
+# collections.  We normalise to int here so both collections agree on type.
+def _normalise_batch(raw) -> int:
+    """
+    Accept any of: int 1, string '1', string 'Batch 1', string 'Batch Batch 1'.
+    Always returns a plain int.  Returns 0 on total parse failure (sentinel
+    value — callers should log/skip 0-batch entries).
+    """
+    if isinstance(raw, int):
+        return raw
     s = str(raw).strip()
-    while s.startswith('Batch Batch'):
-        s = s[len('Batch '):].strip()
-    return s
+    # Strip any number of leading 'Batch ' prefixes
+    while s.lower().startswith('batch '):
+        s = s[len('batch '):].strip()
+    try:
+        return int(s)
+    except ValueError:
+        logger.warning(f"_normalise_batch: could not parse '{raw}', returning 0")
+        return 0
 
 
 def _is_two_hour_practical(lab_doc: dict, day: str, slot: str, session: dict) -> bool:
     """
-    Determine if this session at (day, slot) is part of a 2-hour practical
-    by checking whether the same batch+subject appears in the follow-on slot
-    of the master lab schedule.
+    Return True if this session is part of a 2-hour practical by checking
+    whether the same batch+subject appears in the follow-on slot of the
+    master lab schedule.
     """
     if slot not in NEXT_SLOT:
         return False
@@ -63,7 +76,6 @@ def generate_class_timetables() -> dict:
             for day in DAYS:
                 for slot, sessions in lab_doc.get('schedule', {}).get(day, {}).items():
 
-                    # Only process START slots to avoid double-counting
                     if slot not in START_SLOTS:
                         continue
 
@@ -75,6 +87,14 @@ def generate_class_timetables() -> dict:
                                 f"Missing class/div in {lab_name} {day} {slot}")
                             continue
 
+                        # CH-02 FIX: store batch as int to match timetable_generator
+                        batch_int = _normalise_batch(session.get('batch', ''))
+                        if batch_int == 0:
+                            logger.warning(
+                                f"Skipping unresolvable batch '{session.get('batch')}' "
+                                f"in {lab_name} {day} {slot}")
+                            continue
+
                         key = (class_name, division)
                         if key not in class_schedules:
                             class_schedules[key] = {
@@ -83,7 +103,7 @@ def generate_class_timetables() -> dict:
                             }
 
                         entry = {
-                            'batch':        _normalise_batch(session.get('batch', '')),
+                            'batch':        batch_int,          # int, not "Batch N"
                             'subject':      session.get('subject'),
                             'subject_full': session.get('subject_full'),
                             'faculty':      session.get('faculty'),
@@ -92,10 +112,10 @@ def generate_class_timetables() -> dict:
                             'type':         'practical',
                         }
 
-                        # Write primary slot (always)
+                        # Write primary START slot
                         class_schedules[key][day][slot].append(dict(entry))
 
-                        # Write follow-on slot if this is a 2-hour practical
+                        # Write follow-on slot for 2-hr practicals
                         if _is_two_hour_practical(lab_doc, day, slot, session):
                             next_slot = NEXT_SLOT[slot]
                             class_schedules[key][day][next_slot].append(dict(entry))
@@ -104,12 +124,15 @@ def generate_class_timetables() -> dict:
 
         timetables_created = 0
         for (class_name, division), schedule in class_schedules.items():
+
+            # CH-01 FIX: count only entries that sit in a START_SLOT.
+            # Previously the loop counted follow-on slots too, doubling the
+            # total for every 2-hour practical.
             total_practicals = sum(
-                1
-                for d in schedule.values()
-                for slot_sessions in d.values()
-                for s in slot_sessions
-                if s.get('type') == 'practical'
+                len(schedule[day][slot])
+                for day in DAYS
+                for slot in START_SLOTS          # only START_SLOTS, not ALL_SLOTS
+                if slot in schedule.get(day, {})
             )
 
             doc = {
@@ -123,7 +146,7 @@ def generate_class_timetables() -> dict:
             class_timetable_collection.insert_one(doc)
             timetables_created += 1
             logger.info(f"Created {class_name}-{division} "
-                        f"({total_practicals} practical slot-entries)")
+                        f"({total_practicals} practicals)")
 
         logger.info(f"✅ Created {timetables_created} class timetables")
         return {

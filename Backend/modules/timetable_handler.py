@@ -1,64 +1,41 @@
-from flask import jsonify, request
-from bson import ObjectId
+# timetable_handler.py
+# Read-only handlers for the master lab timetable collection.
+# Generation logic lives in timetable_generator.py — this file only reads.
+
+from flask import jsonify
 from config import db
 import logging
 
-# Collection reference
-master_lab_timetable_collection = db['master_lab_timetable']
-
-# Logger
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+master_lab_timetable_collection = db['master_lab_timetable']
 
-def get_master_practical_timetable(data=None):
+
+def get_master_practical_timetable():
     """
-    Fetch master practical timetables from the database.
-    Supports optional filters for year and semester.
-
-    Example Request Body:
-    {
-        "year": "SY",
-        "sem": "1"
-    }
-
-    Example Response:
-    {
-        "timetables": [
-            {
-                "_id": "652b4a3f...",
-                "lab_name": "DBMS Lab",
-                "year": "SY",
-                "semester": "1",
-                "schedule": { "Monday": {...}, ... },
-                "generated_at": "2025-10-29T12:30:00",
-                "total_assignments": 12
-            },
-            ...
-        ]
-    }
+    GET /api/master_timetables
+    Returns all lab timetables from master_lab_timetable collection.
     """
     try:
-        query = {}
-        if data:
-            year = data.get("year")
-            semester = data.get("sem")
-            if year:
-                query["year"] = year
-            if semester:
-                query["semester"] = semester
+        timetables = list(master_lab_timetable_collection.find({}))
 
-        timetables = list(master_lab_timetable_collection.find(query))
+        if not timetables:
+            return jsonify({
+                'total': 0,
+                'timetables': [],
+                'message': 'No timetables found. Run generation first.'
+            }), 200
 
-        # Convert ObjectIds and datetime to strings
         for t in timetables:
-            t["_id"] = str(t["_id"])
-            if "generated_at" in t and t["generated_at"]:
-                t["generated_at"] = t["generated_at"].isoformat()
+            t['_id'] = str(t['_id'])
+            if t.get('generated_at'):
+                t['generated_at'] = t['generated_at'].isoformat()
 
-        logger.info(f"Fetched {len(timetables)} timetables from database.")
-        return jsonify({"timetables": timetables}), 200
+        return jsonify({
+            'total': len(timetables),
+            'timetables': timetables
+        }), 200
 
     except Exception as e:
-        logger.error(f"Error fetching master timetable: {str(e)}", exc_info=True)
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"get_master_practical_timetable error: {e}", exc_info=True)
+        return jsonify({'error': str(e)}), 500

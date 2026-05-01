@@ -3,15 +3,12 @@ from flask_cors import CORS
 from datetime import datetime
 import logging
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-# Enable CORS for all routes
 CORS(app)
 
-# Import all handlers
 from modules import (
     faculty_handler,
     labs_handler,
@@ -21,11 +18,12 @@ from modules import (
     workload_handler,
     class_timetable_handler,
     timetable_generator,
-    lecture_tt_generator
+    lecture_tt_generator,
 )
 
+
 # ============================================================================
-# HOME ENDPOINT
+# HOME
 # ============================================================================
 
 @app.route('/')
@@ -34,222 +32,232 @@ def home():
 
 
 # ============================================================================
-# FACULTY ENDPOINTS
+# FACULTY
 # ============================================================================
 
 @app.route('/api/faculty', methods=['GET'])
 def get_faculty():
-    """Get all faculty members"""
     return faculty_handler.display_faculty()
 
 
 @app.route('/api/faculty', methods=['POST'])
 def add_faculty():
-    """Add a new faculty member"""
     data = request.json or {}
     return faculty_handler.add_faculty(data)
 
 
 @app.route('/api/faculty', methods=['PUT'])
 def update_faculty():
-    """Update a faculty member"""
     data = request.json or {}
     return faculty_handler.update_faculty(data)
 
 
 @app.route('/api/faculty', methods=['DELETE'])
 def delete_faculty():
-    """Delete a faculty member"""
     data = request.json or {}
     return faculty_handler.delete_faculty(data)
 
 
 # ============================================================================
-# LABS ENDPOINTS
+# LABS
 # ============================================================================
 
 @app.route('/api/labs', methods=['GET'])
 def get_labs():
-    """Get all labs"""
     return labs_handler.display_labs()
 
 
 @app.route('/api/labs', methods=['POST'])
 def add_lab():
-    """Add a new lab"""
     data = request.json or {}
     return labs_handler.add_lab(data)
 
 
 @app.route('/api/labs', methods=['PUT'])
 def update_lab():
-    """Update a lab"""
     data = request.json or {}
     return labs_handler.update_lab(data)
 
 
 @app.route('/api/labs', methods=['DELETE'])
 def delete_lab():
-    """Delete a lab"""
     data = request.json or {}
     return labs_handler.delete_lab(data)
 
 
 @app.route('/api/confirm_labs', methods=['POST'])
 def confirm_labs():
-    """Confirm labs"""
     data = request.json
     return labs_handler.confirm_labs(data)
 
 
 # ============================================================================
-# CLASS STRUCTURE ENDPOINTS
+# CLASS STRUCTURE
 # ============================================================================
 
 @app.route('/api/class_structure', methods=['GET'])
 def get_class_structure():
-    """Get class structure"""
     return class_structure_handler.get_class_structure()
 
 
 @app.route('/api/class_structure', methods=['POST'])
 def save_class_structure():
-    """Save class structure"""
     data = request.json or {}
     return class_structure_handler.save_class_structure(data)
 
 
 # ============================================================================
-# SUBJECTS ENDPOINTS
+# SUBJECTS
 # ============================================================================
 
 @app.route('/api/subjects', methods=['POST'])
 def save_subjects():
-    """Add a new subject"""
     data = request.json
     return subjects_handler.save_subjects(data)
 
 
 @app.route('/api/subjects', methods=['GET'])
 def get_subjects():
-    """Get all subjects"""
     return subjects_handler.get_subjects()
 
 
 @app.route('/api/subjects', methods=['DELETE'])
 def delete_subject():
-    """Delete a subject"""
     data = request.json
     return subjects_handler.delete_subject(data)
 
 
 @app.route('/api/subjects', methods=['PUT'])
 def update_subject():
-    """Update a subject"""
     data = request.json
     return subjects_handler.update_subject(data)
 
 
 # ============================================================================
-# FACULTY WORKLOAD ENDPOINTS
+# FACULTY WORKLOAD
 # ============================================================================
 
 @app.route('/api/faculty_workload', methods=['POST'])
 def save_workload():
-    """Add faculty workload"""
     data = request.json
     return workload_handler.add_faculty_workload(data)
 
 
 @app.route('/api/faculty_workload', methods=['GET'])
 def get_faculty_workload():
-    """Get all faculty workloads"""
     return workload_handler.get_faculty_workload()
 
 
 @app.route('/api/faculty_workload', methods=['DELETE'])
 def delete_faculty_workload():
-    """Delete faculty workload"""
     data = request.json
     return workload_handler.delete_faculty_workload(data)
 
 
 @app.route('/api/faculty_workload', methods=['PUT'])
 def update_faculty_workload():
-    """Update faculty workload"""
     data = request.json
     return workload_handler.update_faculty_workload(data)
 
 
 # ============================================================================
-# MASTER PRACTICAL TIMETABLE ENDPOINTS
+# MASTER PRACTICAL TIMETABLE — main generation pipeline
 # ============================================================================
 
 @app.route('/api/regenerate_master_practical_timetable', methods=['POST'])
 def regenerate_master_practical_timetable():
     """
-    MAIN ENDPOINT - Regenerate master practical timetable + lectures.
+    Full pipeline:
+      1. Snapshot existing data (for rollback)
+      2. Delete existing timetables
+      3. timetable_generator   → practicals → master_lab_timetable
+      4. class_timetable_handler → class timetables
+      5. lecture_tt_generator  → lectures merged into class timetables
 
-    Pipeline (order matters):
-    1. Delete existing master lab timetables and class timetables
-    2. timetable_generator  → schedules practicals, saves master lab timetable ONLY
-    3. class_timetable_handler → reads master lab timetable, builds class timetables
-                                  (single writer — prevents duplicate follow-on entries)
-    4. lecture_tt_generator → reads class timetables, fills in lectures, re-saves
+    AP-01 FIX: if step 4 or 5 raises an unrecoverable error the collections
+    that were cleared in step 2 are restored from the snapshot taken before
+    deletion, leaving the DB in its original state instead of empty.
     """
+    from config import db
+
+    master_col = db['master_lab_timetable']
+    class_col  = db['class_timetable']
+
+    logger.info("=" * 80)
+    logger.info("STARTING COMPLETE TIMETABLE GENERATION")
+    logger.info("=" * 80)
+
+    # ── Snapshot for rollback (AP-01) ────────────────────────────────────────
+    snapshot_master = list(master_col.find({}))
+    snapshot_class  = list(class_col.find({}))
+    logger.info(f"Snapshot taken: {len(snapshot_master)} lab docs, "
+                f"{len(snapshot_class)} class docs")
+
+    def _rollback(reason: str):
+        """Restore both collections from the pre-run snapshot."""
+        logger.error(f"Rolling back due to: {reason}")
+        master_col.delete_many({})
+        class_col.delete_many({})
+        if snapshot_master:
+            master_col.insert_many(snapshot_master)
+        if snapshot_class:
+            class_col.insert_many(snapshot_class)
+        logger.info("Rollback complete — DB restored to pre-run state")
+
     try:
-        from config import db
+        # ── Step 1: Delete existing data ─────────────────────────────────────
+        logger.info("\n[STEP 1] Deleting existing timetables…")
+        deleted_labs    = master_col.delete_many({}).deleted_count
+        deleted_classes = class_col.delete_many({}).deleted_count
+        logger.info(f"✓ Deleted {deleted_labs} lab docs, {deleted_classes} class docs")
 
-        master_lab_timetable_collection = db['master_lab_timetable']
-        class_timetable_col             = db['class_timetable']
-
-        logger.info("=" * 80)
-        logger.info("STARTING COMPLETE TIMETABLE GENERATION")
-        logger.info("=" * 80)
-
-        # STEP 1: Delete all existing timetable data
-        logger.info("\n[STEP 1] Deleting existing timetables...")
-        deleted_labs    = master_lab_timetable_collection.delete_many({}).deleted_count
-        deleted_classes = class_timetable_col.delete_many({}).deleted_count
-        logger.info(f"✓ Deleted {deleted_labs} lab timetables, "
-                    f"{deleted_classes} class timetables")
-
-        # STEP 2: Generate master practical timetable (writes to master_lab_timetable only)
-        logger.info("\n[STEP 2] Generating master practical timetable...")
+        # ── Step 2: Generate master practical timetable ──────────────────────
+        logger.info("\n[STEP 2] Generating master practical timetable…")
         result = timetable_generator.generate()
 
         if not result or not result.get('success'):
+            # Step 2 failed — nothing was written yet, no rollback needed
             logger.error("✗ Practical timetable generation failed")
+            _rollback("practical generation failed")
             return jsonify({
-                "error": "Failed to generate practical timetable. "
-                         "Please verify subject, faculty, and workload data.",
-                "detail": result.get('error', '') if result else ''
+                "error":  ("Failed to generate practical timetable. "
+                           "Verify subject, faculty, and workload data."),
+                "detail": result.get('error', '') if result else '',
             }), 400
 
         leftovers = result.get("leftovers", {})
 
-        # STEP 3: Build class timetables from master lab timetable
-        # (this is the ONLY place class timetables are written for practicals)
-        logger.info("\n[STEP 3] Building class timetables from master lab timetable...")
-        class_timetables_result = class_timetable_handler.generate_class_timetables()
-        if not class_timetables_result.get('success'):
-            logger.error(f"✗ Class timetable generation failed: "
-                         f"{class_timetables_result.get('error')}")
-            return jsonify({
-                "error": "Failed to build class timetables.",
-                "detail": class_timetables_result.get('error', '')
-            }), 500
-        logger.info(f"✓ {class_timetables_result.get('message', '')}")
+        # ── Step 3: Build class timetables ───────────────────────────────────
+        logger.info("\n[STEP 3] Building class timetables…")
+        class_result = class_timetable_handler.generate_class_timetables()
 
-        # STEP 4: Fill lectures into class timetables
-        logger.info("\n[STEP 4] Generating lecture timetable...")
+        if not class_result.get('success'):
+            err = class_result.get('error', 'unknown error')
+            logger.error(f"✗ Class timetable generation failed: {err}")
+            _rollback(f"class timetable generation failed: {err}")
+            return jsonify({
+                "error":  "Failed to build class timetables.",
+                "detail": err,
+            }), 500
+
+        logger.info(f"✓ {class_result.get('message', '')}")
+
+        # ── Step 4: Fill lectures ────────────────────────────────────────────
+        logger.info("\n[STEP 4] Generating lecture timetable…")
         lecture_result = lecture_tt_generator.generate()
-        logger.info(f"✓ {lecture_result.get('message', '')}")
 
         if not lecture_result.get('success'):
-            logger.warning(
-                f"⚠️ Lecture generation had issues: {lecture_result.get('error', '')}")
+            err = lecture_result.get('error', 'unknown error')
+            logger.error(f"✗ Lecture generation failed: {err}")
+            _rollback(f"lecture generation failed: {err}")
+            return jsonify({
+                "error":  "Failed to generate lecture timetable.",
+                "detail": err,
+            }), 500
 
+        logger.info(f"✓ {lecture_result.get('message', '')}")
+
+        # ── Build response ───────────────────────────────────────────────────
         logger.info("\n" + "=" * 80)
         logger.info("✅ COMPLETE TIMETABLE GENERATION FINISHED")
         logger.info("=" * 80)
@@ -257,20 +265,20 @@ def regenerate_master_practical_timetable():
         status_code      = 201
         response_message = "Timetable regenerated successfully!"
         if leftovers:
-            unscheduled = sum(len(v) for v in leftovers.values())
+            unscheduled      = sum(len(v) for v in leftovers.values())
             response_message = (f"Timetable generated, but {unscheduled} practical "
                                 f"session(s) could not be scheduled.")
             status_code = 206
 
         return jsonify({
-            "message":          response_message,
-            "deleted_records":  deleted_labs,
-            "labs_generated":   result.get('labs_generated', 0),
+            "message":              response_message,
+            "deleted_records":      deleted_labs,
+            "labs_generated":       result.get('labs_generated', 0),
             "practicals_scheduled": result.get('practicals_scheduled', 0),
             "class_timetables": {
-                "success":            class_timetables_result['success'],
-                "message":            class_timetables_result.get('message', ''),
-                "timetables_created": class_timetables_result.get('timetables_created', 0),
+                "success":            class_result['success'],
+                "message":            class_result.get('message', ''),
+                "timetables_created": class_result.get('timetables_created', 0),
             },
             "lectures": {
                 "success":            lecture_result.get('success', False),
@@ -282,61 +290,49 @@ def regenerate_master_practical_timetable():
         }), status_code
 
     except Exception as e:
-        logger.error(
-            f"✗ Error in regenerate_master_practical_timetable: {e}", exc_info=True)
+        logger.error(f"✗ Unexpected error in pipeline: {e}", exc_info=True)
+        _rollback(f"unexpected exception: {e}")
         return jsonify({"error": str(e)}), 500
-    
+
+
+# ============================================================================
+# MASTER TIMETABLE (read-only)
+# ============================================================================
+
 @app.route('/api/master_timetables', methods=['GET'])
 def get_all_master_timetables():
-    """Get all master practical timetables (lab-wise)"""
     return timetable_handler.get_master_practical_timetable()
 
 
 # ============================================================================
-# CLASS TIMETABLE ENDPOINTS - Main Endpoint Only
+# CLASS TIMETABLE (read-only)
 # ============================================================================
 
 @app.route('/api/class_timetable/<class_name>/<division>', methods=['GET'])
 def get_class_timetable_endpoint(class_name, division):
-    """
-    Get complete timetable for a specific class with LECTURES + PRACTICALS.
-    
-    Example: GET /api/class_timetable/SY/A
-    
-    Returns complete timetable showing:
-    - Morning: Lectures (10:15, 11:15, 12:15)
-    - Lunch: Break (13:15)
-    - Afternoon: Practicals (14:15, 15:15, 16:20)
-    """
+    """GET /api/class_timetable/SY/A"""
     try:
         if not class_name or not division:
             return jsonify({'error': 'Missing class_name or division'}), 400
-        
-        class_name = class_name.upper()
-        division = division.upper()
-        
-        # Import here to avoid circular imports
+
         from config import db
-        class_timetable_collection = db['class_timetable']
-        
-        # Find timetable
-        timetable = class_timetable_collection.find_one({
-            'class': class_name,
-            'division': division
+        collection = db['class_timetable']
+        timetable  = collection.find_one({
+            'class':    class_name.upper(),
+            'division': division.upper(),
         })
-        
+
         if not timetable:
             return jsonify({
-                'error': f'No timetable found for {class_name}-{division}'
+                'error': f'No timetable found for {class_name.upper()}-{division.upper()}'
             }), 404
-        
-        # Convert ObjectId to string
+
         timetable['_id'] = str(timetable['_id'])
         if 'generated_at' in timetable:
             timetable['generated_at'] = timetable['generated_at'].isoformat()
-        
+
         return jsonify(timetable), 200
-        
+
     except Exception as e:
         logger.error(f"Error fetching class timetable: {e}", exc_info=True)
         return jsonify({'error': str(e)}), 500
@@ -344,31 +340,18 @@ def get_class_timetable_endpoint(class_name, division):
 
 @app.route('/api/class_timetables', methods=['GET'])
 def get_all_class_timetables_endpoint():
-    """
-    Get all class timetables with both lectures and practicals.
-    
-    Returns list of all class timetables (SY-A, SY-B, TY-A, TY-B, BE-A)
-    Each timetable shows:
-    - Morning: Lectures (10:15, 11:15, 12:15)
-    - Lunch: Break (13:15)
-    - Afternoon: Practicals (14:15, 15:15, 16:20)
-    """
     try:
         from config import db
-        class_timetable_collection = db['class_timetable']
-        
-        timetables = list(class_timetable_collection.find({}))
-        
+        collection = db['class_timetable']
+        timetables = list(collection.find({}))
+
         for t in timetables:
             t['_id'] = str(t['_id'])
             if 'generated_at' in t:
                 t['generated_at'] = t['generated_at'].isoformat()
-        
-        return jsonify({
-            'total': len(timetables),
-            'timetables': timetables
-        }), 200
-    
+
+        return jsonify({'total': len(timetables), 'timetables': timetables}), 200
+
     except Exception as e:
         logger.error(f"Error fetching all class timetables: {e}", exc_info=True)
         return jsonify({'error': str(e)}), 500
@@ -378,22 +361,35 @@ def get_all_class_timetables_endpoint():
 # ERROR HANDLERS
 # ============================================================================
 
+# AP-02 FIX: return JSON for client errors, not Flask's default HTML page.
+# Covers malformed JSON body, missing Content-Type, and validation failures
+# raised explicitly with abort(400) anywhere in the app.
+@app.errorhandler(400)
+def bad_request(error):
+    return jsonify({'error': 'Bad request', 'detail': str(error)}), 400
+
+
 @app.errorhandler(404)
 def not_found(error):
-    """Handle 404 errors"""
     return jsonify({'error': 'Endpoint not found'}), 404
+
+
+# AP-02 FIX: wrong HTTP method (e.g. GET on a POST-only route) also returns
+# HTML by default — catch it here.
+@app.errorhandler(405)
+def method_not_allowed(error):
+    return jsonify({'error': 'Method not allowed'}), 405
 
 
 @app.errorhandler(500)
 def internal_error(error):
-    """Handle 500 errors"""
     return jsonify({'error': 'Internal server error'}), 500
 
 
 # ============================================================================
-# RUN APPLICATION
+# RUN
 # ============================================================================
 
 if __name__ == '__main__':
-    logger.info("Starting Flask Timetable API...")
+    logger.info("Starting Flask Timetable API…")
     app.run(debug=True)
