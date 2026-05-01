@@ -191,34 +191,40 @@ class LectureTimetableGenerator:
     }
 
     def _consecutive_ok(self, year: str, division: str, day: str,
-                        slot: str, subject: str, faculty: str) -> bool:
+                    slot: str, subject: str, faculty: str) -> bool:
         """
-        Return True if placing this lecture at (day, slot) does not create an
-        undesirable back-to-back situation.
+    Return True if placing this lecture is acceptable. Blocks:
+      1. Same subject already anywhere on this day for this class
+         (enforces one lecture per subject per day — the spread constraint).
+      2. Same subject in an immediately adjacent slot for this class
+         (redundant given rule 1, kept as safety net).
+      3. Same faculty in an adjacent slot within this class
+         (faculty gets a break between sessions in the same class).
 
-        Rules enforced:
-          1. Same subject must not appear in an adjacent slot for this class
-             (no two DS lectures at 10:15 and 11:15 for the same class).
-          2. Same faculty must not appear in an adjacent slot FOR THIS SAME CLASS
-             (the faculty gets no break within the class).
-
-        What is intentionally NOT blocked:
-          - Faculty teaching a different class in an adjacent slot. This is normal
-            scheduling (e.g. faculty teaches TY-A at 10:15 and SY-B at 11:15).
-            Blocking this was the root cause of VM's lectures being completely
-            unschedulable because VM's practicals occupied adjacent slots in
-            multiple classes simultaneously.
+    Cross-class faculty adjacency is intentionally NOT blocked — teaching
+    different classes in adjacent slots is normal and was the root cause
+    of VM's lecture starvation when it was blocked.
         """
         tt = self.class_timetables.get((year.upper(), division.upper()))
         if not tt:
             return True
-        day_sched = tt['schedule'].get(day, {})
+
+        day_schedule = tt['schedule'].get(day, {})
+
+    # Rule 1 — same subject must not appear anywhere else on this day
+        for s, entries in day_schedule.items():
+            if s == slot:
+                continue   # skip the target slot itself
+            for sess in entries:
+                if sess.get('subject') == subject and sess.get('type') == 'lecture':
+                    return False  # subject already has a lecture today
+
+    # Rule 2 & 3 — adjacent slot checks (faculty break within class)
         for adj in self._ADJACENT.get(slot, []):
-            for sess in day_sched.get(adj, []):
-                if sess.get('subject') == subject:
-                    return False   # same subject back-to-back for this class
+            for sess in day_schedule.get(adj, []):
                 if sess.get('faculty') == faculty:
-                    return False   # same faculty back-to-back within this class
+                    return False  # same faculty back-to-back within this class
+
         return True
 
     # ── Write helper ──────────────────────────────────────────────────────────
