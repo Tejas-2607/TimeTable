@@ -172,16 +172,19 @@ class TimetableGenerator:
 
     # ── Constraint helpers ────────────────────────────────────────────────────
 
-    def _faculty_busy(faculty, day, slot, lab_schedule):
-    # existing check
-        if faculty in lab_schedule.get(day, {}).get(slot, []):
-            return True
+    def _faculty_busy(self, faculty, day, slot): # Add self, remove lab_schedule
+    # 1. Check if busy in the current generated lab schedule
+    # We look through all labs to see if this faculty is already teaching somewhere
+        for lab in self.lab_schedule:
+            sessions = self.lab_schedule[lab].get(day, {}).get(slot, [])
+            if any(s.get('faculty') == faculty for s in sessions):
+                return True
 
-    # ✅ NEW: preferred_off constraint
+    # 2. Preferred off constraint check (Keep your existing logic)
         for c in constraints_collection.find({
             "type": "preferred_off",
             "faculty_name": faculty
-    }):
+        }):
             if c.get("day") == day and c.get("time_slot") == slot:
                 return True
 
