@@ -10,6 +10,11 @@ export const authenticate = async (credentials) => {
   return response.data;
 };
 
+export const resetPassword = async (resetData) => {
+  const response = await api.post("/auth/reset-password", resetData);
+  return response.data;
+};
+
 export const logout = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("user");

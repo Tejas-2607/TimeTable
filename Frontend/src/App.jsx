@@ -16,6 +16,7 @@ import ViewTimetables from "./components/ViewTimetables";
 import FacultyTimetables from "./components/FacultyTimetables";
 import SpecialConstraints from "./components/SpecialConstraints";
 import Login from "./components/Login";
+import ResetPassword from "./components/ResetPassword";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
 // ── Protected route wrapper ────────────────────────────────────────────────
@@ -54,7 +55,7 @@ function AppContent() {
   const { user } = useAuth();
   const location = useLocation();
 
-  const showSidebar = user && location.pathname !== "/login";
+  const showSidebar = user && location.pathname !== "/login" && location.pathname !== "/reset-password";
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
@@ -64,6 +65,7 @@ function AppContent() {
       <main className="flex-1 h-full overflow-y-auto overflow-x-hidden">
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Root: redirect based on role */}
           <Route
