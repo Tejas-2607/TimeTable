@@ -69,6 +69,7 @@ def save_timings(data):
 
     return jsonify(data), 200
 
+
 def get_timings():
     settings = collection.find_one({"type": "department_timings"})
 
@@ -84,5 +85,46 @@ def get_timings():
     settings["_id"] = str(settings["_id"])
     settings["slots"] = calculate_slots(settings)
 
+    return jsonify(settings), 200
 
+
+def save_lab_timings(data):
+    data["type"] = "lab_timings"
+    data["updated_at"] = datetime.utcnow()
+
+    sessions = data.get("sessions", [])
+    normalized_sessions = []
+    for session in sessions:
+        start_time = session.get("startTime") or session.get("start_time")
+        end_time = session.get("endTime") or session.get("end_time")
+        if not start_time or not end_time:
+            continue
+        normalized_sessions.append({
+            "startTime": start_time,
+            "endTime": end_time,
+        })
+
+    data["sessions"] = normalized_sessions
+
+    collection.update_one(
+        {"type": "lab_timings"},
+        {"$set": data},
+        upsert=True
+    )
+
+    if "_id" in data:
+        data.pop("_id")
+
+    return jsonify(data), 200
+
+
+def get_lab_timings():
+    settings = collection.find_one({"type": "lab_timings"})
+
+    if not settings:
+        return jsonify({
+            "sessions": [],
+        }), 200
+
+    settings["_id"] = str(settings["_id"])
     return jsonify(settings), 200

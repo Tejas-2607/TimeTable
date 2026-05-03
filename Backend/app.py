@@ -132,6 +132,19 @@ def save_timings():
     return settings_handler.save_timings(data)
 
 
+@app.route('/api/settings/lab-timings', methods=['GET'])
+def get_lab_timings():
+    return settings_handler.get_lab_timings()
+
+
+@app.route('/api/settings/lab-timings', methods=['POST'])
+@token_required
+@role_required('admin')
+def save_lab_timings():
+    data = request.json or {}
+    return settings_handler.save_lab_timings(data)
+
+
 # ========================================================================
 # CONSTRAINTS
 # ========================================================================

@@ -55,6 +55,18 @@ class TimetableGenerator:
     # ── Data loading ─────────────────────────────────────────────────────────
 
     def _load_settings(self):
+        lab_doc = settings_collection.find_one({"type": "lab_timings"})
+        if lab_doc and lab_doc.get("sessions"):
+            sessions = lab_doc["sessions"]
+            self.all_slots = [session["startTime"] for session in sessions]
+            self.start_slots = self.all_slots.copy()
+            self.two_hr_start_slots = self.all_slots.copy()
+            self.next_slot = {}
+            self.covers = {}
+            self.lunch_slot = ''
+            logger.info(f"✓ Loaded lab timings from DB: {self.all_slots}")
+            return
+
         doc = settings_collection.find_one({"type": "department_timings"})
         if not doc:
             # Default values
@@ -301,7 +313,7 @@ class TimetableGenerator:
             return False
         if hrs == 2:
             next_s = self.next_slot.get(slot)
-            if next_s is None or not self._batch_slot_free(year, division, batch, day, next_s):
+            if next_s is not None and not self._batch_slot_free(year, division, batch, day, next_s):
                 return False
         if self._select_lab(practical, day, slot, used_labs) is None:
             return False
