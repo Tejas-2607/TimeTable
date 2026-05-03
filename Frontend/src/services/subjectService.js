@@ -1,13 +1,11 @@
 // src/services/subjectService.js
-import api from '../lib/api';
+import api from "../lib/api";
 
 // ---------- GET ALL SUBJECTS ----------
 export const getSubjects = async () => {
   try {
-    const res = await api.get('/subjects');
-    console.log(res);
-    
-    return res;
+    const res = await api.get("/subjects");
+    return res.data;
   } catch (err) {
     console.error("Error fetching subjects:", err);
     throw err;
@@ -17,7 +15,7 @@ export const getSubjects = async () => {
 // ---------- ADD NEW SUBJECT ----------
 export const addSubject = async (subjectData) => {
   try {
-    const res = await api.post('/subjects', subjectData);
+    const res = await api.post("/subjects", subjectData);
     return res.data;
   } catch (err) {
     console.error("Error adding subject:", err.response?.data || err);
@@ -28,7 +26,7 @@ export const addSubject = async (subjectData) => {
 // ---------- UPDATE SUBJECT ----------
 export const updateSubject = async (subjectData) => {
   try {
-    const res = await api.put('/subjects', subjectData);
+    const res = await api.put("/subjects", subjectData);
     return res.data;
   } catch (err) {
     console.error("Error updating subject:", err.response?.data || err);
@@ -39,7 +37,7 @@ export const updateSubject = async (subjectData) => {
 // ---------- DELETE SUBJECT ----------
 export const deleteSubject = async (year, id) => {
   try {
-    const res = await api.delete('/subjects', {
+    const res = await api.delete("/subjects", {
       data: { id, year },
     });
     return res.data;

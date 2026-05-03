@@ -1,6 +1,6 @@
 from flask import jsonify
-from bson import ObjectId
 from config import db
+from bson import ObjectId
 
 subjects_collection = db['subjects']
 
@@ -29,7 +29,7 @@ def save_subjects(data):
             if field not in data:
                 return jsonify({"error": f"Missing required field: '{field}'"}), 400
 
-        year = data.get('year').lower()
+        year = data.get("year", "").lower()
         valid_years = ['sy', 'ty', 'be']
         if year not in valid_years:
             return jsonify({"error": f"Invalid year. Must be one of: {', '.join(valid_years)}"}), 400

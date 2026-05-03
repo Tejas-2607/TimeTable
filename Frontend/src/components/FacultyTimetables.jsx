@@ -49,7 +49,10 @@ export default function FacultyTimetables({
 
       // Map short names to full titles/names
       const fMap = {};
-      const facultiesList = facRes || facRes.data || [];
+      const facultiesList =
+        (Array.isArray(facRes) && facRes) ||
+        (Array.isArray(facRes?.data) && facRes.data) ||
+        [];
       facultiesList.forEach((f) => {
         if (f.short_name) {
           fMap[f.short_name] = `${f.title} ${f.name}`;

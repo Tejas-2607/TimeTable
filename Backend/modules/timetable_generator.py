@@ -3,6 +3,10 @@
 from datetime import datetime
 from config import db
 import logging
+from config import db
+
+constraints_collection = db["constraints"]
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -168,19 +172,19 @@ class TimetableGenerator:
 
     # ── Constraint helpers ────────────────────────────────────────────────────
 
-    def _faculty_busy(self, faculty: str, day: str, slot: str) -> bool:
-        # TG-02 FIX: also check the start slot that covers this follow-on slot.
-        # e.g. if slot='12:15', also scan '11:15' because a 2-hr session that
-        # started at 11:15 occupies 12:15 as well — checking only 12:15 misses it.
-        slots_to_check = {slot}
-        if slot in COVERS:
-            slots_to_check.add(COVERS[slot])
+    def _faculty_busy(faculty, day, slot, lab_schedule):
+    # existing check
+        if faculty in lab_schedule.get(day, {}).get(slot, []):
+            return True
 
-        for lab_sched in self.lab_schedule.values():
-            for s in slots_to_check:
-                for sess in lab_sched.get(day, {}).get(s, []):
-                    if sess.get('faculty') == faculty:
-                        return True
+    # ✅ NEW: preferred_off constraint
+        for c in constraints_collection.find({
+            "type": "preferred_off",
+            "faculty_name": faculty
+    }):
+            if c.get("day") == day and c.get("time_slot") == slot:
+                return True
+
         return False
 
     def _batch_slot_free(self, year, division, batch, day, slot) -> bool:

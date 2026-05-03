@@ -1,13 +1,13 @@
 // src/services/classStructureService.js
-import api from '../lib/api';
+import api from "../lib/api";
 
 // ✅ Save the full class structure
 export const saveClassStructure = async (structureData) => {
   try {
-    const response = await api.post('/class_structure', structureData);
+    const response = await api.post("/class_structure", structureData);
     return response.data;
   } catch (error) {
-    console.error('API Error (saveClassStructure):', error);
+    console.error("API Error (saveClassStructure):", error);
     throw error;
   }
 };
@@ -15,11 +15,11 @@ export const saveClassStructure = async (structureData) => {
 // ✅ Fetch the saved class structure
 export const getClassStructure = async () => {
   try {
-    const response = await api.get('/class_structure');
-        console.log("Backend Response:", response);
-    return response;
+    const response = await api.get("/class_structure");
+    console.log("Backend Response:", response);
+    return response.data;
   } catch (error) {
-    console.error('API Error (getClassStructure):', error);
+    console.error("API Error (getClassStructure):", error);
     throw error;
   }
 };

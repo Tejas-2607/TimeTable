@@ -296,6 +296,28 @@ class LectureTimetableGenerator:
                 break
 
         return ordered
+    
+    # for constraint in constraints:
+    #     if constraint["type"] != "fixed_time":
+    #         continue
+
+    #     class_name = constraint["class"]
+    #     division = constraint["division"]
+    #     day = constraint["day"]
+    #     slot = constraint["time_slot"]
+
+    # # ✅ NEW FIX: check slot free BEFORE placing
+    #     if not self._slot_free(class_name, division, day, slot):
+    #         continue
+
+        self._place_lecture(
+        class_name,
+        division,
+        constraint["subject"],
+        constraint["faculty"],
+        day,
+        slot
+    )
 
     # ── Main scheduling loop ──────────────────────────────────────────────────
 

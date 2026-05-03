@@ -11,3 +11,5 @@ DB_NAME = os.getenv("DB_NAME")
 # Connect to MongoDB
 client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
+
+SECRET_KEY = os.getenv("SECRET_KEY", "super-secret-key-that-is-longer-than-32-chars")
