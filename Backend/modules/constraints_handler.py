@@ -41,25 +41,65 @@ def add_constraint(data):
         if not constraint_type or not day or not time_slot:
             return jsonify({"error": "type, day, time_slot required"}), 400
 
-        faculty_name = data.get("faculty_name", user.get("name"))
+        # CH-01 FIX: validate required fields for fixed_time constraints
+        if constraint_type == "fixed_time":
+            # Accept both 'class' and 'year' from frontend (year → class mapping)
+            class_name = data.get("class") or data.get("year")
+            division = data.get("division")
+            subject = data.get("subject")
+            faculty_name = data.get("faculty_name", user.get("name"))
+            
+            if not all([class_name, division, subject, faculty_name]):
+                return jsonify({
+                    "error": "fixed_time constraints require: class/year, division, subject, faculty_name"
+                }), 400
+        else:
+            faculty_name = data.get("faculty_name", user.get("name"))
 
-        # ✅ duplicate check
-        existing = constraints_collection.find_one({
-            "type": constraint_type,
-            "faculty_name": faculty_name,
-            "day": day,
-            "time_slot": time_slot
-        })
+        # ✅ duplicate check — more comprehensive for fixed_time
+        if constraint_type == "fixed_time":
+            # CH-02 FIX: check for both "class" and "year" fields since we're migrating
+            class_val = data.get("class") or data.get("year")
+            existing = constraints_collection.find_one({
+                "$or": [
+                    {
+                        "type": constraint_type,
+                        "class": class_val,
+                        "division": data.get("division"),
+                        "subject": data.get("subject"),
+                        "day": day,
+                        "time_slot": time_slot
+                    },
+                    {
+                        "type": constraint_type,
+                        "year": class_val,  # Check old "year" field too
+                        "division": data.get("division"),
+                        "subject": data.get("subject"),
+                        "day": day,
+                        "time_slot": time_slot
+                    }
+                ]
+            })
+        else:
+            existing = constraints_collection.find_one({
+                "type": constraint_type,
+                "faculty_name": faculty_name,
+                "day": day,
+                "time_slot": time_slot
+            })
 
         if existing:
             return jsonify({"error": "Constraint already exists"}), 409
 
+        # CH-01 FIX: use "class" not "year" so lecture_tt_generator can read it
+        # Map year → class for new constraints
+        class_val = data.get("class") or data.get("year")
         new_constraint = {
             "faculty_name": faculty_name,
             "type": constraint_type,
             "day": day,
             "time_slot": time_slot,
-            "year": data.get("year"),
+            "class": class_val,           # FIXED: renamed from "year"
             "division": data.get("division"),
             "subject": data.get("subject"),
             "created_at": datetime.utcnow()

@@ -2,3 +2,11 @@
 __pycache__ 
 venv/       
 *.pyc
+fix_and_verify.py
+fix_constraint_direct.py 
+migrate_constraints.py 
+query_db.py 
+verify_constraints.py 
+test_imports.py 
+test.py
+fix_constraints.py 

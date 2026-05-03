@@ -20,6 +20,7 @@ workload_collection        = db['workload']
 faculty_collection         = db['faculty']
 subjects_collection        = db['subjects']
 class_timetable_collection = db['class_timetable']
+constraints_collection     = db['constraints']
 
 
 class LectureTimetableGenerator:
@@ -296,28 +297,89 @@ class LectureTimetableGenerator:
                 break
 
         return ordered
-    
-    # for constraint in constraints:
-    #     if constraint["type"] != "fixed_time":
-    #         continue
 
-    #     class_name = constraint["class"]
-    #     division = constraint["division"]
-    #     day = constraint["day"]
-    #     slot = constraint["time_slot"]
+    # ── Apply fixed_time constraints (Phase 0) ────────────────────────────────
 
-    # # ✅ NEW FIX: check slot free BEFORE placing
-    #     if not self._slot_free(class_name, division, day, slot):
-    #         continue
+    def _apply_fixed_time_constraints(self, assignments: dict) -> tuple[int, list]:
+        """
+        Apply fixed_time constraints BEFORE the main scheduling loop.
+        This is Phase 0 of the lecture generation.
 
-        self._place_lecture(
-        class_name,
-        division,
-        constraint["subject"],
-        constraint["faculty"],
-        day,
-        slot
-    )
+        Returns:
+            (num_placed, unplaced_constraints)
+            where unplaced_constraints are constraints that could not be placed.
+        """
+        constraints = list(constraints_collection.find({'type': 'fixed_time'}))
+        placed_count = 0
+        unplaced = []
+
+        for constraint in constraints:
+            try:
+                # LG-05 FIX: accept both "class" and "year" fields for backward compatibility
+                # Existing constraints may have "year", new ones store as "class"
+                year         = (constraint.get('class') or constraint.get('year') or '').strip().upper()
+                division     = constraint.get('division', 'A').strip().upper()
+                subject      = constraint.get('subject', '')
+                day          = constraint.get('day', '')
+                slot         = constraint.get('time_slot', '')
+                faculty_name = constraint.get('faculty_name', '')
+
+                # Validate required fields
+                if not all([year, division, subject, day, slot, faculty_name]):
+                    logger.warning(
+                        f"Incomplete fixed_time constraint: {constraint}. Skipping."
+                    )
+                    unplaced.append(constraint)
+                    continue
+
+                # Check if slot is free
+                if not self._slot_free(year, division, day, slot):
+                    logger.warning(
+                        f"Cannot place fixed_time constraint {year}-{division} "
+                        f"{subject} @ {day} {slot}: slot occupied"
+                    )
+                    unplaced.append(constraint)
+                    continue
+
+                # Find the matching assignment and place it
+                key = (year, division, subject)
+                if key not in assignments or not assignments[key]:
+                    logger.warning(
+                        f"No assignment found for fixed_time constraint: "
+                        f"{year}-{division}-{subject}. Check if workload exists."
+                    )
+                    unplaced.append(constraint)
+                    continue
+
+                # Find the lecture from this faculty within the pending list
+                found = False
+                for idx, lecture in enumerate(assignments[key]):
+                    if lecture['faculty'] == faculty_name:
+                        # Place it
+                        self._place_lecture(year, division, day, slot, lecture)
+                        assignments[key].pop(idx)
+                        placed_count += 1
+                        found = True
+                        logger.info(
+                            f"✓ Fixed_time constraint placed: {year}-{division} "
+                            f"{subject} ({faculty_name}) → {day} {slot}"
+                        )
+                        break
+
+                if not found:
+                    logger.warning(
+                        f"No lecture found for fixed_time constraint faculty "
+                        f"{faculty_name} in {year}-{division}-{subject}"
+                    )
+                    unplaced.append(constraint)
+
+            except Exception as e:
+                logger.error(
+                    f"Error applying fixed_time constraint {constraint}: {e}"
+                )
+                unplaced.append(constraint)
+
+        return placed_count, unplaced
 
     # ── Main scheduling loop ──────────────────────────────────────────────────
 
@@ -345,6 +407,14 @@ class LectureTimetableGenerator:
                 }
 
             scheduled_count = 0
+
+            # ── Phase 0: Apply fixed_time constraints ────────────────────────
+            fixed_time_placed, fixed_time_unplaced = self._apply_fixed_time_constraints(assignments)
+            scheduled_count += fixed_time_placed
+            if fixed_time_unplaced:
+                logger.warning(
+                    f"⚠️  {len(fixed_time_unplaced)} fixed_time constraint(s) could not be placed"
+                )
 
             for pass_num in range(30):
                 progress = False
@@ -426,9 +496,9 @@ class LectureTimetableGenerator:
                 'success':             True,
                 'message':             f'Scheduled {scheduled_count} lectures',
                 'lectures_scheduled':  scheduled_count,
+                'fixed_time_placed':   fixed_time_placed,
+                'fixed_time_unplaced': len(fixed_time_unplaced),
                 'leftovers':           leftovers,
-                # LG-03 FIX: expose unresolved subjects so the API caller can
-                # show them in the UI rather than leaving the user confused
                 'unresolved_subjects': unresolved_subjects,
             }
 
