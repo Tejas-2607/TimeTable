@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
-import { Trash2, Edit2, Plus, Save, X } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Trash2, Edit2, Plus, Save, X } from "lucide-react";
 import {
   getFaculties,
   createFaculty,
   updateFaculty,
   deleteFaculty,
-} from '../services/facultyService';
+} from "../services/facultyService";
 
 export default function FacultyData() {
   const [faculties, setFaculties] = useState([]);
@@ -13,9 +13,10 @@ export default function FacultyData() {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    title: 'Prof',
-    name: '',
-    short_name: '',
+    title: "Prof",
+    name: "",
+    short_name: "",
+    email: "", // Add this line
   });
 
   // ✅ Load faculties from backend
@@ -29,14 +30,13 @@ export default function FacultyData() {
       const data = await getFaculties();
       // Sort by created_at if available
       const sorted = data.sort(
-        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        (a, b) => new Date(b.created_at) - new Date(a.created_at),
       );
       setFaculties(sorted);
       console.log(sorted);
-
     } catch (error) {
-      console.error('Failed to load faculties:', error);
-      alert('Error loading faculties');
+      console.error("Failed to load faculties:", error);
+      alert("Error loading faculties");
     } finally {
       setLoading(false);
     }
@@ -58,8 +58,8 @@ export default function FacultyData() {
       await loadFaculties();
       resetForm();
     } catch (error) {
-      console.error('Error saving faculty:', error);
-      alert('Failed to save faculty');
+      console.error("Error saving faculty:", error);
+      alert("Failed to save faculty");
     }
   };
 
@@ -69,6 +69,7 @@ export default function FacultyData() {
       title: faculty.title,
       name: faculty.name,
       short_name: faculty.short_name,
+      email: faculty.email || "",
     });
     setEditingId(faculty._id || faculty.id);
     setShowForm(true);
@@ -76,21 +77,21 @@ export default function FacultyData() {
 
   // ✅ Delete
   const handleDelete = async (id) => {
-    if (confirm('Are you sure you want to delete this faculty?')) {
+    if (confirm("Are you sure you want to delete this faculty?")) {
       try {
-        id = { "_id": id };
+        id = { _id: id };
         console.log(id);
         await deleteFaculty(id);
         await loadFaculties();
       } catch (error) {
-        console.error('Error deleting faculty:', error);
-        alert('Failed to delete faculty');
+        console.error("Error deleting faculty:", error);
+        alert("Failed to delete faculty");
       }
     }
   };
 
   const resetForm = () => {
-    setFormData({ title: 'Prof', name: '', short_name: '' });
+    setFormData({ title: "Prof", name: "", short_name: "", email: "" });
     setEditingId(null);
     setShowForm(false);
   };
@@ -99,7 +100,9 @@ export default function FacultyData() {
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-3xl font-bold text-slate-800 tracking-tight">Faculty Data</h2>
+          <h2 className="text-3xl font-bold text-slate-800 tracking-tight">
+            Faculty Data
+          </h2>
           <p className="text-slate-500 mt-2">Manage faculty information</p>
         </div>
         {!showForm && (
@@ -117,7 +120,7 @@ export default function FacultyData() {
         <div className="bg-white rounded-xl shadow-md p-6 mb-8 border border-slate-200">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-slate-800">
-              {editingId ? 'Edit Faculty' : 'Add New Faculty'}
+              {editingId ? "Edit Faculty" : "Add New Faculty"}
             </h3>
             <button
               onClick={resetForm}
@@ -165,7 +168,6 @@ export default function FacultyData() {
               </div>
             </div>
 
-            {/* Short Name */}
             <div className="grid grid-cols-2 gap-6 mt-6">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -181,6 +183,20 @@ export default function FacultyData() {
                   required
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-4 focus:ring-slate-100 focus:border-slate-400 outline-none transition-all shadow-sm"
+                  required
+                />
+              </div>
             </div>
 
             <div className="flex gap-3">
@@ -189,7 +205,7 @@ export default function FacultyData() {
                 className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-all shadow-md active:scale-95"
               >
                 <Save size={18} />
-                {editingId ? 'Update' : 'Save'} Faculty
+                {editingId ? "Update" : "Save"} Faculty
               </button>
               <button
                 type="button"
@@ -267,9 +283,7 @@ export default function FacultyData() {
                         <Edit2 size={16} />
                       </button>
                       <button
-                        onClick={() =>
-                          handleDelete(faculty._id || faculty.id)
-                        }
+                        onClick={() => handleDelete(faculty._id || faculty.id)}
                         className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
                       >
                         <Trash2 size={16} />

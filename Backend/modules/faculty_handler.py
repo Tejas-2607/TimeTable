@@ -21,23 +21,25 @@ def display_faculty():
 def add_faculty(data):
     name = data.get('name')
     short_name = data.get('short_name')
+    email = data.get('email') # NEW: Extract email
     title = data.get('title')
 
-    if not name or not short_name:
-        return jsonify({"error": "Missing name or short_name"}), 400
+    # UPDATED: Check for email presence
+    if not name or not short_name or not email:
+        return jsonify({"error": "Missing name, short_name, or email"}), 400
 
-    # Check if faculty already exists
-    existing = faculty_collection.find_one({"name": name})
-    if existing:
-        return jsonify({"error": f"Faculty '{name}' already exists"}), 400
+    # NEW: Check if email already exists to prevent duplicates
+    if faculty_collection.find_one({"email": email.lower()}):
+        return jsonify({"error": f"Faculty with email '{email}' already exists"}), 400
 
     try:
         faculty_data = {
             "name": name,
-            "short_name": short_name
+            "short_name": short_name,
+            "email": email.lower(), # NEW: Save lowercase email
+            "role": "faculty"       # NEW: Assign default role for auth compatibility
         }
         
-        # Add title if provided
         if title:
             faculty_data["title"] = title
         
@@ -48,7 +50,6 @@ def add_faculty(data):
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 # ---------- Delete a faculty ----------
 def delete_faculty(data):
