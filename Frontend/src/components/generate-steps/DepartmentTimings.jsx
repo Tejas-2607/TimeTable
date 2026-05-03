@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
-import { storage } from '../../lib/storage';
-import { Plus, Trash2 } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { storage } from "../../lib/storage";
+import { Plus, Trash2 } from "lucide-react";
+import { saveDepartmentTimings } from "../../services/settingsService";
 
 export default function DepartmentTimings({ data, onDataChange }) {
   const [formData, setFormData] = useState({
     lecture_duration: 60,
-    day_start_time: '09:15',
-    day_end_time: '17:20',
-    breaks: [{ name: 'Lunch', start_time: '12:15', duration: 65 }],
+    day_start_time: "09:15",
+    day_end_time: "17:20",
+    breaks: [{ name: "Lunch", start_time: "12:15", duration: 65 }],
   });
 
   useEffect(() => {
@@ -34,7 +35,7 @@ export default function DepartmentTimings({ data, onDataChange }) {
   const addBreak = () => {
     setFormData((prev) => ({
       ...prev,
-      breaks: [...prev.breaks, { name: '', start_time: '', duration: 0 }],
+      breaks: [...prev.breaks, { name: "", start_time: "", duration: 0 }],
     }));
   };
 
@@ -49,15 +50,23 @@ export default function DepartmentTimings({ data, onDataChange }) {
     setFormData((prev) => ({
       ...prev,
       breaks: prev.breaks.map((brk, i) =>
-        i === index ? { ...brk, [field]: value } : brk
+        i === index ? { ...brk, [field]: value } : brk,
       ),
     }));
   };
 
-  const handleSave = () => {
-    storage.departmentTimings.upsert(formData);
-    onDataChange('timings', formData);
-    alert('Timings saved successfully!');
+  const handleSave = async () => {
+    try {
+      const response = await saveDepartmentTimings(formData);
+
+      storage.departmentTimings.upsert(response);
+      onDataChange("timings", response);
+
+      alert("Timings and Slots generated successfully on server!");
+    } catch (error) {
+      console.error("Failed to save timings:", error);
+      alert("Error saving timings to server.");
+    }
   };
 
   return (
@@ -76,7 +85,7 @@ export default function DepartmentTimings({ data, onDataChange }) {
           <input
             type="number"
             value={formData.lecture_duration}
-            onChange={(e) => handleChange('lecture_duration', e.target.value)}
+            onChange={(e) => handleChange("lecture_duration", e.target.value)}
             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
           />
         </div>
@@ -88,7 +97,7 @@ export default function DepartmentTimings({ data, onDataChange }) {
           <input
             type="time"
             value={formData.day_start_time}
-            onChange={(e) => handleChange('day_start_time', e.target.value)}
+            onChange={(e) => handleChange("day_start_time", e.target.value)}
             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
           />
         </div>
@@ -100,7 +109,7 @@ export default function DepartmentTimings({ data, onDataChange }) {
           <input
             type="time"
             value={formData.day_end_time}
-            onChange={(e) => handleChange('day_end_time', e.target.value)}
+            onChange={(e) => handleChange("day_end_time", e.target.value)}
             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
           />
         </div>
@@ -131,7 +140,7 @@ export default function DepartmentTimings({ data, onDataChange }) {
                 <input
                   type="text"
                   value={brk.name}
-                  onChange={(e) => updateBreak(index, 'name', e.target.value)}
+                  onChange={(e) => updateBreak(index, "name", e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
                   placeholder="e.g., Lunch"
                 />
@@ -145,7 +154,7 @@ export default function DepartmentTimings({ data, onDataChange }) {
                   type="time"
                   value={brk.start_time}
                   onChange={(e) =>
-                    updateBreak(index, 'start_time', e.target.value)
+                    updateBreak(index, "start_time", e.target.value)
                   }
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
                 />
@@ -159,7 +168,7 @@ export default function DepartmentTimings({ data, onDataChange }) {
                   type="number"
                   value={brk.duration}
                   onChange={(e) =>
-                    updateBreak(index, 'duration', e.target.value)
+                    updateBreak(index, "duration", e.target.value)
                   }
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
                 />
