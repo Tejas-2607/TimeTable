@@ -1,6 +1,8 @@
 from flask import jsonify
 from bson import ObjectId
 from config import db
+from modules.email_service import send_faculty_welcome_email
+from werkzeug.security import generate_password_hash
 
 # Collection for faculty
 faculty_collection = db['faculty']
@@ -33,17 +35,25 @@ def add_faculty(data):
         return jsonify({"error": f"Faculty with email '{email}' already exists"}), 400
 
     try:
+        # Set default password for new faculty
+        default_password = "password123"
+        hashed_password = generate_password_hash(default_password)
+        
         faculty_data = {
             "name": name,
             "short_name": short_name,
             "email": email.lower(), # NEW: Save lowercase email
-            "role": "faculty"       # NEW: Assign default role for auth compatibility
+            "role": "faculty",       # NEW: Assign default role for auth compatibility
+            "password": hashed_password  # NEW: Set default password
         }
         
         if title:
             faculty_data["title"] = title
         
         result = faculty_collection.insert_one(faculty_data)
+
+        send_faculty_welcome_email(name, email.lower())
+
         return jsonify({
             "message": f"Faculty '{name}' added successfully!",
             "_id": str(result.inserted_id)

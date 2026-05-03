@@ -101,6 +101,20 @@ def authenticate():
     return auth_handler.authenticate(data)
 
 
+@app.route('/api/auth/reset-password', methods=['POST'])
+@token_required
+def reset_password():
+    data = request.json or {}
+    user_id = request.user.get('sub')
+    return auth_handler.reset_password(user_id, data)
+
+
+@app.route('/api/auth/forgot-password', methods=['POST'])
+def forgot_password():
+    data = request.json or {}
+    return auth_handler.forgot_password(data)
+
+
 # ========================================================================
 # SETTINGS
 # ========================================================================

@@ -187,6 +187,18 @@ export default function Login() {
                   </>
                 )}
               </button>
+
+              {!isRegister && (
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => navigate("/reset-password")}
+                    className="text-blue-300 hover:text-blue-200 transition-colors font-medium text-sm border-b border-blue-400/30 pb-0.5"
+                  >
+                    Reset Password?
+                  </button>
+                </div>
+              )}
             </form>
 
             <div className="mt-8 text-center text-white/40 text-sm">
