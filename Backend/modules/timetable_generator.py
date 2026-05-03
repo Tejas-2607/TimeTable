@@ -3,24 +3,9 @@
 from datetime import datetime
 from config import db
 import logging
-from config import db
-
-constraints_collection = db["constraints"]
-
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-DAYS               = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-ALL_SLOTS          = ['10:15', '11:15', '12:15', '13:15', '14:15', '15:15', '16:20']
-START_SLOTS        = ['11:15', '14:15', '16:20']
-NEXT_SLOT          = {'11:15': '12:15', '14:15': '15:15'}
-TWO_HR_START_SLOTS = ['11:15', '14:15']
-
-# TG-02 FIX: follow-on slot → the start slot that "covers" it
-# e.g. a 2-hr session starting at 11:15 occupies 12:15 as well.
-# When checking if faculty is busy at 12:15, we must also look at 11:15.
-COVERS = {'12:15': '11:15', '15:15': '14:15'}
 
 # TG-01 FIX: Round-robin weights per year.
 # Pattern: SY, SY, TY, TY, BE — repeating.
@@ -33,6 +18,8 @@ faculty_collection              = db['faculty']
 workload_collection             = db['workload']
 labs_collection                 = db['labs']
 master_lab_timetable_collection = db['master_lab_timetable']
+constraints_collection          = db['constraints']
+settings_collection             = db['settings']
 
 
 # TG-03 FIX: return None on parse failure instead of silently returning 1
@@ -50,13 +37,52 @@ def _normalise_batch(raw) -> int | None:
 class TimetableGenerator:
 
     def __init__(self):
-        self.lab_schedule   = {}   # lab_name → day → slot → [sessions]
-        self.batch_occupied = {}   # (year, div, batch) → day → slot → bool
-        self.faculty_names  = {}
-        self.labs_list      = []
-        self.subject_map    = {}   # short_name → subject doc
+        self.lab_schedule       = {}   # lab_name → day → slot → [sessions]
+        self.batch_occupied     = {}   # (year, div, batch) → day → slot → bool
+        self.faculty_names      = {}
+        self.labs_list          = []
+        self.subject_map        = {}   # short_name → subject doc
+        self.preferred_off      = set()  # (faculty, day, slot) tuples — cached constraints
+        self.fixed_time_blocked = set()  # (faculty, day, slot, class, division, subject) — cached constraints
+        self.days               = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+        self.all_slots          = []
+        self.start_slots        = []
+        self.next_slot          = {}
+        self.two_hr_start_slots = []
+        self.covers             = {}
+        self.lunch_slot         = ''
 
     # ── Data loading ─────────────────────────────────────────────────────────
+
+    def _load_settings(self):
+        doc = settings_collection.find_one({"type": "department_timings"})
+        if not doc:
+            # Default values
+            self.all_slots = ['10:15', '11:15', '12:15', '13:15', '14:15', '15:15', '16:20']
+            self.lunch_slot = '13:15'
+            self.start_slots = ['11:15', '14:15', '16:20']
+            self.two_hr_start_slots = ['11:15', '14:15']
+            self.next_slot = {'11:15': '12:15', '14:15': '15:15'}
+            self.covers = {'12:15': '11:15', '15:15': '14:15'}
+        else:
+            from modules.settings_handler import calculate_slots
+            slots = calculate_slots(doc)
+            breaks = doc.get('breaks', [])
+            lunch_break = next((b for b in breaks if 'lunch' in b.get('name', '').lower()), None)
+            if lunch_break:
+                self.lunch_slot = lunch_break['start_time']
+            else:
+                self.lunch_slot = '13:15'
+            self.all_slots = slots
+            self.start_slots = [s for s in slots if s != self.lunch_slot]
+            # Assume practicals can be 2hr, so next_slot for consecutive slots
+            self.next_slot = {}
+            self.covers = {}
+            for i in range(len(slots) - 1):
+                self.next_slot[slots[i]] = slots[i+1]
+                self.covers[slots[i+1]] = slots[i]
+            self.two_hr_start_slots = self.start_slots  # assume all can start 2hr
+        logger.info(f"✓ Loaded practical settings: slots {self.all_slots}, start {self.start_slots}, lunch {self.lunch_slot}")
 
     def _load_faculty_names(self):
         for f in faculty_collection.find({}, {'_id': 1, 'name': 1, 'short_name': 1}):
@@ -79,17 +105,50 @@ class TimetableGenerator:
         self.labs_list = [lab['name'] for lab in labs if lab.get('name')]
         for lab_name in self.labs_list:
             self.lab_schedule[lab_name] = {
-                day: {slot: [] for slot in ALL_SLOTS}
-                for day in DAYS
+                day: {slot: [] for slot in self.all_slots}
+                for day in self.days
             }
         logger.info(f"✓ Loaded {len(self.labs_list)} labs")
+
+    def _load_constraints(self):
+        """
+        TG-CACHE FIX: Load all constraints into memory ONCE at the start,
+        never query the DB in the hot loop. This prevents thousands of
+        MongoDB queries that cause the 10-second timeout.
+        """
+        try:
+            for c in constraints_collection.find({}):
+                fac  = c.get("faculty_name", "")
+                day  = c.get("day", "")
+                slot = c.get("time_slot", "")
+                
+                if c.get("type") == "preferred_off":
+                    # Faculty should not teach at this day+slot
+                    self.preferred_off.add((fac, day, slot))
+                    
+                elif c.get("type") == "fixed_time":
+                    # Faculty is locked to teach this class+division+subject at day+slot
+                    # Other practicals cannot assign this faculty to a different session at day+slot
+                    self.fixed_time_blocked.add((
+                        fac,
+                        day,
+                        slot,
+                        c.get("class", "").upper(),
+                        c.get("division", "").upper(),
+                        c.get("subject", "")
+                    ))
+            
+            logger.info(f"✓ Loaded {len(self.preferred_off)} preferred_off constraints")
+            logger.info(f"✓ Loaded {len(self.fixed_time_blocked)} fixed_time constraints")
+        except Exception as e:
+            logger.error(f"Error loading constraints: {e}", exc_info=True)
 
     def _ensure_batch(self, year, division, batch):
         key = (year, division, batch)
         if key not in self.batch_occupied:
             self.batch_occupied[key] = {
-                day: {slot: False for slot in ALL_SLOTS}
-                for day in DAYS
+                day: {slot: False for slot in self.all_slots}
+                for day in self.days
             }
 
     # ── Assignment preparation ────────────────────────────────────────────────
@@ -172,21 +231,21 @@ class TimetableGenerator:
 
     # ── Constraint helpers ────────────────────────────────────────────────────
 
-    def _faculty_busy(self, faculty, day, slot): # Add self, remove lab_schedule
-    # 1. Check if busy in the current generated lab schedule
-    # We look through all labs to see if this faculty is already teaching somewhere
+    def _faculty_busy(self, faculty, day, slot):
+        """
+        Check if faculty is busy at this day+slot.
+        TG-CACHE FIX: Use in-memory constraint sets instead of DB queries.
+        """
+        # 1. Check if busy in the current generated lab schedule
         for lab in self.lab_schedule:
             sessions = self.lab_schedule[lab].get(day, {}).get(slot, [])
             if any(s.get('faculty') == faculty for s in sessions):
                 return True
 
-    # 2. Preferred off constraint check (Keep your existing logic)
-        for c in constraints_collection.find({
-            "type": "preferred_off",
-            "faculty_name": faculty
-        }):
-            if c.get("day") == day and c.get("time_slot") == slot:
-                return True
+        # 2. Preferred off constraint check (in-memory, no DB query)
+        if (faculty, day, slot) in self.preferred_off:
+            logger.debug(f"Faculty {faculty} busy at {day} {slot} due to preferred_off constraint")
+            return True
 
         return False
 
@@ -202,7 +261,7 @@ class TimetableGenerator:
     def _select_lab(self, practical: dict, day: str, slot: str,
                     used_labs: set) -> str | None:
         hrs       = practical['practical_hrs']
-        next_slot = NEXT_SLOT.get(slot) if hrs == 2 else None
+        next_slot = self.next_slot.get(slot) if hrs == 2 else None
         required  = practical.get('required_lab')
         candidates = [required] if required else self.labs_list
 
@@ -223,16 +282,26 @@ class TimetableGenerator:
         year, division, batch = practical['year'], practical['division'], practical['batch']
         faculty, hrs          = practical['faculty'], practical['practical_hrs']
 
-        if hrs == 2 and slot not in TWO_HR_START_SLOTS:
+        if hrs == 2 and slot not in self.two_hr_start_slots:
             return False
         if faculty in used_faculty:
             return False
-        if self._faculty_busy(faculty, day, slot):   # TG-02 fix applied inside here
+        if self._faculty_busy(faculty, day, slot):
             return False
+        
+        # TG-CACHE FIX: Check fixed_time constraints from in-memory cache
+        # Block this slot if faculty is locked to a DIFFERENT class/subject here
+        for (fac, d, s, cls, div, subj) in self.fixed_time_blocked:
+            if fac == faculty and d == day and s == slot:
+                # Faculty is locked at this slot. Only allow if it matches this practical
+                if not (cls == year and div == division and subj == practical['subject']):
+                    return False
+        
         if not self._batch_slot_free(year, division, batch, day, slot):
             return False
         if hrs == 2:
-            if not self._batch_slot_free(year, division, batch, day, NEXT_SLOT[slot]):
+            next_s = self.next_slot.get(slot)
+            if next_s is None or not self._batch_slot_free(year, division, batch, day, next_s):
                 return False
         if self._select_lab(practical, day, slot, used_labs) is None:
             return False
@@ -262,16 +331,16 @@ class TimetableGenerator:
         # Lab timetable — primary slot
         self.lab_schedule[lab][day][slot].append(dict(session))
         # Lab timetable — follow-on slot (for 2-hr practicals)
-        if hrs == 2 and slot in NEXT_SLOT:
-            self.lab_schedule[lab][day][NEXT_SLOT[slot]].append(dict(session))
+        if hrs == 2 and slot in self.next_slot:
+            self.lab_schedule[lab][day][self.next_slot[slot]].append(dict(session))
 
         # Mark this batch occupied at both slots
         key = (year, division, batch)
         self.batch_occupied[key][day][slot] = True
-        if hrs == 2 and slot in NEXT_SLOT:
-            self.batch_occupied[key][day][NEXT_SLOT[slot]] = True
+        if hrs == 2 and slot in self.next_slot:
+            self.batch_occupied[key][day][self.next_slot[slot]] = True
 
-        extra = f"+{NEXT_SLOT[slot]}" if hrs == 2 and slot in NEXT_SLOT else ""
+        extra = f"+{self.next_slot[slot]}" if hrs == 2 and slot in self.next_slot else ""
         logger.info(f"  ✓ {year}-{division}-B{batch} {practical['subject']} "
                     f"→ {lab} @ {day} {slot}{extra}")
 
@@ -345,7 +414,9 @@ class TimetableGenerator:
         logger.info("=" * 80)
 
         try:
+            self._load_settings()  # Load dynamic slots first
             self._load_labs()
+            self._load_constraints()  # ← TG-CACHE FIX: Load constraints once at start
             assignments = self.prepare_assignments()
 
             if not assignments:
@@ -358,8 +429,8 @@ class TimetableGenerator:
             for pass_num in range(30):
                 progress = False
 
-                for day in DAYS:
-                    for slot in START_SLOTS:
+                for day in self.days:
+                    for slot in self.start_slots:
 
                         # TG-01 FIX: build round-robin ordered list instead of
                         # fixed year_order sort.  Only include keys that still

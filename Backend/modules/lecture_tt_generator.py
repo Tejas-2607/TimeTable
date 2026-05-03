@@ -7,13 +7,10 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-DAYS              = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-MORNING_SLOTS     = ['10:15', '11:15', '12:15']
-AFTERNOON_SLOTS   = ['14:15', '15:15', '16:20', '17:20']
-ALL_LECTURE_SLOTS = MORNING_SLOTS + AFTERNOON_SLOTS
-LUNCH_SLOT        = '13:15'
-
-
+# LG-01 FIX: Round-robin weights per year.
+# Pattern: SY, SY, TY, TY, BE — repeating.
+# This gives SY and TY 2 turns each before BE gets 1 turn,
+# preserving priority while guaranteeing BE is never locked out.
 ROUND_ROBIN_CYCLE = ['SY', 'SY', 'TY', 'TY', 'BE']
 
 workload_collection        = db['workload']
@@ -21,6 +18,7 @@ faculty_collection         = db['faculty']
 subjects_collection        = db['subjects']
 class_timetable_collection = db['class_timetable']
 constraints_collection     = db['constraints']
+settings_collection        = db['settings']
 
 
 class LectureTimetableGenerator:
@@ -29,8 +27,36 @@ class LectureTimetableGenerator:
         self.class_timetables        = {}   # (year, div) → full timetable doc
         self.subject_map             = {}   # short_name → subject doc
         self._warned_missing_keys    = set()  # LG-02 FIX: suppress repeated warnings
+        self.preferred_off           = set()  # (faculty, day, slot) tuples — cached constraints
+        self.fixed_time_locked       = set()  # (faculty, day, slot) tuples that have fixed_time constraints
+        self.days                    = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+        self.morning_slots           = []
+        self.afternoon_slots         = []
+        self.all_lecture_slots       = []
+        self.lunch_slot              = ''
 
     # ── Data loading ──────────────────────────────────────────────────────────
+
+    def _load_settings(self):
+        doc = settings_collection.find_one({"type": "department_timings"})
+        if not doc:
+            # Default values
+            self.morning_slots = ['10:15', '11:15', '12:15']
+            self.afternoon_slots = ['14:15', '15:15', '16:20', '17:20']
+            self.lunch_slot = '13:15'
+        else:
+            from modules.settings_handler import calculate_slots
+            slots = calculate_slots(doc)
+            breaks = doc.get('breaks', [])
+            lunch_break = next((b for b in breaks if 'lunch' in b.get('name', '').lower()), None)
+            if lunch_break:
+                self.lunch_slot = lunch_break['start_time']
+            else:
+                self.lunch_slot = '13:15'  # default
+            self.morning_slots = [s for s in slots if s < self.lunch_slot]
+            self.afternoon_slots = [s for s in slots if s > self.lunch_slot]
+        self.all_lecture_slots = self.morning_slots + self.afternoon_slots
+        logger.info(f"✓ Loaded settings: morning {self.morning_slots}, afternoon {self.afternoon_slots}, lunch {self.lunch_slot}")
 
     def _load_class_timetables(self):
         for tt in class_timetable_collection.find({}):
@@ -50,6 +76,31 @@ class LectureTimetableGenerator:
                 if sname:
                     self.subject_map[sname] = subj
         logger.info(f"✓ Loaded {len(self.subject_map)} subjects for lecture lookup")
+
+    def _load_constraints(self):
+        """
+        LG-CACHE FIX: Load all constraints into memory ONCE at the start,
+        never query the DB in the hot loop. This prevents thousands of
+        MongoDB queries that cause the 10-second timeout.
+        """
+        try:
+            for c in constraints_collection.find({}):
+                fac  = c.get("faculty_name", "")
+                day  = c.get("day", "")
+                slot = c.get("time_slot", "")
+                
+                if c.get("type") == "preferred_off":
+                    # Faculty should not teach at this day+slot
+                    self.preferred_off.add((fac, day, slot))
+                    
+                elif c.get("type") == "fixed_time":
+                    # Faculty is locked to teach at this day+slot (for a specific class+subject)
+                    self.fixed_time_locked.add((fac, day, slot))
+            
+            logger.info(f"✓ Loaded {len(self.preferred_off)} preferred_off constraints")
+            logger.info(f"✓ Loaded {len(self.fixed_time_locked)} fixed_time constraints")
+        except Exception as e:
+            logger.error(f"Error loading constraints: {e}", exc_info=True)
 
     # ── Assignment preparation ────────────────────────────────────────────────
 
@@ -158,11 +209,22 @@ class LectureTimetableGenerator:
     # ── Constraint helpers ────────────────────────────────────────────────────
 
     def _faculty_busy(self, faculty: str, day: str, slot: str) -> bool:
-        """Global check — faculty cannot be in two classes at once."""
+        """
+        Global check — faculty cannot be in two classes at once.
+        LG-CACHE FIX: Use in-memory constraint sets instead of DB queries.
+        """
         for tt in self.class_timetables.values():
             for sess in tt.get('schedule', {}).get(day, {}).get(slot, []):
                 if sess.get('faculty') == faculty:
                     return True
+        # Check preferred_off constraints (in-memory, no DB query)
+        if (faculty, day, slot) in self.preferred_off:
+            logger.debug(f"Faculty {faculty} busy at {day} {slot} due to preferred_off constraint")
+            return True
+        # Check fixed_time constraints
+        if (faculty, day, slot) in self.fixed_time_locked:
+            logger.debug(f"Faculty {faculty} busy at {day} {slot} due to fixed_time constraint")
+            return True
         return False
 
     def _slot_free(self, year: str, division: str, day: str, slot: str) -> bool:
@@ -194,17 +256,17 @@ class LectureTimetableGenerator:
     def _consecutive_ok(self, year: str, division: str, day: str,
                     slot: str, subject: str, faculty: str) -> bool:
         """
-    Return True if placing this lecture is acceptable. Blocks:
-      1. Same subject already anywhere on this day for this class
-         (enforces one lecture per subject per day — the spread constraint).
-      2. Same subject in an immediately adjacent slot for this class
-         (redundant given rule 1, kept as safety net).
-      3. Same faculty in an adjacent slot within this class
-         (faculty gets a break between sessions in the same class).
+        Return True if placing this lecture is acceptable. Blocks:
+          1. Same subject already anywhere on this day for this class
+             (enforces one lecture per subject per day — the spread constraint).
+          2. Same subject in an immediately adjacent slot for this class
+             (redundant given rule 1, kept as safety net).
+          3. Same faculty in an adjacent slot within this class
+             (faculty gets a break between sessions in the same class).
 
-    Cross-class faculty adjacency is intentionally NOT blocked — teaching
-    different classes in adjacent slots is normal and was the root cause
-    of VM's lecture starvation when it was blocked.
+        Cross-class faculty adjacency is intentionally NOT blocked — teaching
+        different classes in adjacent slots is normal and was the root cause
+        of VM's lecture starvation when it was blocked.
         """
         tt = self.class_timetables.get((year.upper(), division.upper()))
         if not tt:
@@ -212,7 +274,7 @@ class LectureTimetableGenerator:
 
         day_schedule = tt['schedule'].get(day, {})
 
-    # Rule 1 — same subject must not appear anywhere else on this day
+        # Rule 1 — same subject must not appear anywhere else on this day
         for s, entries in day_schedule.items():
             if s == slot:
                 continue   # skip the target slot itself
@@ -220,7 +282,7 @@ class LectureTimetableGenerator:
                 if sess.get('subject') == subject and sess.get('type') == 'lecture':
                     return False  # subject already has a lecture today
 
-    # Rule 2 & 3 — adjacent slot checks (faculty break within class)
+        # Rule 2 & 3 — adjacent slot checks (faculty break within class)
         for adj in self._ADJACENT.get(slot, []):
             for sess in day_schedule.get(adj, []):
                 if sess.get('faculty') == faculty:
@@ -391,6 +453,8 @@ class LectureTimetableGenerator:
         try:
             self._load_class_timetables()
             self._load_subject_map()
+            self._load_constraints()  # ← LG-CACHE FIX: Load constraints once at start
+            self._load_settings()  # Load dynamic slots
 
             if not self.class_timetables:
                 return {'success': False, 'error': 'No class timetables found'}
@@ -419,9 +483,9 @@ class LectureTimetableGenerator:
             for pass_num in range(30):
                 progress = False
 
-                for day in DAYS:
-                    for slot in ALL_LECTURE_SLOTS:
-                        if slot == LUNCH_SLOT:
+                for day in self.days:
+                    for slot in self.all_lecture_slots:
+                        if slot == self.lunch_slot:
                             continue
 
                         # LG-01 FIX: use round-robin ordering instead of fixed year_order
@@ -463,9 +527,9 @@ class LectureTimetableGenerator:
             # Use ALL_LECTURE_SLOTS + LUNCH_SLOT so the scaffold always matches
             # whatever slots are defined at the top of this file.
             # Previously this was a hardcoded list that didn't include 17:20.
-            save_slots = sorted(set(ALL_LECTURE_SLOTS + [LUNCH_SLOT]))
+            save_slots = sorted(set(self.all_lecture_slots + [self.lunch_slot]))
             for (year, division), tt in self.class_timetables.items():
-                for day in DAYS:
+                for day in self.days:
                     for sl in save_slots:
                         tt['schedule'].setdefault(day, {}).setdefault(sl, [])
                 tt['generated_at'] = datetime.now()
