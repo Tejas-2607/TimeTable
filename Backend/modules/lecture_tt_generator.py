@@ -85,7 +85,12 @@ class LectureTimetableGenerator:
         """
         try:
             for c in constraints_collection.find({}):
-                fac  = c.get("faculty_name", "")
+                fac  = c.get("faculty_short", c.get("faculty_name", ""))
+                # If fac is full name and no short, look up
+                if fac == c.get("faculty_name", "") and not c.get("faculty_short"):
+                    faculty_doc = faculty_collection.find_one({"name": fac})
+                    if faculty_doc:
+                        fac = faculty_doc.get("short_name", fac)
                 day  = c.get("day", "")
                 slot = c.get("time_slot", "")
                 
@@ -384,7 +389,12 @@ class LectureTimetableGenerator:
                 subject      = constraint.get('subject', '')
                 day          = constraint.get('day', '')
                 slot         = constraint.get('time_slot', '')
-                faculty_name = constraint.get('faculty_name', '')
+                faculty_name = constraint.get('faculty_short', constraint.get('faculty_name', ''))
+                # If full name, look up short
+                if faculty_name == constraint.get('faculty_name', '') and not constraint.get('faculty_short'):
+                    faculty_doc = faculty_collection.find_one({"name": faculty_name})
+                    if faculty_doc:
+                        faculty_name = faculty_doc.get("short_name", faculty_name)
 
                 # Validate required fields
                 if not all([year, division, subject, day, slot, faculty_name]):
@@ -394,14 +404,16 @@ class LectureTimetableGenerator:
                     unplaced.append(constraint)
                     continue
 
-                # Check if slot is free
-                if not self._slot_free(year, division, day, slot):
-                    logger.warning(
-                        f"Cannot place fixed_time constraint {year}-{division} "
-                        f"{subject} @ {day} {slot}: slot occupied"
-                    )
-                    unplaced.append(constraint)
-                    continue
+                # Check if slot is free for lectures (practicals can stay)
+                tt_key = (year, division)
+                if tt_key in self.class_timetables:
+                    tt = self.class_timetables[tt_key]
+                    schedule = tt.get('schedule', {}).get(day, {}).get(slot, [])
+                    has_lecture = any(sess.get('type') == 'lecture' for sess in schedule)
+                    if has_lecture:
+                        # Remove existing lectures to make room for fixed_time
+                        tt['schedule'][day][slot] = [sess for sess in schedule if sess.get('type') != 'lecture']
+                        logger.info(f"Removed existing lecture(s) at {year}-{division} {day} {slot} for fixed_time constraint")
 
                 # Find the matching assignment and place it
                 key = (year, division, subject)

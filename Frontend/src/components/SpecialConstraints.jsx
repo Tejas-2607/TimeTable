@@ -484,7 +484,7 @@ export default function SpecialConstraints() {
                           <BookOpen size={14} className="text-emerald-500" />
                           <span className="font-semibold">{c.subject}</span>
                           <span className="text-xs text-slate-400">
-                            ({c.year}-{c.division})
+                            ({c.class || c.year || "N/A"}-{c.division || "N/A"})
                           </span>
                         </div>
                       </div>

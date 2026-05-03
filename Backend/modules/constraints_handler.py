@@ -56,6 +56,12 @@ def add_constraint(data):
         else:
             faculty_name = data.get("faculty_name", user.get("name"))
 
+        # Get faculty short name
+        from config import db
+        faculty_collection = db['faculty']
+        faculty_doc = faculty_collection.find_one({"name": faculty_name})
+        faculty_short = faculty_doc.get("short_name", faculty_name) if faculty_doc else faculty_name
+
         # ✅ duplicate check — more comprehensive for fixed_time
         if constraint_type == "fixed_time":
             # CH-02 FIX: check for both "class" and "year" fields since we're migrating
@@ -96,10 +102,12 @@ def add_constraint(data):
         class_val = data.get("class") or data.get("year")
         new_constraint = {
             "faculty_name": faculty_name,
+            "faculty_short": faculty_short,
             "type": constraint_type,
             "day": day,
             "time_slot": time_slot,
             "class": class_val,           # FIXED: renamed from "year"
+            "year": class_val,            # For frontend display
             "division": data.get("division"),
             "subject": data.get("subject"),
             "created_at": datetime.utcnow()
