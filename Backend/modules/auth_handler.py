@@ -89,7 +89,7 @@ def login_or_register(data):
         
         faculty_id = str(faculty['_id'])
         full_name = faculty.get('name')
-        role = faculty.get('role', 'faculty')
+        role = faculty.get('role', 'faculty').lower()
         
         token = _generate_token(faculty_id, full_name, email, role=role)
         
