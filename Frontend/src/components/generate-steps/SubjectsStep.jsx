@@ -7,6 +7,7 @@ import {
   deleteSubject,
 } from "../../services/subjectService";
 import { getAllLabs } from "../../services/labsService";
+import { getUserFriendlyErrorMessage } from "../../lib/errorMessages";
 
 export default function SubjectsStep({ data, onDataChange }) {
   const [year, setYear] = useState("sy");
@@ -48,6 +49,12 @@ export default function SubjectsStep({ data, onDataChange }) {
       setSubjects(Array.isArray(yearData) ? yearData : []);
     } catch (err) {
       console.error("Error loading subjects:", err);
+      alert(
+        getUserFriendlyErrorMessage(
+          err,
+          "Unable to load subjects right now. Please try again.",
+        ),
+      );
       setSubjects([]);
     } finally {
       setLoading(false);
@@ -71,6 +78,12 @@ export default function SubjectsStep({ data, onDataChange }) {
       setLabs(Array.isArray(labsArray) ? labsArray : []);
     } catch (err) {
       console.error("Error loading labs:", err);
+      alert(
+        getUserFriendlyErrorMessage(
+          err,
+          "Unable to load labs right now. Please try again.",
+        ),
+      );
       setLabs([]);
     }
   };
@@ -80,6 +93,8 @@ export default function SubjectsStep({ data, onDataChange }) {
   };
 
   const handleEdit = (subject) => {
+    const subjectId = String(subject._id || "");
+
     setFormData({
       name: subject.name,
       short_name: subject.short_name,
@@ -89,7 +104,8 @@ export default function SubjectsStep({ data, onDataChange }) {
       practical_type: subject.practical_type || "Specific Lab",
       required_labs: subject.required_labs || "",
     });
-    setEditingId(subject._id);
+
+    setEditingId(subjectId);
     setShowForm(true);
   };
 
@@ -111,13 +127,17 @@ export default function SubjectsStep({ data, onDataChange }) {
         }),
       };
 
-      if (editingId) {
+      const isEditing = Boolean(editingId);
+
+      if (isEditing) {
         await updateSubject({
           id: editingId,
           ...subjectData,
         });
+        alert("Subject updated successfully!");
       } else {
         await addSubject(subjectData);
+        alert("Subject added successfully!");
       }
 
       setFormData({
@@ -135,13 +155,12 @@ export default function SubjectsStep({ data, onDataChange }) {
       await loadSubjects();
     } catch (err) {
       console.error("Error submitting subject:", err);
-      if (err.response?.status === 409) {
-        alert(
-          "Subject with this short name already exists in the selected year.",
-        );
-      } else {
-        alert("Error saving subject. Please try again.");
-      }
+      alert(
+        getUserFriendlyErrorMessage(
+          err,
+          "Unable to save subject. Please check details and try again.",
+        ),
+      );
     } finally {
       setLoading(false);
     }
@@ -151,11 +170,17 @@ export default function SubjectsStep({ data, onDataChange }) {
     if (confirm("Are you sure you want to delete this subject?")) {
       try {
         setLoading(true);
+        console.log("Deleting subject", { year, id });
         await deleteSubject(year, id);
         await loadSubjects();
       } catch (err) {
         console.error("Error deleting subject:", err);
-        alert("Error deleting subject. Please try again.");
+        alert(
+          getUserFriendlyErrorMessage(
+            err,
+            "Unable to delete subject. Please refresh and try again.",
+          ),
+        );
       } finally {
         setLoading(false);
       }
@@ -228,7 +253,7 @@ export default function SubjectsStep({ data, onDataChange }) {
         <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-blue-200">
           <div className="flex items-center justify-between mb-6">
             <h4 className="text-lg font-semibold text-slate-800">
-              {editingId ? "Edit Subject" : "Add New Subject"} for{" "}
+              {editingId ? "Update Subject" : "Add New Subject"} for{" "}
               {getYearLabel(year)}
             </h4>
             <button
@@ -412,7 +437,7 @@ export default function SubjectsStep({ data, onDataChange }) {
                 disabled={loading}
               >
                 <Plus size={18} />
-                {editingId ? "Update" : "Add"} Subject
+                {editingId ? "Update Subject" : "Add Subject"}
               </button>
               <button
                 type="button"

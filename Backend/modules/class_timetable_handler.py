@@ -4,6 +4,7 @@ from flask import jsonify
 from config import db
 from datetime import datetime
 import logging
+from bson import ObjectId
 
 logger = logging.getLogger(__name__)
 
@@ -204,4 +205,92 @@ def get_class_timetable_summary(class_name: str, division: str):
         return jsonify({'class_key': tt.get('class_key'), 'summary': summary}), 200
     except Exception as e:
         logger.error(f"get_class_timetable_summary error: {e}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+
+def delete_class_timetable(timetable_id: str):
+    try:
+        if not timetable_id or not ObjectId.is_valid(timetable_id):
+            return jsonify({'error': 'Invalid timetable id'}), 400
+
+        result = class_timetable_collection.delete_one({'_id': ObjectId(timetable_id)})
+        if result.deleted_count == 0:
+            return jsonify({'error': 'Class timetable not found'}), 404
+
+        return jsonify({'message': 'Class timetable deleted successfully'}), 200
+    except Exception as e:
+        logger.error(f"delete_class_timetable error: {e}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+
+def _remove_matching_sessions_from_class_timetables(matcher):
+    docs = list(class_timetable_collection.find({}))
+    updated_count = 0
+
+    for doc in docs:
+        schedule = doc.get('schedule', {})
+        changed = False
+
+        for day, day_slots in schedule.items():
+            for slot, sessions in day_slots.items():
+                filtered = [s for s in sessions if not matcher(s)]
+                if len(filtered) != len(sessions):
+                    schedule[day][slot] = filtered
+                    changed = True
+
+        if changed:
+            class_timetable_collection.update_one(
+                {'_id': doc['_id']},
+                {'$set': {'schedule': schedule}}
+            )
+            updated_count += 1
+
+    return updated_count
+
+
+def delete_faculty_timetable(faculty_short_name: str):
+    try:
+        faculty_short_name = (faculty_short_name or '').strip()
+        if not faculty_short_name:
+            return jsonify({'error': 'Missing faculty short name'}), 400
+
+        updated_count = _remove_matching_sessions_from_class_timetables(
+            lambda s: any(
+                f.strip() == faculty_short_name
+                for f in str(s.get('faculty', '')).split(',')
+                if f.strip()
+            )
+        )
+
+        if updated_count == 0:
+            return jsonify({'error': f'No sessions found for faculty {faculty_short_name}'}), 404
+
+        return jsonify({
+            'message': f'Faculty timetable deleted for {faculty_short_name}',
+            'updated_class_timetables': updated_count
+        }), 200
+    except Exception as e:
+        logger.error(f"delete_faculty_timetable error: {e}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+
+def delete_lab_timetable(lab_name: str):
+    try:
+        lab_name = (lab_name or '').strip()
+        if not lab_name:
+            return jsonify({'error': 'Missing lab name'}), 400
+
+        updated_count = _remove_matching_sessions_from_class_timetables(
+            lambda s: str(s.get('lab', '')).strip() == lab_name
+        )
+
+        if updated_count == 0:
+            return jsonify({'error': f'No sessions found for lab {lab_name}'}), 404
+
+        return jsonify({
+            'message': f'Lab timetable deleted for {lab_name}',
+            'updated_class_timetables': updated_count
+        }), 200
+    except Exception as e:
+        logger.error(f"delete_lab_timetable error: {e}", exc_info=True)
         return jsonify({'error': str(e)}), 500

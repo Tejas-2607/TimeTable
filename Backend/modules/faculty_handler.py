@@ -32,7 +32,7 @@ def add_faculty(data):
 
     # NEW: Check if email already exists to prevent duplicates
     if faculty_collection.find_one({"email": email.lower()}):
-        return jsonify({"error": f"Faculty with email '{email}' already exists"}), 400
+        return jsonify({"error": f"Faculty with email '{email}' already exists"}), 409
 
     try:
         # Set default password for new faculty

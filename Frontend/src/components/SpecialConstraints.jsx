@@ -5,6 +5,7 @@ import {
   getConstraints,
   addConstraint,
   deleteConstraint,
+  reviewConstraint,
 } from "../services/constraintsService";
 import { getFaculties } from "../services/facultyService";
 import { getDepartmentTimings } from "../services/settingsService";
@@ -60,6 +61,12 @@ export default function SpecialConstraints() {
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (user?.role?.toLowerCase() === "faculty" && user?.name) {
+      setFormData((prev) => ({ ...prev, faculty_name: user.name }));
+    }
+  }, [user]);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -159,7 +166,11 @@ export default function SpecialConstraints() {
 
     try {
       await addConstraint(payload);
-      setSuccess("Constraint added successfully!");
+      setSuccess(
+        user?.role?.toLowerCase() === "faculty"
+          ? "Constraint request submitted for admin approval."
+          : "Constraint added successfully!",
+      );
       loadData();
       setFormData((prev) => ({
         ...prev,
@@ -169,6 +180,31 @@ export default function SpecialConstraints() {
       setError("Failed to add constraint.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleReview = async (id, status) => {
+    try {
+      let review_reason = "";
+      if (status === "rejected") {
+        review_reason = window
+          .prompt("Please enter rejection reason:")
+          ?.trim();
+        if (!review_reason) {
+          setError("Rejection reason is required.");
+          return;
+        }
+      }
+
+      await reviewConstraint(id, { status, review_reason });
+      setSuccess(
+        status === "approved"
+          ? "Constraint request approved."
+          : "Constraint request rejected.",
+      );
+      loadData();
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to review request.");
     }
   };
 
@@ -261,12 +297,16 @@ export default function SpecialConstraints() {
                   <label className="block text-sm font-semibold text-slate-700 mb-1">
                     Faculty
                   </label>
-                  <input
-                    type="text"
-                    value={user?.name}
-                    disabled
-                    className="w-full px-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-slate-500 cursor-not-allowed"
-                  />
+                  <select
+                    value={formData.faculty_name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, faculty_name: e.target.value })
+                    }
+                    className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+                    required
+                  >
+                    <option value={user?.name}>{user?.name}</option>
+                  </select>
                 </div>
               )}
 
@@ -425,7 +465,9 @@ export default function SpecialConstraints() {
                 ) : (
                   <Plus size={20} />
                 )}
-                Add Constraint
+                {user?.role?.toLowerCase() === "faculty"
+                  ? "Submit Request"
+                  : "Add Constraint"}
               </button>
             </form>
           </div>
@@ -462,15 +504,35 @@ export default function SpecialConstraints() {
                         ? "Preferred Off"
                         : "Fixed Time"}
                     </span>
-                    <button
-                      onClick={() => handleDelete(c._id)}
-                      className="text-slate-300 hover:text-red-500 transition-colors p-1"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      {(user?.role?.toLowerCase() === "admin" ||
+                        c.status === "pending") && (
+                        <button
+                          onClick={() => handleDelete(c._id)}
+                          className="text-slate-300 hover:text-red-500 transition-colors p-1"
+                          title="Delete"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          c.status === "approved"
+                            ? "bg-green-50 text-green-700"
+                            : c.status === "rejected"
+                              ? "bg-red-50 text-red-700"
+                              : "bg-amber-50 text-amber-700"
+                        }`}
+                      >
+                        Status: {c.status || "pending"}
+                      </span>
+                    </div>
+
                     <div className="flex items-center gap-2 text-slate-700 border-b border-slate-50 pb-2">
                       <User size={14} className="text-blue-500" />
                       <span className="font-bold">
@@ -484,7 +546,7 @@ export default function SpecialConstraints() {
                           <BookOpen size={14} className="text-emerald-500" />
                           <span className="font-semibold">{c.subject}</span>
                           <span className="text-xs text-slate-400">
-                            ({c.class || c.year || "N/A"}-{c.division || "N/A"})
+                            ({c.class || c.year}-{c.division})
                           </span>
                         </div>
                       </div>
@@ -502,6 +564,30 @@ export default function SpecialConstraints() {
                         "{c.description}"
                       </div>
                     )}
+
+                    {c.status === "rejected" && c.review_reason && (
+                      <div className="text-xs text-red-600 bg-red-50 rounded-lg p-2">
+                        Rejection reason: {c.review_reason}
+                      </div>
+                    )}
+
+                    {user?.role?.toLowerCase() === "admin" &&
+                      c.status === "pending" && (
+                        <div className="flex gap-2 pt-2">
+                          <button
+                            onClick={() => handleReview(c._id, "approved")}
+                            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-green-100 text-green-700 hover:bg-green-200"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleReview(c._id, "rejected")}
+                            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-100 text-red-700 hover:bg-red-200"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      )}
                   </div>
                 </div>
               ))}

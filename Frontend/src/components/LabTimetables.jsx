@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
-import { getClassTimetables } from "../services/classTimetableService";
+import {
+  deleteLabTimetable,
+  getClassTimetables,
+} from "../services/classTimetableService";
 import { getAllLabs } from "../services/labsService";
+import { getDepartmentTimings } from "../services/settingsService";
 import { exportLabTimetable } from "../lib/excelExport";
+import { getUserFriendlyErrorMessage } from "../lib/errorMessages";
 import {
   Clock,
   ArrowLeft,
@@ -11,6 +16,7 @@ import {
   Users,
   Printer,
   Search,
+  Trash2,
 } from "lucide-react";
 import { getSessionTimes } from "../services/labSettingsService";
 
@@ -29,6 +35,7 @@ export default function LabTimetables({
 
   const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
   const [allTimeSlots, setAllTimeSlots] = useState([]);
+  const [breaks, setBreaks] = useState([]);
 
   useEffect(() => {
     loadLabData();
@@ -109,12 +116,57 @@ export default function LabTimetables({
 
       setLabData(extractedData);
       setLabNames(Object.keys(extractedData).sort());
+
+      // Fetch breaks from settings
+      try {
+        const timingsRes = await getDepartmentTimings();
+        const breaksData = timingsRes.breaks || [];
+        setBreaks(breaksData);
+      } catch (err) {
+        console.warn("Could not load breaks:", err);
+        setError(
+          getUserFriendlyErrorMessage(
+            err,
+            "Unable to load break settings. Please try again.",
+          ),
+        );
+        setBreaks([]);
+      }
     } catch (err) {
       console.error("Error extracting lab timetables:", err);
-      setError("Failed to load timetables for labs.");
+      setError(
+        getUserFriendlyErrorMessage(
+          err,
+          "Unable to load lab timetables. Please try again.",
+        ),
+      );
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDeleteLabTimetable = async (labName) => {
+    if (!window.confirm(`Delete timetable for lab ${labName}?`)) return;
+    try {
+      await deleteLabTimetable(labName);
+      if (selectedLab === labName) {
+        setSelectedLab(null);
+        setView("landing");
+      }
+      await loadLabData();
+    } catch (err) {
+      alert(
+        getUserFriendlyErrorMessage(
+          err,
+          "Unable to delete lab timetable. Please try again.",
+        ),
+      );
+    }
+  };
+
+  // Helper function to get break name for a specific time
+  const getBreakAtTime = (time) => {
+    return breaks.find((b) => b.start_time === time);
   };
 
   // ─── Cell Renderer ───────────────────────────────────────────────────────────
@@ -178,35 +230,61 @@ export default function LabTimetables({
               </tr>
             </thead>
             <tbody>
-              {allTimeSlots.map((time, timeIdx) => (
-                <tr
-                  key={time}
-                  className={timeIdx % 2 === 0 ? "bg-white" : "bg-slate-50"}
-                >
-                  <td
-                    className="border border-slate-300 px-4 py-3 font-semibold text-slate-800 sticky left-0 z-10 whitespace-nowrap"
-                    style={{
-                      backgroundColor: timeIdx % 2 === 0 ? "white" : "#f8fafc",
-                    }}
+              {allTimeSlots.map((time, timeIdx) => {
+                const breakInfo = getBreakAtTime(time);
+                const isBreakTime = breakInfo !== undefined;
+
+                return (
+                  <tr
+                    key={time}
+                    className={isBreakTime ? "bg-amber-50" : timeIdx % 2 === 0 ? "bg-white" : "bg-slate-50"}
                   >
-                    <div className="flex items-center gap-1.5">
-                      <Clock size={14} className="text-slate-500" />
-                      <span>{time}</span>
-                    </div>
-                  </td>
-                  {daysOfWeek.map((day) => {
-                    const sessions = (schedule[day] || {})[time] || [];
-                    return (
-                      <td
-                        key={`${time}-${day}`}
-                        className="border border-slate-300 p-2 min-w-[160px]"
-                      >
-                        {renderSessionCell(sessions)}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
+                    <td
+                      className={`border ${isBreakTime ? "border-amber-300" : "border-slate-300"} px-4 py-3 font-semibold sticky left-0 z-10 whitespace-nowrap ${
+                        isBreakTime ? "text-amber-700 bg-amber-50" : "text-slate-800"
+                      }`}
+                      style={{
+                        backgroundColor: isBreakTime
+                          ? "#fef3c7"
+                          : timeIdx % 2 === 0
+                          ? "white"
+                          : "#f8fafc",
+                      }}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <Clock size={14} className={isBreakTime ? "text-amber-600" : "text-slate-500"} />
+                        <div className="flex flex-col">
+                          <span>{time}</span>
+                          {isBreakTime && (
+                            <span className="text-xs font-bold text-amber-700 uppercase">
+                              ☕ {breakInfo.name}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    {daysOfWeek.map((day) => {
+                      const sessions = (schedule[day] || {})[time] || [];
+                      return (
+                        <td
+                          key={`${time}-${day}`}
+                          className={`border ${isBreakTime ? "border-amber-200 bg-amber-50" : "border-slate-300"} p-2 min-w-[160px]`}
+                        >
+                          {isBreakTime ? (
+                            <div className="h-full min-h-[70px] bg-amber-100 border-2 border-dashed border-amber-300 rounded p-2 flex items-center justify-center">
+                              <span className="text-sm font-bold text-amber-700 text-center">
+                                ☕ {breakInfo.name}
+                              </span>
+                            </div>
+                          ) : (
+                            renderSessionCell(sessions)
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -269,14 +347,24 @@ export default function LabTimetables({
             });
 
             return (
-              <button
+              <div
                 key={lab}
                 onClick={() => {
                   setSelectedLab(lab);
                   setView("schedule");
                 }}
-                className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200 hover:border-emerald-300 transition-all duration-300 p-5 text-left cursor-pointer"
+                className="relative group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200 hover:border-emerald-300 transition-all duration-300 p-5 text-left cursor-pointer"
               >
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteLabTimetable(lab);
+                  }}
+                  className="absolute top-3 right-3 p-2 rounded-lg text-red-600 hover:bg-red-50"
+                  title="Delete lab timetable"
+                >
+                  <Trash2 size={16} />
+                </button>
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
                     <FlaskConical size={20} />
@@ -298,7 +386,7 @@ export default function LabTimetables({
                     </span>
                   </p>
                 </div>
-              </button>
+              </div>
             );
           })
         )}

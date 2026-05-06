@@ -6,6 +6,7 @@ import {
   updateFaculty,
   deleteFaculty,
 } from "../services/facultyService";
+import { getUserFriendlyErrorMessage } from "../lib/errorMessages";
 
 export default function FacultyData() {
   const [faculties, setFaculties] = useState([]);
@@ -46,6 +47,40 @@ export default function FacultyData() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const facultyData = { ...formData };
+    const normalizedEmail = String(facultyData.email || "")
+      .trim()
+      .toLowerCase();
+
+    if (!facultyData.name?.trim() || !facultyData.short_name?.trim()) {
+      alert("Please fill in faculty name and short name.");
+      return;
+    }
+
+    if (!normalizedEmail) {
+      alert("Please enter an email address.");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(normalizedEmail)) {
+      alert("Please enter a valid email address.");
+      return;
+    }
+
+    // Frontend duplicate guard for a quicker user response.
+    const duplicateEmail = faculties.some((faculty) => {
+      const existingEmail = String(faculty.email || "").trim().toLowerCase();
+      const isSameRecord =
+        editingId &&
+        String(faculty._id || faculty.id || "") === String(editingId);
+      return !isSameRecord && existingEmail && existingEmail === normalizedEmail;
+    });
+    if (duplicateEmail) {
+      alert("This email is already used by another faculty member.");
+      return;
+    }
+
+    facultyData.email = normalizedEmail;
 
     try {
       console.log(facultyData);
@@ -59,7 +94,17 @@ export default function FacultyData() {
       resetForm();
     } catch (error) {
       console.error("Error saving faculty:", error);
-      alert("Failed to save faculty");
+      const backendError = error.response?.data?.error || "";
+      if (backendError.toLowerCase().includes("already exists")) {
+        alert("This email is already used by another faculty member.");
+        return;
+      }
+      alert(
+        getUserFriendlyErrorMessage(
+          error,
+          "Unable to save faculty details. Please try again.",
+        ),
+      );
     }
   };
 

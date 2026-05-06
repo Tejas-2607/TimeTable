@@ -17,3 +17,8 @@ export const deleteConstraint = async (constraintId) => {
   const res = await api.delete(`/constraints/${constraintId}`);
   return res.data;
 };
+
+export const reviewConstraint = async (constraintId, reviewData) => {
+  const res = await api.put(`/constraints/${constraintId}/review`, reviewData);
+  return res.data;
+};

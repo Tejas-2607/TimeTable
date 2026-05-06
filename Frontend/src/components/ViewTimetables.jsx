@@ -1,11 +1,19 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { getClassTimetables } from "../services/classTimetableService";
-import { getMasterTimetables } from "../services/masterTimetableService";
+import {
+  deleteClassTimetable,
+  getClassTimetables,
+} from "../services/classTimetableService";
+import {
+  deleteMasterTimetable,
+  getMasterTimetables,
+} from "../services/masterTimetableService";
 import {
   exportClassTimetable,
   exportMasterPractical,
 } from "../lib/excelExport"; //[cite: 2]
+import { getDepartmentTimings } from "../services/settingsService";
+import { getUserFriendlyErrorMessage } from "../lib/errorMessages";
 import {
   Clock,
   ArrowLeft,
@@ -18,6 +26,7 @@ import {
   Printer,
   Briefcase,
   Grid3x3,
+  Trash2,
 } from "lucide-react";
 
 import FacultyTimetables from "./FacultyTimetables";
@@ -56,6 +65,7 @@ export default function ViewTimetables() {
   const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
   const [timeSlots, setTimeSlots] = useState([]);
   const [practicalTimeSlots, setPracticalTimeSlots] = useState([]);
+  const [breaks, setBreaks] = useState([]);
 
   // Fetch both datasets on mount
   useEffect(() => {
@@ -91,7 +101,12 @@ export default function ViewTimetables() {
       setTimeSlots(sorted);
     } catch (err) {
       console.error("Error loading class timetables:", err);
-      setError("Failed to load class timetables.");
+      setError(
+        getUserFriendlyErrorMessage(
+          err,
+          "Unable to load class timetables. Please try again.",
+        ),
+      );
       setTimetables([]);
     } finally {
       setIsLoading(false);
@@ -123,9 +138,67 @@ export default function ViewTimetables() {
       }
     } catch (err) {
       console.warn("Could not load practical data:", err);
+      setError(
+        getUserFriendlyErrorMessage(
+          err,
+          "Unable to load practical timetable data. Please try again.",
+        ),
+      );
       setPracticalData(null);
     } finally {
       setIsPracticalLoading(false);
+    }
+
+    // Fetch breaks from settings
+    try {
+      const timingsRes = await getDepartmentTimings();
+      const breaksData = timingsRes.breaks || [];
+      setBreaks(breaksData);
+    } catch (err) {
+      console.warn("Could not load breaks:", err);
+      setError(
+        getUserFriendlyErrorMessage(
+          err,
+          "Unable to load break settings. Please try again.",
+        ),
+      );
+      setBreaks([]);
+    }
+  };
+
+  const handleDeleteClassTimetable = async (timetableId) => {
+    if (!timetableId) return;
+    if (!window.confirm("Delete this class timetable?")) return;
+    try {
+      await deleteClassTimetable(timetableId);
+      if (selectedClass?._id === timetableId) {
+        setSelectedClass(null);
+        setView("classCards");
+      }
+      await loadAllData();
+    } catch (err) {
+      alert(
+        getUserFriendlyErrorMessage(
+          err,
+          "Unable to delete class timetable. Please try again.",
+        ),
+      );
+    }
+  };
+
+  const handleDeleteMasterTimetable = async (timetableId) => {
+    if (!timetableId) return;
+    if (!window.confirm("Delete this master practical timetable entry?")) return;
+    try {
+      await deleteMasterTimetable(timetableId);
+      await loadAllData();
+    } catch (err) {
+      alert(
+        getUserFriendlyErrorMessage(
+          err,
+          "Unable to delete master practical timetable entry. Please try again.",
+        ),
+      );
     }
   };
 
@@ -159,6 +232,25 @@ export default function ViewTimetables() {
     });
     return allLabs;
   };
+
+  // Helper function to get break name for a specific time
+  const getBreakAtTime = (time) => {
+    return breaks.find((b) => b.start_time === time);
+  };
+
+  const renderBreakCell = (breakInfo, minHeight = "70px") => (
+    <div
+      className="h-full bg-amber-100 border-2 border-dashed border-amber-300 rounded p-2 flex flex-col items-center justify-center"
+      style={{ minHeight }}
+    >
+      <span className="text-[10px] font-bold tracking-wide text-amber-800">
+        BREAK
+      </span>
+      <span className="text-sm font-semibold text-amber-700 text-center">
+        {breakInfo?.name || "Break"}
+      </span>
+    </div>
+  );
 
   // ---------- session cell (class timetable) ----------
   const renderSessionCell = (sessions) => {
@@ -261,26 +353,49 @@ export default function ViewTimetables() {
             <tbody>
               {timeSlots.map((time, timeIdx) => {
                 const isPracticalSlot = practicalTimeSlots.includes(time);
+                const breakInfo = getBreakAtTime(time);
+                const isBreakTime = breakInfo !== undefined;
+
                 return (
                   <tr
                     key={time}
-                    className={timeIdx % 2 === 0 ? "bg-white" : "bg-slate-50"}
+                    className={isBreakTime ? "bg-amber-50" : timeIdx % 2 === 0 ? "bg-white" : "bg-slate-50"}
                   >
                     <td
-                      className={`border border-slate-300 px-4 py-3 font-semibold sticky left-0 z-10 whitespace-nowrap ${isPracticalSlot ? "text-blue-700" : "text-slate-800"}`}
+                      className={`border ${isBreakTime ? "border-amber-300" : "border-slate-300"} px-4 py-3 font-semibold sticky left-0 z-10 whitespace-nowrap ${
+                        isBreakTime
+                          ? "text-amber-700 bg-amber-50"
+                          : isPracticalSlot
+                          ? "text-blue-700"
+                          : "text-slate-800"
+                      }`}
                       style={{
-                        backgroundColor:
-                          timeIdx % 2 === 0 ? "white" : "#f8fafc",
+                        backgroundColor: isBreakTime
+                          ? "#fef3c7"
+                          : timeIdx % 2 === 0
+                          ? "white"
+                          : "#f8fafc",
                       }}
                     >
                       <div className="flex items-center gap-1.5">
                         <Clock
                           size={14}
                           className={
-                            isPracticalSlot ? "text-blue-500" : "text-slate-500"
+                            isBreakTime
+                              ? "text-amber-600"
+                              : isPracticalSlot
+                              ? "text-blue-500"
+                              : "text-slate-500"
                           }
                         />
-                        <span>{time}</span>
+                        <div className="flex flex-col">
+                          <span>{time}</span>
+                          {isBreakTime && (
+                            <span className="text-xs font-bold text-amber-700 uppercase">
+                              {breakInfo.name}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     {daysOfWeek.map((day) => {
@@ -289,9 +404,13 @@ export default function ViewTimetables() {
                       return (
                         <td
                           key={`${time}-${day}`}
-                          className="border border-slate-300 p-2 min-w-[160px]"
+                          className={`border ${isBreakTime ? "border-amber-200 bg-amber-50" : "border-slate-300"} p-2 min-w-[160px]`}
                         >
-                          {renderSessionCell(sessions)}
+                          {isBreakTime ? (
+                            renderBreakCell(breakInfo, "70px")
+                          ) : (
+                            renderSessionCell(sessions)
+                          )}
                         </td>
                       );
                     })}
@@ -342,23 +461,41 @@ export default function ViewTimetables() {
                   Time
                 </th>
                 {daysOfWeek.map((day) =>
-                  practicalTimeSlots.map((time) => (
-                    <th
-                      key={`${day}-${time}`}
-                      className="border border-emerald-600 px-2 py-2 text-white text-xs font-medium"
-                    >
-                      <div className="flex items-center justify-center gap-1">
-                        <Clock size={12} />
-                        <span>{time}</span>
-                      </div>
-                    </th>
-                  )),
+                  practicalTimeSlots.map((time) => {
+                    const breakInfo = getBreakAtTime(time);
+                    const isBreakTime = breakInfo !== undefined;
+                    return (
+                      <th
+                        key={`${day}-${time}`}
+                        className={`border px-2 py-2 text-xs font-medium ${
+                          isBreakTime
+                            ? "border-amber-600 bg-amber-500 text-white"
+                            : "border-emerald-600 text-white"
+                        }`}
+                      >
+                        <div className="flex flex-col items-center justify-center leading-tight">
+                          <div className="flex items-center justify-center gap-1">
+                            <Clock size={12} />
+                            <span>{time}</span>
+                          </div>
+                          {isBreakTime && (
+                            <span className="text-[10px] font-bold uppercase">
+                              {breakInfo.name}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                    );
+                  }),
                 )}
               </tr>
             </thead>
             <tbody>
               {labNames.map((labName, labIdx) => {
                 const labSchedule = allLabs[labName];
+                const masterTimetableId =
+                  practicalData?.timetables?.find((t) => t.lab_name === labName)
+                    ?._id;
                 return (
                   <tr
                     key={labName}
@@ -370,18 +507,37 @@ export default function ViewTimetables() {
                         backgroundColor: labIdx % 2 === 0 ? "white" : "#f8fafc",
                       }}
                     >
-                      {labName}
+                      <div className="flex items-center justify-between gap-2">
+                        <span>{labName}</span>
+                        <button
+                          onClick={() =>
+                            handleDeleteMasterTimetable(masterTimetableId)
+                          }
+                          className="p-1.5 rounded-md text-red-600 hover:bg-red-50"
+                          title="Delete master practical timetable"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </td>
                     {daysOfWeek.map((day) => {
                       const daySchedule = labSchedule[day] || {};
                       return practicalTimeSlots.map((time) => {
+                        const breakInfo = getBreakAtTime(time);
+                        const isBreakTime = breakInfo !== undefined;
                         const sessions = daySchedule[time] || [];
                         return (
                           <td
                             key={`${labName}-${day}-${time}`}
-                            className="border border-slate-300 p-2 min-w-[140px]"
+                            className={`border p-2 min-w-[140px] ${
+                              isBreakTime
+                                ? "border-amber-200 bg-amber-50"
+                                : "border-slate-300"
+                            }`}
                           >
-                            {renderPracticalSessionCell(sessions)}
+                            {isBreakTime
+                              ? renderBreakCell(breakInfo, "80px")
+                              : renderPracticalSessionCell(sessions)}
                           </td>
                         );
                       });
@@ -604,14 +760,24 @@ export default function ViewTimetables() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {/* Class-wise Cards */}
           {timetables.map((tt) => (
-            <button
+            <div
               key={tt._id}
               onClick={() => {
                 setSelectedClass(tt);
                 setView("schedule");
               }}
-              className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200 hover:border-blue-300 transition-all duration-300 p-5 text-left cursor-pointer"
+              className="relative group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200 hover:border-blue-300 transition-all duration-300 p-5 text-left cursor-pointer"
             >
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteClassTimetable(tt._id);
+                }}
+                className="absolute top-3 right-3 p-2 rounded-lg text-red-600 hover:bg-red-50"
+                title="Delete class timetable"
+              >
+                <Trash2 size={16} />
+              </button>
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-blue-500/20">
                   {tt.class_key.split("-")[0]}
@@ -634,7 +800,7 @@ export default function ViewTimetables() {
                 </p>
                 <p>Generated: {formatDate(tt.generated_at)}</p>
               </div>
-            </button>
+            </div>
           ))}
         </div>
       </section>

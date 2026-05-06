@@ -31,6 +31,29 @@ export default function FacultyAssignment({ data, onDataChange }) {
     practical_hrs: '0',
   });
 
+  const parseBatchValue = (value) => {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (!trimmed) return null;
+      const numeric = trimmed.toLowerCase().startsWith('batch ')
+        ? Number(trimmed.slice(6))
+        : Number(trimmed);
+      return Number.isInteger(numeric) && numeric > 0 ? numeric : null;
+    }
+    return null;
+  };
+
+  const normalizeBatches = (rawBatches) => {
+    const arr = Array.isArray(rawBatches) ? rawBatches : [rawBatches];
+    const normalized = arr
+      .map(parseBatchValue)
+      .filter((batch) => batch !== null);
+    return [...new Set(normalized)].sort((a, b) => a - b);
+  };
+
+  const formatBatchLabel = (batchNumber) => `Batch ${batchNumber}`;
+
   // Load all static data on mount
   useEffect(() => {
     loadAllStaticData();
@@ -165,7 +188,7 @@ export default function FacultyAssignment({ data, onDataChange }) {
     }
 
     const divisions = Array.from({ length: divisionsCount }, (_, i) => String.fromCharCode(65 + i));
-    const batches = Array.from({ length: batchesCount }, (_, i) => `Batch ${i + 1}`);
+    const batches = Array.from({ length: batchesCount }, (_, i) => i + 1);
 
     return { divisions, batches };
   };
@@ -176,7 +199,7 @@ export default function FacultyAssignment({ data, onDataChange }) {
       subject: workload.subject,
       subject_full: workload.subject_full,
       division: workload.division,
-      batches: workload.batches || [],
+      batches: normalizeBatches(workload.batches || []),
       theory_hrs: String(workload.theory_hrs || 0),
       practical_hrs: String(workload.practical_hrs || 0),
     });
@@ -196,7 +219,7 @@ export default function FacultyAssignment({ data, onDataChange }) {
         subject: formData.subject,
         subject_full: formData.subject_full,
         division: formData.division,
-        batches: formData.batches,
+        batches: normalizeBatches(formData.batches),
         theory_hrs: parseInt(formData.theory_hrs),
         practical_hrs: parseInt(formData.practical_hrs),
       };
@@ -247,11 +270,14 @@ export default function FacultyAssignment({ data, onDataChange }) {
   };
 
   const toggleBatch = (batch) => {
+    const normalizedBatch = parseBatchValue(batch);
+    if (normalizedBatch === null) return;
+
     setFormData(prev => ({
       ...prev,
-      batches: prev.batches.includes(batch)
-        ? prev.batches.filter(b => b !== batch)
-        : [...prev.batches, batch],
+      batches: prev.batches.includes(normalizedBatch)
+        ? prev.batches.filter(b => b !== normalizedBatch)
+        : [...prev.batches, normalizedBatch].sort((a, b) => a - b),
     }));
   };
 
@@ -432,7 +458,7 @@ export default function FacultyAssignment({ data, onDataChange }) {
                           onChange={() => toggleBatch(batch)}
                           className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
                         />
-                        <span className="text-slate-700">{batch}</span>
+                        <span className="text-slate-700">{formatBatchLabel(batch)}</span>
                       </label>
                     ))}
                   </div>
@@ -551,7 +577,7 @@ export default function FacultyAssignment({ data, onDataChange }) {
                         <span className="text-xs font-semibold text-slate-500 uppercase">Division & Batches</span>
                         <p className="text-slate-800 font-semibold mt-1">
                           Division {workload.division}
-                          {workload.batches && workload.batches.length > 0 && ` - ${workload.batches.join(', ')}`}
+                          {workload.batches && workload.batches.length > 0 && ` - ${normalizeBatches(workload.batches).map(formatBatchLabel).join(', ')}`}
                         </p>
                       </div>
                       <div>

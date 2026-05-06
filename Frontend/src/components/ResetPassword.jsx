@@ -1,10 +1,49 @@
 // src/components/ResetPassword.jsx
-import { useState } from "react";
+import React, { useState, useRef, memo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Lock, ArrowLeft, CheckCircle, Mail } from "lucide-react";
+import { Lock, ArrowLeft, CheckCircle, Mail, Eye, EyeOff } from "lucide-react";
 import { resetPassword } from "../services/authService";
 import { useAuth } from "../context/AuthContext";
 import api from "../lib/api";
+
+const PasswordInput = memo(({ label, name, value, show, toggleShow, showPasswordKey, onChange }) => {
+  const inputRef = useRef(null);
+  const showIcon = show;
+
+  return (
+    <div className="relative group">
+      <label className="block text-white/70 text-sm font-medium mb-2">{label}</label>
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/40 group-focus-within:text-blue-400 transition-colors">
+          <Lock size={18} />
+        </div>
+        <input
+          ref={inputRef}
+          type={showIcon ? "text" : "password"}
+          name={name}
+          placeholder={label}
+          required
+          value={value}
+          onChange={onChange}
+          className="w-full bg-white/5 border border-white/10 text-white pl-11 pr-12 py-3 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder:text-white/20"
+        />
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            toggleShow(showPasswordKey);
+            setTimeout(() => inputRef.current?.focus(), 0);
+          }}
+          tabIndex={-1}
+          className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-200 transition-colors z-10 w-10 justify-center"
+          aria-label={showIcon ? "Hide password" : "Show password"}
+        >
+          {showIcon ? <EyeOff size={18} /> : <Eye size={18} />}
+        </button>
+      </div>
+    </div>
+  );
+});
 
 export default function ResetPassword() {
   const { user } = useAuth();
@@ -24,6 +63,8 @@ export default function ResetPassword() {
     confirm: false,
   });
   const navigate = useNavigate();
+
+  const toggleShow = (key) => setShowPassword((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -173,42 +214,7 @@ export default function ResetPassword() {
     }
   };
 
-  const PasswordInput = ({ label, name, value, showPasswordKey }) => {
-    const show = showPassword[showPasswordKey];
-    return (
-      <div className="relative group">
-        <label className="block text-white/70 text-sm font-medium mb-2">
-          {label}
-        </label>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/40 group-focus-within:text-blue-400 transition-colors">
-            <Lock size={18} />
-          </div>
-          <input
-            type={show ? "text" : "password"}
-            name={name}
-            placeholder={label}
-            required
-            value={value}
-            onChange={handleInputChange}
-            className="w-full bg-white/5 border border-white/10 text-white pl-11 pr-12 py-3 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all placeholder:text-white/20"
-          />
-          <button
-            type="button"
-            onClick={() =>
-              setShowPassword({
-                ...showPassword,
-                [showPasswordKey]: !show,
-              })
-            }
-            className="absolute inset-y-0 right-0 pr-4 flex items-center text-white/40 hover:text-white/60 transition-colors"
-          >
-            {show ? "Hide" : "Show"}
-          </button>
-        </div>
-      </div>
-    );
-  };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-indigo-900 to-slate-900 p-4 font-sans relative overflow-hidden">
@@ -319,21 +325,30 @@ export default function ResetPassword() {
                     label="Current Password"
                     name="current_password"
                     value={formData.current_password}
+                    show={showPassword.current}
+                    toggleShow={toggleShow}
                     showPasswordKey="current"
+                    onChange={handleInputChange}
                   />
 
                   <PasswordInput
                     label="New Password"
                     name="new_password"
                     value={formData.new_password}
+                    show={showPassword.new}
+                    toggleShow={toggleShow}
                     showPasswordKey="new"
+                    onChange={handleInputChange}
                   />
 
                   <PasswordInput
                     label="Confirm New Password"
                     name="confirm_password"
                     value={formData.confirm_password}
+                    show={showPassword.confirm}
+                    toggleShow={toggleShow}
                     showPasswordKey="confirm"
+                    onChange={handleInputChange}
                   />
 
                   <button
@@ -412,21 +427,30 @@ export default function ResetPassword() {
                     label="Current Password"
                     name="current_password"
                     value={formData.current_password}
+                    show={showPassword.current}
+                    toggleShow={toggleShow}
                     showPasswordKey="current"
+                    onChange={handleInputChange}
                   />
 
                   <PasswordInput
                     label="New Password"
                     name="new_password"
                     value={formData.new_password}
+                    show={showPassword.new}
+                    toggleShow={toggleShow}
                     showPasswordKey="new"
+                    onChange={handleInputChange}
                   />
 
                   <PasswordInput
                     label="Confirm New Password"
                     name="confirm_password"
                     value={formData.confirm_password}
+                    show={showPassword.confirm}
+                    toggleShow={toggleShow}
                     showPasswordKey="confirm"
+                    onChange={handleInputChange}
                   />
 
                   <button

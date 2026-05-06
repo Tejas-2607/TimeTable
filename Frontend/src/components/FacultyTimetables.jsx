@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
-import { getClassTimetables } from "../services/classTimetableService";
+import {
+  deleteFacultyTimetable,
+  getClassTimetables,
+} from "../services/classTimetableService";
 import { getFaculties } from "../services/facultyService";
+import { getDepartmentTimings } from "../services/settingsService";
 import { exportFacultyTimetable } from "../lib/excelExport";
+import { getUserFriendlyErrorMessage } from "../lib/errorMessages";
 import {
   Clock,
   ArrowLeft,
@@ -12,6 +17,7 @@ import {
   Briefcase,
   Printer,
   Search,
+  Trash2,
 } from "lucide-react";
 
 export default function FacultyTimetables({
@@ -29,6 +35,7 @@ export default function FacultyTimetables({
 
   const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
   const [allTimeSlots, setAllTimeSlots] = useState([]);
+  const [breaks, setBreaks] = useState([]);
 
   useEffect(() => {
     loadFacultyData();
@@ -114,12 +121,59 @@ export default function FacultyTimetables({
 
       setFacultyData(extractedData);
       setFacultyNames(Object.keys(extractedData).sort());
+
+      // Fetch breaks from settings
+      try {
+        const timingsRes = await getDepartmentTimings();
+        const breaksData = timingsRes.breaks || [];
+        setBreaks(breaksData);
+      } catch (err) {
+        console.warn("Could not load breaks:", err);
+        setError(
+          getUserFriendlyErrorMessage(
+            err,
+            "Unable to load break settings. Please try again.",
+          ),
+        );
+        setBreaks([]);
+      }
     } catch (err) {
       console.error("Error extracting faculty timetables:", err);
-      setError("Failed to load timetables for faculty.");
+      setError(
+        getUserFriendlyErrorMessage(
+          err,
+          "Unable to load faculty timetables. Please try again.",
+        ),
+      );
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDeleteFacultyTimetable = async (facultyShortName) => {
+    if (!window.confirm(`Delete timetable for faculty ${facultyShortName}?`)) {
+      return;
+    }
+    try {
+      await deleteFacultyTimetable(facultyShortName);
+      if (selectedFaculty === facultyShortName) {
+        setSelectedFaculty(null);
+        setView("landing");
+      }
+      await loadFacultyData();
+    } catch (err) {
+      alert(
+        getUserFriendlyErrorMessage(
+          err,
+          "Unable to delete faculty timetable. Please try again.",
+        ),
+      );
+    }
+  };
+
+  // Helper function to get break name for a specific time
+  const getBreakAtTime = (time) => {
+    return breaks.find((b) => b.start_time === time);
   };
 
   const renderSessionCell = (sessions) => {
@@ -185,21 +239,36 @@ export default function FacultyTimetables({
             </thead>
             <tbody>
               {allTimeSlots.map((time, timeIdx) => {
+                const breakInfo = getBreakAtTime(time);
+                const isBreakTime = breakInfo !== undefined;
+
                 return (
                   <tr
                     key={time}
-                    className={timeIdx % 2 === 0 ? "bg-white" : "bg-slate-50"}
+                    className={isBreakTime ? "bg-amber-50" : timeIdx % 2 === 0 ? "bg-white" : "bg-slate-50"}
                   >
                     <td
-                      className="border border-slate-300 px-4 py-3 font-semibold text-slate-800 sticky left-0 z-10 whitespace-nowrap"
+                      className={`border ${isBreakTime ? "border-amber-300" : "border-slate-300"} px-4 py-3 font-semibold sticky left-0 z-10 whitespace-nowrap ${
+                        isBreakTime ? "text-amber-700 bg-amber-50" : "text-slate-800"
+                      }`}
                       style={{
-                        backgroundColor:
-                          timeIdx % 2 === 0 ? "white" : "#f8fafc",
+                        backgroundColor: isBreakTime
+                          ? "#fef3c7"
+                          : timeIdx % 2 === 0
+                          ? "white"
+                          : "#f8fafc",
                       }}
                     >
                       <div className="flex items-center gap-1.5">
-                        <Clock size={14} className="text-slate-500" />
-                        <span>{time}</span>
+                        <Clock size={14} className={isBreakTime ? "text-amber-600" : "text-slate-500"} />
+                        <div className="flex flex-col">
+                          <span>{time}</span>
+                          {isBreakTime && (
+                            <span className="text-xs font-bold text-amber-700 uppercase">
+                              ☕ {breakInfo.name}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     {daysOfWeek.map((day) => {
@@ -208,9 +277,17 @@ export default function FacultyTimetables({
                       return (
                         <td
                           key={`${time}-${day}`}
-                          className="border border-slate-300 p-2 min-w-[160px]"
+                          className={`border ${isBreakTime ? "border-amber-200 bg-amber-50" : "border-slate-300"} p-2 min-w-[160px]`}
                         >
-                          {renderSessionCell(sessions)}
+                          {isBreakTime ? (
+                            <div className="h-full min-h-[70px] bg-amber-100 border-2 border-dashed border-amber-300 rounded p-2 flex items-center justify-center">
+                              <span className="text-sm font-bold text-amber-700 text-center">
+                                ☕ {breakInfo.name}
+                              </span>
+                            </div>
+                          ) : (
+                            renderSessionCell(sessions)
+                          )}
                         </td>
                       );
                     })}
@@ -283,14 +360,24 @@ export default function FacultyTimetables({
             });
 
             return (
-              <button
+              <div
                 key={fac}
                 onClick={() => {
                   setSelectedFaculty(fac);
                   setView("schedule");
                 }}
-                className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200 hover:border-indigo-300 transition-all duration-300 p-5 text-left cursor-pointer"
+                className="relative group bg-white rounded-2xl shadow-md hover:shadow-xl border border-slate-200 hover:border-indigo-300 transition-all duration-300 p-5 text-left cursor-pointer"
               >
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteFacultyTimetable(fac);
+                  }}
+                  className="absolute top-3 right-3 p-2 rounded-lg text-red-600 hover:bg-red-50"
+                  title="Delete faculty timetable"
+                >
+                  <Trash2 size={16} />
+                </button>
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
                     <Briefcase size={20} />
@@ -318,7 +405,7 @@ export default function FacultyTimetables({
                     </span>
                   </p>
                 </div>
-              </button>
+              </div>
             );
           })
         )}

@@ -94,15 +94,39 @@ def get_subjects():
         if not subjects_doc:
             return jsonify({"sy": [], "ty": [], "be": []}), 200
 
+        doc_id = subjects_doc.get('_id')
         subjects_doc.pop('_id', None)
+
+        needs_backfill = False
+        backfill_updates = {}
 
         for yr in ['sy', 'ty', 'be']:
             if yr not in subjects_doc:
                 subjects_doc[yr] = []
             # Serialise any ObjectId _ids to strings so JSON doesn't choke
-            for subj in subjects_doc[yr]:
+            for index, subj in enumerate(subjects_doc[yr]):
+                # If _id is an ObjectId, convert to string
                 if isinstance(subj.get('_id'), ObjectId):
                     subj['_id'] = str(subj['_id'])
+                # If _id is a string, keep it as is
+                elif isinstance(subj.get('_id'), str):
+                    pass  # Already a string, no conversion needed
+                # If _id is missing or invalid, generate one
+                else:
+                    print(f"⚠️  Subject missing _id in {yr}, generating one: {subj.get('name')}")
+                    new_id = str(ObjectId())
+                    subj['_id'] = new_id
+                    subjects_doc[yr][index]['_id'] = new_id
+                    needs_backfill = True
+
+            backfill_updates[yr] = subjects_doc[yr]
+
+        # Persist generated IDs so subject IDs remain stable across requests.
+        if needs_backfill and doc_id is not None:
+            subjects_collection.update_one(
+                {"_id": doc_id},
+                {"$set": backfill_updates}
+            )
 
         return jsonify(subjects_doc), 200
 
@@ -173,6 +197,15 @@ def update_subject(data):
                 "error": f"Subject with ID '{subject_id_raw}' not found in {year.upper()}"
             }), 404
 
+        # Check for duplicate short_name (excluding the current subject being updated)
+        new_short_name = data.get('short_name')
+        for subj in year_subjects:
+            if str(subj.get('_id')) != str(subject_id_raw):  # Skip the current subject
+                if subj.get('short_name') == new_short_name:
+                    return jsonify({
+                        "error": f"Subject with short_name '{new_short_name}' already exists in {year.upper()}"
+                    }), 409
+
         # Build the replacement object, preserving the stored _id type
         updated_subject = {
             "_id":                    stored_id,
@@ -204,14 +237,15 @@ def update_subject(data):
         return jsonify({"error": str(e)}), 500
 
 
-def delete_subject(data):
+def delete_subject(data=None):
     """
     Delete a subject by its _id.
-    Expected data: { "id": "<subject_id>", "year": "sy" }
+    Accepts data dict (from request.json or request.args).
+    Expected: { "id": "<subject_id>", "year": "sy" }
     """
     try:
-        subject_id_raw = data.get('id')
-        year           = data.get('year', '').lower()
+        subject_id_raw = data.get('id') if data else None
+        year           = (data.get('year', '') if data else '').lower()
 
         if not subject_id_raw or not year:
             return jsonify({"error": "Missing 'id' or 'year'"}), 400

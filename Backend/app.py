@@ -168,6 +168,14 @@ def delete_constraint(id):
     return constraints_handler.delete_constraint(id)
 
 
+@app.route('/api/constraints/<id>/review', methods=['PUT'])
+@token_required
+@role_required('admin')
+def review_constraint(id):
+    data = request.json or {}
+    return constraints_handler.review_constraint(id, data)
+
+
 # ========================================================================
 # FACULTY
 # ========================================================================
@@ -284,7 +292,8 @@ def get_subjects():
 @token_required
 @role_required('admin')
 def delete_subject():
-    data = request.json
+    # DELETE can come with query params (preferred) or JSON body
+    data = request.args.to_dict() or request.json or {}
     return subjects_handler.delete_subject(data)
 
 
@@ -292,8 +301,26 @@ def delete_subject():
 @token_required
 @role_required('admin')
 def update_subject():
-    data = request.json
+    data = request.json or {}
     return subjects_handler.update_subject(data)
+
+
+@app.route('/api/subjects/<subject_id>', methods=['PUT'])
+@token_required
+@role_required('admin')
+def update_subject_by_id(subject_id):
+    data = request.json or {}
+    data['id'] = subject_id
+    return subjects_handler.update_subject(data)
+
+
+@app.route('/api/subjects/<subject_id>', methods=['DELETE'])
+@token_required
+@role_required('admin')
+def delete_subject_by_id(subject_id):
+    data = request.args.to_dict() or request.json or {}
+    data['id'] = subject_id
+    return subjects_handler.delete_subject(data)
 
 
 # ========================================================================
@@ -398,10 +425,45 @@ def get_master_timetables():
     return timetable_handler.get_master_practical_timetable()
 
 
+@app.route('/api/master_timetables/<timetable_id>', methods=['DELETE'])
+@token_required
+@role_required('admin')
+def delete_master_timetable(timetable_id):
+    return timetable_handler.delete_master_timetable(timetable_id)
+
+
+@app.route('/api/master_timetables/lab/<path:lab_name>', methods=['DELETE'])
+@token_required
+@role_required('admin')
+def delete_master_timetable_by_lab(lab_name):
+    return timetable_handler.delete_master_timetable_by_lab(lab_name)
+
+
 @app.route('/api/class_timetables', methods=['GET'])
 @token_required
 def get_class_timetables():
     return class_timetable_handler.get_all_class_timetables()
+
+
+@app.route('/api/class_timetables/<timetable_id>', methods=['DELETE'])
+@token_required
+@role_required('admin')
+def delete_class_timetable(timetable_id):
+    return class_timetable_handler.delete_class_timetable(timetable_id)
+
+
+@app.route('/api/faculty_timetables/<faculty_short_name>', methods=['DELETE'])
+@token_required
+@role_required('admin')
+def delete_faculty_timetable(faculty_short_name):
+    return class_timetable_handler.delete_faculty_timetable(faculty_short_name)
+
+
+@app.route('/api/lab_timetables/<path:lab_name>', methods=['DELETE'])
+@token_required
+@role_required('admin')
+def delete_lab_timetable(lab_name):
+    return class_timetable_handler.delete_lab_timetable(lab_name)
 
 
 # ========================================================================

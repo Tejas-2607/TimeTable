@@ -17,6 +17,13 @@ def parse_batch_item(value):
     raise ValueError(f"Invalid batch value: {value}")
 
 
+def normalize_batches(raw_batches):
+    if not isinstance(raw_batches, list):
+        raw_batches = [raw_batches]
+    normalized = [parse_batch_item(b) for b in raw_batches]
+    return sorted(set(normalized))
+
+
 # ---------- GET FACULTY WORKLOAD ----------
 def get_faculty_workload():
     """
@@ -70,10 +77,7 @@ def add_faculty_workload(data):
                 return jsonify({"error": "Invalid faculty_id — must be a 24-character hex ObjectId"}), 400
 
             raw_batches = data.get("batches", [1])
-            # Accept both a list and a single integer/label
-            if not isinstance(raw_batches, list):
-                raw_batches = [raw_batches]
-            batches = [parse_batch_item(b) for b in raw_batches]
+            batches = normalize_batches(raw_batches)
 
             sanitised = {
                 "faculty_id":    faculty_id_str,
@@ -177,10 +181,8 @@ def update_faculty_workload(data):
                 continue
             if field == "batches":
                 raw = data["batches"]
-                if not isinstance(raw, list):
-                    raw = [raw]
                 try:
-                    update_data["batches"] = [parse_batch_item(b) for b in raw]
+                    update_data["batches"] = normalize_batches(raw)
                 except (TypeError, ValueError) as e:
                     return jsonify({"error": f"batches must be a list of integers or batch labels: {e}"}), 400
             else:

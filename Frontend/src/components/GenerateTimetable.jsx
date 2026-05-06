@@ -5,6 +5,7 @@ import { regenerateMasterTimetable } from '../services/timetableGeneratorService
 import DepartmentTimings from './generate-steps/DepartmentTimings';
 import SubjectsStep from './generate-steps/SubjectsStep';
 import FacultyAssignment from './generate-steps/FacultyAssignment';
+import { getUserFriendlyErrorMessage } from '../lib/errorMessages';
 
 export default function GenerateTimetable() {
   const navigate = useNavigate();
@@ -55,10 +56,12 @@ export default function GenerateTimetable() {
       setShowSuccess(true);
 
     } catch (error) {
-      const errorMessage = error.response?.data?.error || error.message || 'Failed to generate timetable. Please try again.';
-
-      // Show error alert
-      alert(`❌ Error: ${errorMessage}`);
+      alert(
+        getUserFriendlyErrorMessage(
+          error,
+          'Timetable generation failed. Please review inputs and try again.',
+        ),
+      );
     } finally {
       setIsGenerating(false);
     }

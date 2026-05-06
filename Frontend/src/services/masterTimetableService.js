@@ -21,3 +21,31 @@ export const getTimetablesByYear = async (year) => {
     throw err;
   }
 };
+
+export const deleteMasterTimetable = async (id) => {
+  try {
+    const res = await api.delete(`/master_timetables/${id}`);
+    return res.data;
+  } catch (err) {
+    console.error(
+      "Error deleting master practical timetable:",
+      err.response?.data || err,
+    );
+    throw err;
+  }
+};
+
+export const deleteMasterTimetableByLab = async (labName) => {
+  try {
+    const res = await api.delete(
+      `/master_timetables/lab/${encodeURIComponent(labName)}`,
+    );
+    return res.data;
+  } catch (err) {
+    console.error(
+      "Error deleting master practical timetable by lab:",
+      err.response?.data || err,
+    );
+    throw err;
+  }
+};

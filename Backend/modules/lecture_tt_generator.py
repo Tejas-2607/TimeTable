@@ -376,7 +376,13 @@ class LectureTimetableGenerator:
             (num_placed, unplaced_constraints)
             where unplaced_constraints are constraints that could not be placed.
         """
-        constraints = list(constraints_collection.find({'type': 'fixed_time'}))
+        constraints = list(constraints_collection.find({
+            'type': 'fixed_time',
+            '$or': [
+                {'status': 'approved'},
+                {'status': {'$exists': False}}
+            ]
+        }))
         placed_count = 0
         unplaced = []
 
