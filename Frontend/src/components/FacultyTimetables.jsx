@@ -227,8 +227,58 @@ export default function FacultyTimetables({
     );
   };
 
+  const PRACTICAL_NEXT_SLOT = { "11:15": "12:15", "14:15": "15:15" };
+  const PRACTICAL_CONT_SLOT = new Set(["12:15", "15:15"]);
+
+  const sessionKey = (s) => `${s.class_key}-${s.subject}-${s.lab}-${s.batch}`;
+
+  const isTwoHourStart = (time, daySchedule) => {
+    const nextSlot = PRACTICAL_NEXT_SLOT[time];
+    if (!nextSlot) return false;
+    const startPracticals = (daySchedule[time] || []).filter((s) => s.isPractical);
+    if (startPracticals.length === 0) return false;
+    const nextKeys = new Set(
+      (daySchedule[nextSlot] || []).filter((s) => s.isPractical).map(sessionKey)
+    );
+    return startPracticals.some((s) => nextKeys.has(sessionKey(s)));
+  };
+
+  const isContinuationSlot = (time, daySchedule) => {
+    if (!PRACTICAL_CONT_SLOT.has(time)) return false;
+    const startSlot = Object.keys(PRACTICAL_NEXT_SLOT).find(
+      (s) => PRACTICAL_NEXT_SLOT[s] === time
+    );
+    if (!startSlot) return false;
+    return isTwoHourStart(startSlot, daySchedule);
+  };
+
+  const getMergedSessions = (time, daySchedule) => {
+    let merged = [...(daySchedule[time] || [])];
+    if (isTwoHourStart(time, daySchedule)) {
+      const nextSlot = PRACTICAL_NEXT_SLOT[time];
+      const nextSessions = daySchedule[nextSlot] || [];
+      const existingKeys = new Set(merged.map(sessionKey));
+      nextSessions.forEach((s) => {
+        if (!existingKeys.has(sessionKey(s))) {
+          merged.push(s);
+        }
+      });
+    }
+    return merged;
+  };
+
   const renderScheduleTable = (facName) => {
     const schedule = facultyData[facName] || {};
+
+    const isAllDaysContinuation = (time) =>
+      PRACTICAL_CONT_SLOT.has(time) &&
+      daysOfWeek.every((day) => {
+        const daySched = schedule[day] || {};
+        const thisSessions = daySched[time] || [];
+        if (thisSessions.length === 0) return true;
+        return isContinuationSlot(time, daySched);
+      });
+
     return (
       <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-slate-200">
         <div className="overflow-x-auto">
@@ -252,6 +302,8 @@ export default function FacultyTimetables({
               {allTimeSlots.map((time, timeIdx) => {
                 const breakInfo = getBreakAtTime(time);
                 const isBreakTime = breakInfo !== undefined;
+                
+                if (isAllDaysContinuation(time)) return null;
 
                 return (
                   <tr
@@ -284,11 +336,25 @@ export default function FacultyTimetables({
                     </td>
                     {daysOfWeek.map((day) => {
                       const daySchedule = schedule[day] || {};
-                      const sessions = daySchedule[time] || [];
+                      
+                      const isCont = isContinuationSlot(time, daySchedule);
+                      const isStart = isTwoHourStart(time, daySchedule);
+                      
+                      if (isCont) return null;
+
+                      const sessions = getMergedSessions(time, daySchedule);
+                      const cellClass = isStart ? "border border-indigo-200" : (isBreakTime ? "border-amber-200 bg-amber-50" : "border-slate-300");
+
                       return (
                         <td
                           key={`${time}-${day}`}
-                          className={`border ${isBreakTime ? "border-amber-200 bg-amber-50" : "border-slate-300"} p-2 min-w-[160px]`}
+                          className={`border p-2 align-top ${cellClass}`}
+                          rowSpan={
+                            isStart &&
+                            !isAllDaysContinuation(PRACTICAL_NEXT_SLOT[time])
+                              ? 2
+                              : 1
+                          }
                         >
                           {isBreakTime ? (
                             <div className="h-full min-h-[70px] bg-amber-100 border-2 border-dashed border-amber-300 rounded p-2 flex items-center justify-center">
