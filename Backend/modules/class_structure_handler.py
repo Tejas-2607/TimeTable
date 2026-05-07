@@ -3,6 +3,7 @@ from config import db
 
 # Collection for class structure
 class_structure_collection = db['class_structure']
+settings_collection = db["settings"]
 
 def save_class_structure(data):
     """
@@ -31,7 +32,22 @@ def save_class_structure(data):
         return jsonify({"error": str(e)}), 500
 
 
-    
+def update_settings(data):
+    """
+    Updates the settings in the database.
+    """
+    try:
+        settings_collection.update_one(
+            {"type": "department_timings"},
+            {"$set": data},
+            upsert=True
+        )
+        return jsonify({"message": "Settings updated successfully!"})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 def get_class_structure():
     """
     Retrieves the current class structure.
@@ -47,4 +63,4 @@ def get_class_structure():
             return jsonify({"message": "No class structure found"}), 404
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500  
+        return jsonify({"error": str(e)}), 500

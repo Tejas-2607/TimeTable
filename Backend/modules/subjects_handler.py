@@ -51,6 +51,12 @@ def save_subjects(data):
         if 'required_labs' in data and data.get('required_labs'):
             subject_obj['required_labs'] = data.get('required_labs')
 
+        # Include subject_type and elective_group_id if provided
+        if 'subject_type' in data and data.get('subject_type'):
+            subject_obj['subject_type'] = data.get('subject_type')
+        if 'elective_group_id' in data and data.get('elective_group_id'):
+            subject_obj['elective_group_id'] = data.get('elective_group_id')
+
         existing_doc = subjects_collection.find_one({})
 
         if existing_doc:
@@ -218,6 +224,12 @@ def update_subject(data):
         }
         if 'required_labs' in data and data.get('required_labs'):
             updated_subject['required_labs'] = data.get('required_labs')
+
+        # Include subject_type and elective_group_id if provided
+        if 'subject_type' in data and data.get('subject_type'):
+            updated_subject['subject_type'] = data.get('subject_type')
+        if 'elective_group_id' in data and data.get('elective_group_id'):
+            updated_subject['elective_group_id'] = data.get('elective_group_id')
 
         # SH-01 FIX: $ positional operator — filter on the array element's _id,
         # then set the matched element to the new object.  No index needed.
