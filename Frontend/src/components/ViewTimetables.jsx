@@ -145,7 +145,6 @@ export default function ViewTimetables() {
       breaksData.forEach((b) => {
         if (b.start_time) {
           slotSet.add(b.start_time);
-          pSlotSet.add(b.start_time);
         }
       });
     } catch (err) {
@@ -508,27 +507,16 @@ export default function ViewTimetables() {
                 </th>
                 {daysOfWeek.map((day) =>
                   practicalTimeSlots.map((time) => {
-                    const breakInfo = getBreakAtTime(time);
-                    const isBreakTime = breakInfo !== undefined;
                     return (
                       <th
                         key={`${day}-${time}`}
-                        className={`border px-2 py-2 text-xs font-medium ${
-                          isBreakTime
-                            ? "border-amber-600 bg-amber-500 text-white"
-                            : "border-emerald-600 text-white"
-                        }`}
+                        className="border border-emerald-600 px-2 py-2 text-xs font-medium text-white"
                       >
                         <div className="flex flex-col items-center justify-center leading-tight">
                           <div className="flex items-center justify-center gap-1">
                             <Clock size={12} />
                             <span>{time}</span>
                           </div>
-                          {isBreakTime && (
-                            <span className="text-[10px] font-bold uppercase">
-                              {breakInfo.name}
-                            </span>
-                          )}
                         </div>
                       </th>
                     );
@@ -569,21 +557,13 @@ export default function ViewTimetables() {
                     {daysOfWeek.map((day) => {
                       const daySchedule = labSchedule[day] || {};
                       return practicalTimeSlots.map((time) => {
-                        const breakInfo = getBreakAtTime(time);
-                        const isBreakTime = breakInfo !== undefined;
                         const sessions = daySchedule[time] || [];
                         return (
                           <td
                             key={`${labName}-${day}-${time}`}
-                            className={`border p-2 min-w-[140px] ${
-                              isBreakTime
-                                ? "border-amber-200 bg-amber-50"
-                                : "border-slate-300"
-                            }`}
+                            className="border border-slate-300 p-2 min-w-[140px]"
                           >
-                            {isBreakTime
-                              ? renderBreakCell(breakInfo, "80px")
-                              : renderPracticalSessionCell(sessions)}
+                            {renderPracticalSessionCell(sessions)}
                           </td>
                         );
                       });

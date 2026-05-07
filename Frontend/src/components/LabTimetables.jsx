@@ -4,7 +4,6 @@ import {
   getClassTimetables,
 } from "../services/classTimetableService";
 import { getAllLabs } from "../services/labsService";
-import { getDepartmentTimings } from "../services/settingsService";
 import { exportLabTimetable } from "../lib/excelExport";
 import { getUserFriendlyErrorMessage } from "../lib/errorMessages";
 import {
@@ -35,7 +34,6 @@ export default function LabTimetables({
 
   const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
   const [allTimeSlots, setAllTimeSlots] = useState([]);
-  const [breaks, setBreaks] = useState([]);
 
   useEffect(() => {
     loadLabData();
@@ -85,7 +83,7 @@ export default function LabTimetables({
         setAllTimeSlots(combinedTimeSlots);
       };
 
-      // Initial commit from schedule times; will be augmented with breaks later.
+      // Initial commit from schedule times.
       commitAllTimeSlots(timeSlotsSet);
 
       const extractedData = {};
@@ -122,27 +120,6 @@ export default function LabTimetables({
       setLabData(extractedData);
       setLabNames(Object.keys(extractedData).sort());
 
-      // Fetch breaks from settings
-      try {
-        const timingsRes = await getDepartmentTimings();
-        const breaksData = timingsRes.breaks || [];
-        setBreaks(breaksData);
-
-        // Ensure each break time renders as its own row.
-        breaksData.forEach((b) => {
-          if (b.start_time) timeSlotsSet.add(b.start_time);
-        });
-        commitAllTimeSlots(timeSlotsSet);
-      } catch (err) {
-        console.warn("Could not load breaks:", err);
-        setError(
-          getUserFriendlyErrorMessage(
-            err,
-            "Unable to load break settings. Please try again.",
-          ),
-        );
-        setBreaks([]);
-      }
     } catch (err) {
       console.error("Error extracting lab timetables:", err);
       setError(
@@ -173,11 +150,6 @@ export default function LabTimetables({
         ),
       );
     }
-  };
-
-  // Helper function to get break name for a specific time
-  const getBreakAtTime = (time) => {
-    return breaks.find((b) => b.start_time === time);
   };
 
   // ─── Cell Renderer ───────────────────────────────────────────────────────────
@@ -242,35 +214,21 @@ export default function LabTimetables({
             </thead>
             <tbody>
               {allTimeSlots.map((time, timeIdx) => {
-                const breakInfo = getBreakAtTime(time);
-                const isBreakTime = breakInfo !== undefined;
-
                 return (
                   <tr
                     key={time}
-                    className={isBreakTime ? "bg-amber-50" : timeIdx % 2 === 0 ? "bg-white" : "bg-slate-50"}
+                    className={timeIdx % 2 === 0 ? "bg-white" : "bg-slate-50"}
                   >
                     <td
-                      className={`border ${isBreakTime ? "border-amber-300" : "border-slate-300"} px-4 py-3 font-semibold sticky left-0 z-10 whitespace-nowrap ${
-                        isBreakTime ? "text-amber-700 bg-amber-50" : "text-slate-800"
-                      }`}
+                      className="border border-slate-300 px-4 py-3 font-semibold sticky left-0 z-10 whitespace-nowrap text-slate-800"
                       style={{
-                        backgroundColor: isBreakTime
-                          ? "#fef3c7"
-                          : timeIdx % 2 === 0
-                          ? "white"
-                          : "#f8fafc",
+                        backgroundColor: timeIdx % 2 === 0 ? "white" : "#f8fafc",
                       }}
                     >
                       <div className="flex items-center gap-1.5">
-                        <Clock size={14} className={isBreakTime ? "text-amber-600" : "text-slate-500"} />
+                        <Clock size={14} className="text-slate-500" />
                         <div className="flex flex-col">
                           <span>{time}</span>
-                          {isBreakTime && (
-                            <span className="text-xs font-bold text-amber-700 uppercase">
-                              ☕ {breakInfo.name}
-                            </span>
-                          )}
                         </div>
                       </div>
                     </td>
@@ -279,17 +237,9 @@ export default function LabTimetables({
                       return (
                         <td
                           key={`${time}-${day}`}
-                          className={`border ${isBreakTime ? "border-amber-200 bg-amber-50" : "border-slate-300"} p-2 min-w-[160px]`}
+                          className="border border-slate-300 p-2 min-w-[160px]"
                         >
-                          {isBreakTime ? (
-                            <div className="h-full min-h-[70px] bg-amber-100 border-2 border-dashed border-amber-300 rounded p-2 flex items-center justify-center">
-                              <span className="text-sm font-bold text-amber-700 text-center">
-                                ☕ {breakInfo.name}
-                              </span>
-                            </div>
-                          ) : (
-                            renderSessionCell(sessions)
-                          )}
+                          {renderSessionCell(sessions)}
                         </td>
                       );
                     })}
