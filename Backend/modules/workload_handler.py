@@ -54,7 +54,11 @@ def add_faculty_workload(data):
         "division": "A",
         "batches": [1, 2],
         "theory_hrs": 2,
-        "practical_hrs": 2
+        "practical_hrs": 2,
+        
+        // NEW: Optional fields for electives/honors
+        "subject_type": "regular|elective|honors",  // Default: "regular"
+        "elective_group_id": "ELE-AI-DS-2026"      // Required if subject_type != "regular"
     }
     """
     try:
@@ -79,6 +83,19 @@ def add_faculty_workload(data):
             raw_batches = data.get("batches", [1])
             batches = normalize_batches(raw_batches)
 
+            # WH-03 FIX: Validate subject_type and elective_group_id for parallel subjects
+            subject_type = str(data.get("subject_type", "regular")).strip().lower()
+            if subject_type not in ["regular", "elective", "honors"]:
+                return jsonify({"error": "subject_type must be 'regular', 'elective', or 'honors'"}), 400
+            
+            elective_group_id = None
+            if subject_type in ["elective", "honors"]:
+                elective_group_id = str(data.get("elective_group_id", "")).strip()
+                if not elective_group_id:
+                    return jsonify({
+                        "error": f"elective_group_id is required when subject_type is '{subject_type}'"
+                    }), 400
+
             sanitised = {
                 "faculty_id":    faculty_id_str,
                 "year":          str(data["year"]).strip().upper(),
@@ -88,6 +105,8 @@ def add_faculty_workload(data):
                 "batches":       batches,
                 "theory_hrs":    int(data.get("theory_hrs", 0)),
                 "practical_hrs": int(data.get("practical_hrs", 2)),
+                "subject_type":  subject_type,
+                "elective_group_id": elective_group_id,
             }
         except (TypeError, ValueError) as e:
             return jsonify({"error": f"Invalid field type: {e}"}), 400
@@ -172,6 +191,8 @@ def update_faculty_workload(data):
             "year":          lambda v: str(v).strip().upper(),
             "theory_hrs":    int,
             "practical_hrs": int,
+            "subject_type":  None,   # Handled separately below
+            "elective_group_id": None,  # Handled separately below
             "batches":       None,   # handled separately below
         }
 
@@ -185,6 +206,25 @@ def update_faculty_workload(data):
                     update_data["batches"] = normalize_batches(raw)
                 except (TypeError, ValueError) as e:
                     return jsonify({"error": f"batches must be a list of integers or batch labels: {e}"}), 400
+            elif field == "subject_type":
+                subject_type = str(data.get("subject_type", "regular")).strip().lower()
+                if subject_type not in ["regular", "elective", "honors"]:
+                    return jsonify({"error": "subject_type must be 'regular', 'elective', or 'honors'"}), 400
+                update_data["subject_type"] = subject_type
+            elif field == "elective_group_id":
+                elective_group_id = str(data.get("elective_group_id", "")).strip()
+                # Validate consistency: if subject_type is elective/honors, group_id required
+                existing = workload_collection.find_one({"_id": ObjectId(workload_id)})
+                if existing:
+                    current_type = existing.get("subject_type", "regular")
+                    if subject_type in data:
+                        current_type = str(data["subject_type"]).strip().lower()
+                    
+                    if current_type in ["elective", "honors"] and not elective_group_id:
+                        return jsonify({
+                            "error": f"elective_group_id required when subject_type is '{current_type}'"
+                        }), 400
+                update_data["elective_group_id"] = elective_group_id if elective_group_id else None
             else:
                 try:
                     update_data[field] = cast(data[field])

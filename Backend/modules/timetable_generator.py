@@ -51,10 +51,11 @@ class TimetableGenerator:
 
     def __init__(self):
         self.lab_schedule   = {}   # lab_name → day → slot → [sessions]
-        self.batch_occupied = {}   # (year, div, batch) → day → slot → bool
+        self.batch_occupied = {}   # (year, div, batch) → day → slot → [subject_metadata] | bool (for compatibility)
         self.faculty_names  = {}
         self.labs_list      = []
         self.subject_map    = {}   # short_name → subject doc
+        self.workload_cache = {}   # Cache workload data: (year, div, subject) → {subject_type, elective_group_id, ...}
 
     # ── Data loading ─────────────────────────────────────────────────────────
 
@@ -115,6 +116,10 @@ class TimetableGenerator:
                 faculty_id   = str(w.get('faculty_id', '')) if w.get('faculty_id') else ''
                 faculty_name = self.faculty_names.get(faculty_id, faculty_id)
 
+                # TG-06 FIX: Extract elective/honors metadata for parallel scheduling
+                subject_type = str(w.get('subject_type', 'regular')).lower()
+                elective_group_id = w.get('elective_group_id')
+
                 subj_doc       = self.subject_map.get(subject, {})
 
                 # TG-05 FIX: warn when subject not found in subject_map
@@ -157,7 +162,17 @@ class TimetableGenerator:
                         'division':      division,
                         'practical_hrs': practical_hrs,
                         'required_lab':  required_lab,
+                        'subject_type':  subject_type,          # NEW
+                        'elective_group_id': elective_group_id,  # NEW
                     })
+                    
+                    # TG-06 FIX: Cache workload metadata for parallel validation
+                    cache_key = (year, division, subject)
+                    self.workload_cache[cache_key] = {
+                        'subject_type': subject_type,
+                        'elective_group_id': elective_group_id,
+                        'practical_hrs': practical_hrs,
+                    }
 
             total = sum(len(v) for v in assignments.values())
             logger.info(f"✓ {len(assignments)} batch-queues, {total} practicals to schedule")
@@ -171,6 +186,81 @@ class TimetableGenerator:
             return {}
 
     # ── Constraint helpers ────────────────────────────────────────────────────
+
+    def _can_batch_share_slot(self, year: str, division: str, batch: int, 
+                             day: str, slot: str, subject_type: str, 
+                             elective_group_id: str) -> bool:
+        """
+        TG-06 FIX: Allow SAME batch to occupy SAME slot ONLY if:
+        1. Current subject is marked as 'elective' or 'honors'
+        2. Current subject has valid elective_group_id
+        3. ALL existing subjects in slot belong to SAME elective_group_id
+        4. ALL existing subjects are also marked as 'elective' or 'honors'
+        
+        Regular subjects: ALWAYS exclusive per slot
+        Different elective groups: CONFLICT (cannot share)
+        """
+        # Non-parallel subjects cannot share
+        if subject_type not in ['elective', 'honors']:
+            return False
+        
+        if not elective_group_id:
+            return False  # Must have valid group ID
+        
+        # Check existing subjects in this slot
+        key = (year, division, batch)
+        existing = self.batch_occupied.get(key, {}).get(day, {}).get(slot)
+        
+        # If nothing existing or existing is boolean False, slot is free
+        if not existing or existing is False:
+            return True
+        
+        # If existing is True (old boolean format), cannot share
+        if existing is True:
+            return False
+        
+        # existing is a list of metadata dicts
+        if not isinstance(existing, list):
+            return False
+        
+        # All existing subjects must be in same group
+        for existing_entry in existing:
+            if existing_entry.get('elective_group_id') != elective_group_id:
+                return False  # Different group: conflict
+            if existing_entry.get('subject_type') not in ['elective', 'honors']:
+                return False  # Non-parallel subject in slot: conflict
+        
+        return True  # Same group, all parallel: OK!
+
+    def _batch_slot_free_or_parallel(self, year: str, division: str, batch: int, 
+                                    day: str, slot: str, subject_type: str,
+                                    elective_group_id: str) -> bool:
+        """
+        TG-06 FIX: Check if batch can occupy slot.
+        Returns True if:
+        - Slot is free (occupancy is False/None), OR
+        - Slot can accept parallel entry (same elective group)
+        """
+        key = (year, division, batch)
+        if key not in self.batch_occupied:
+            return True
+        
+        occupancy = self.batch_occupied[key][day][slot]
+        
+        # Slot is free
+        if not occupancy or occupancy is False:
+            return True
+        
+        # If boolean True (old format), slot is occupied
+        if occupancy is True:
+            return False
+        
+        # If list, check parallel eligibility
+        if isinstance(occupancy, list):
+            return self._can_batch_share_slot(year, division, batch, day, slot,
+                                             subject_type, elective_group_id)
+        
+        return False
 
     def _faculty_busy(self, faculty, day, slot): # Add self, remove lab_schedule
     # 1. Check if busy in the current generated lab schedule
@@ -222,20 +312,34 @@ class TimetableGenerator:
                       used_faculty: set, used_labs: set) -> bool:
         year, division, batch = practical['year'], practical['division'], practical['batch']
         faculty, hrs          = practical['faculty'], practical['practical_hrs']
+        subject_type          = practical.get('subject_type', 'regular')
+        elective_group_id     = practical.get('elective_group_id')
 
         if hrs == 2 and slot not in TWO_HR_START_SLOTS:
             return False
+        
+        # STRICT: Faculty cannot be busy (no parallel exceptions for faculty)
         if faculty in used_faculty:
             return False
-        if self._faculty_busy(faculty, day, slot):   # TG-02 fix applied inside here
+        if self._faculty_busy(faculty, day, slot):
             return False
-        if not self._batch_slot_free(year, division, batch, day, slot):
+        
+        # TG-06 FIX: Batch constraint WITH parallel exception for electives
+        if not self._batch_slot_free_or_parallel(year, division, batch, day, slot,
+                                               subject_type, elective_group_id):
             return False
+        
+        # 2-hour continuation check WITH parallel exception
         if hrs == 2:
-            if not self._batch_slot_free(year, division, batch, day, NEXT_SLOT[slot]):
+            next_slot = NEXT_SLOT[slot]
+            if not self._batch_slot_free_or_parallel(year, division, batch, day, next_slot,
+                                                   subject_type, elective_group_id):
                 return False
+        
+        # STRICT: Lab constraint (no parallel exceptions for labs)
         if self._select_lab(practical, day, slot, used_labs) is None:
             return False
+        
         return True
 
     # ── Write ─────────────────────────────────────────────────────────────────
@@ -245,9 +349,14 @@ class TimetableGenerator:
         Writes to lab_schedule and batch_occupied ONLY.
         class_timetable_handler reads from master lab timetable (saved at end)
         and is the sole writer for class-level timetables — preventing duplicates.
+        
+        TG-06 FIX: batch_occupied now stores metadata lists for parallel electives
+        instead of just boolean True.
         """
         year, division, batch = practical['year'], practical['division'], practical['batch']
         hrs = practical['practical_hrs']
+        subject_type = practical.get('subject_type', 'regular')
+        elective_group_id = practical.get('elective_group_id')
 
         session = {
             'batch':        f"Batch {batch}",
@@ -257,6 +366,8 @@ class TimetableGenerator:
             'faculty_id':   practical['faculty_id'] or None,
             'division':     division,
             'class':        year,
+            'subject_type': subject_type,              # NEW: Track subject type
+            'elective_group_id': elective_group_id,    # NEW: Track elective group
         }
 
         # Lab timetable — primary slot
@@ -265,11 +376,38 @@ class TimetableGenerator:
         if hrs == 2 and slot in NEXT_SLOT:
             self.lab_schedule[lab][day][NEXT_SLOT[slot]].append(dict(session))
 
-        # Mark this batch occupied at both slots
+        # TG-06 FIX: Mark batch occupancy with metadata for parallel tracking
         key = (year, division, batch)
-        self.batch_occupied[key][day][slot] = True
+        
+        # Create metadata entry for this subject
+        metadata = {
+            'subject': practical['subject'],
+            'subject_type': subject_type,
+            'elective_group_id': elective_group_id,
+            'faculty': practical['faculty'],
+            'lab': lab,
+        }
+        
+        # Initialize as list if currently empty/False
+        if not self.batch_occupied[key][day][slot] or self.batch_occupied[key][day][slot] is False:
+            self.batch_occupied[key][day][slot] = []
+        
+        # Append metadata (handles both first entry and parallel entries)
+        if isinstance(self.batch_occupied[key][day][slot], list):
+            self.batch_occupied[key][day][slot].append(dict(metadata))
+        else:
+            # Fallback for compatibility if somehow still boolean
+            self.batch_occupied[key][day][slot] = [dict(metadata)]
+        
+        # Same for follow-on slot
         if hrs == 2 and slot in NEXT_SLOT:
-            self.batch_occupied[key][day][NEXT_SLOT[slot]] = True
+            next_slot = NEXT_SLOT[slot]
+            if not self.batch_occupied[key][day][next_slot] or self.batch_occupied[key][day][next_slot] is False:
+                self.batch_occupied[key][day][next_slot] = []
+            if isinstance(self.batch_occupied[key][day][next_slot], list):
+                self.batch_occupied[key][day][next_slot].append(dict(metadata))
+            else:
+                self.batch_occupied[key][day][next_slot] = [dict(metadata)]
 
         extra = f"+{NEXT_SLOT[slot]}" if hrs == 2 and slot in NEXT_SLOT else ""
         logger.info(f"  ✓ {year}-{division}-B{batch} {practical['subject']} "

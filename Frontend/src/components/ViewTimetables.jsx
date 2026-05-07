@@ -14,6 +14,7 @@ import {
 } from "../lib/excelExport"; //[cite: 2]
 import { getDepartmentTimings } from "../services/settingsService";
 import { getUserFriendlyErrorMessage } from "../lib/errorMessages";
+import { renderSessionCell } from "../lib/timetableUtils.jsx"; // NEW: Import parallel session renderer
 import {
   Clock,
   ArrowLeft,
@@ -188,7 +189,8 @@ export default function ViewTimetables() {
 
   const handleDeleteMasterTimetable = async (timetableId) => {
     if (!timetableId) return;
-    if (!window.confirm("Delete this master practical timetable entry?")) return;
+    if (!window.confirm("Delete this master practical timetable entry?"))
+      return;
     try {
       await deleteMasterTimetable(timetableId);
       await loadAllData();
@@ -253,47 +255,8 @@ export default function ViewTimetables() {
   );
 
   // ---------- session cell (class timetable) ----------
-  const renderSessionCell = (sessions) => {
-    if (!sessions || sessions.length === 0) {
-      return (
-        <div className="h-full min-h-[70px] bg-slate-50 border border-slate-200 rounded p-2 flex items-center justify-center text-xs text-slate-400">
-          —
-        </div>
-      );
-    }
-    return (
-      <div className="h-full min-h-[70px] flex flex-col gap-1">
-        {sessions.map((session, idx) => (
-          <div
-            key={idx}
-            className={`border rounded p-2 flex-1 ${session.lab ? "bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200" : "bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200"}`}
-          >
-            <div
-              className={`font-semibold text-xs mb-1 ${session.lab ? "text-emerald-900" : "text-blue-900"}`}
-            >
-              {session.batch}
-            </div>
-            <div className="flex items-start gap-1 text-slate-700 mb-0.5">
-              <BookOpen size={11} className="mt-0.5 flex-shrink-0" />
-              <span className="font-medium text-xs">
-                {session.subject} — {session.subject_full}
-              </span>
-            </div>
-            <div className="flex items-start gap-1 text-slate-600 mb-0.5">
-              <UsersIcon size={10} className="mt-0.5 flex-shrink-0" />
-              <span className="text-xs leading-tight">{session.faculty}</span>
-            </div>
-            {session.lab && (
-              <div className="flex items-start gap-1 text-slate-500">
-                <FlaskConical size={10} className="mt-0.5 flex-shrink-0" />
-                <span className="text-xs leading-tight">{session.lab}</span>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    );
-  };
+  // NOTE: renderSessionCell is now imported from timetableUtils.js
+  // It handles both single and parallel sessions automatically
 
   // ---------- practical plan session cell ----------
   const renderPracticalSessionCell = (sessions) => {
@@ -359,22 +322,28 @@ export default function ViewTimetables() {
                 return (
                   <tr
                     key={time}
-                    className={isBreakTime ? "bg-amber-50" : timeIdx % 2 === 0 ? "bg-white" : "bg-slate-50"}
+                    className={
+                      isBreakTime
+                        ? "bg-amber-50"
+                        : timeIdx % 2 === 0
+                          ? "bg-white"
+                          : "bg-slate-50"
+                    }
                   >
                     <td
                       className={`border ${isBreakTime ? "border-amber-300" : "border-slate-300"} px-4 py-3 font-semibold sticky left-0 z-10 whitespace-nowrap ${
                         isBreakTime
                           ? "text-amber-700 bg-amber-50"
                           : isPracticalSlot
-                          ? "text-blue-700"
-                          : "text-slate-800"
+                            ? "text-blue-700"
+                            : "text-slate-800"
                       }`}
                       style={{
                         backgroundColor: isBreakTime
                           ? "#fef3c7"
                           : timeIdx % 2 === 0
-                          ? "white"
-                          : "#f8fafc",
+                            ? "white"
+                            : "#f8fafc",
                       }}
                     >
                       <div className="flex items-center gap-1.5">
@@ -384,8 +353,8 @@ export default function ViewTimetables() {
                             isBreakTime
                               ? "text-amber-600"
                               : isPracticalSlot
-                              ? "text-blue-500"
-                              : "text-slate-500"
+                                ? "text-blue-500"
+                                : "text-slate-500"
                           }
                         />
                         <div className="flex flex-col">
@@ -406,11 +375,9 @@ export default function ViewTimetables() {
                           key={`${time}-${day}`}
                           className={`border ${isBreakTime ? "border-amber-200 bg-amber-50" : "border-slate-300"} p-2 min-w-[160px]`}
                         >
-                          {isBreakTime ? (
-                            renderBreakCell(breakInfo, "70px")
-                          ) : (
-                            renderSessionCell(sessions)
-                          )}
+                          {isBreakTime
+                            ? renderBreakCell(breakInfo, "70px")
+                            : renderSessionCell(sessions)}
                         </td>
                       );
                     })}
@@ -493,9 +460,9 @@ export default function ViewTimetables() {
             <tbody>
               {labNames.map((labName, labIdx) => {
                 const labSchedule = allLabs[labName];
-                const masterTimetableId =
-                  practicalData?.timetables?.find((t) => t.lab_name === labName)
-                    ?._id;
+                const masterTimetableId = practicalData?.timetables?.find(
+                  (t) => t.lab_name === labName,
+                )?._id;
                 return (
                   <tr
                     key={labName}

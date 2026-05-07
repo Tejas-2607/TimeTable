@@ -58,6 +58,72 @@ def _is_two_hour_practical(lab_doc: dict, day: str, slot: str, session: dict) ->
     )
 
 
+def _group_parallel_sessions(sessions: list) -> list:
+    """
+    CH-03 FIX: Group parallel sessions by elective_group_id.
+    If multiple sessions in a slot share the same elective_group_id,
+    wrap them in a 'parallel' container.
+    
+    Input: [
+      {subject: 'AI', elective_group_id: 'ELE-X', ...},
+      {subject: 'DS', elective_group_id: 'ELE-X', ...},
+      {subject: 'OOPJ', elective_group_id: None, ...}
+    ]
+    
+    Output: [
+      {
+        parallel: true,
+        group_id: 'ELE-X',
+        sessions: [
+          {subject: 'AI', ...},
+          {subject: 'DS', ...}
+        ]
+      },
+      {subject: 'OOPJ', ...}
+    ]
+    """
+    if not sessions:
+        return []
+    
+    # Group by elective_group_id
+    grouped: dict = {}
+    ungrouped = []
+    
+    for session in sessions:
+        group_id = session.get('elective_group_id')
+        subject_type = session.get('subject_type', 'regular')
+        
+        # Regular subjects (non-parallel) go to ungrouped
+        if subject_type == 'regular' or not group_id:
+            ungrouped.append(session)
+        else:
+            # Elective/Honors: collect by group_id
+            if group_id not in grouped:
+                grouped[group_id] = []
+            grouped[group_id].append(session)
+    
+    result = []
+    
+    # Add parallel groups (only if 2+ subjects in group)
+    for group_id, group_sessions in grouped.items():
+        if len(group_sessions) > 1:
+            # Multiple subjects in same elective group → wrap in parallel container
+            result.append({
+                'parallel': True,
+                'group_id': group_id,
+                'group_name': f"Electives: {', '.join(s.get('subject', '') for s in group_sessions)}",
+                'sessions': group_sessions
+            })
+        else:
+            # Single subject in group → treat as regular entry
+            ungrouped.extend(group_sessions)
+    
+    # Add all ungrouped/regular sessions
+    result.extend(ungrouped)
+    
+    return result
+
+
 def generate_class_timetables() -> dict:
     try:
         logger.info("Starting class timetable generation…")
@@ -111,6 +177,8 @@ def generate_class_timetables() -> dict:
                             'faculty_id':   session.get('faculty_id'),
                             'lab':          lab_name,
                             'type':         'practical',
+                            'subject_type': session.get('subject_type', 'regular'),  # CH-03 FIX
+                            'elective_group_id': session.get('elective_group_id'),    # CH-03 FIX
                         }
 
                         # Write primary START slot
@@ -126,21 +194,38 @@ def generate_class_timetables() -> dict:
         timetables_created = 0
         for (class_name, division), schedule in class_schedules.items():
 
+            # CH-03 FIX: Apply parallel session grouping BEFORE storing
+            # This transforms (day, slot) → [entries] into grouped format
+            transformed_schedule = {}
+            for day in DAYS:
+                transformed_schedule[day] = {}
+                for slot in ALL_SLOTS:
+                    sessions = schedule.get(day, {}).get(slot, [])
+                    if sessions:
+                        # Group parallel sessions by elective_group_id
+                        transformed_schedule[day][slot] = _group_parallel_sessions(sessions)
+                    else:
+                        transformed_schedule[day][slot] = []
+
             # CH-01 FIX: count only entries that sit in a START_SLOT.
-            # Previously the loop counted follow-on slots too, doubling the
-            # total for every 2-hour practical.
-            total_practicals = sum(
-                len(schedule[day][slot])
-                for day in DAYS
-                for slot in START_SLOTS          # only START_SLOTS, not ALL_SLOTS
-                if slot in schedule.get(day, {})
-            )
+            # Count both standalone sessions and sessions within parallel containers
+            total_practicals = 0
+            for day in DAYS:
+                for slot in START_SLOTS:
+                    entries = transformed_schedule.get(day, {}).get(slot, [])
+                    for entry in entries:
+                        if entry.get('parallel'):
+                            # Count number of sessions within parallel container
+                            total_practicals += len(entry.get('sessions', []))
+                        else:
+                            # Count standalone session
+                            total_practicals += 1
 
             doc = {
                 'class':            class_name,
                 'division':         division,
                 'class_key':        f"{class_name}-{division}",
-                'schedule':         schedule,
+                'schedule':         transformed_schedule,  # Use transformed schedule
                 'generated_at':     datetime.now(),
                 'total_practicals': total_practicals,
             }

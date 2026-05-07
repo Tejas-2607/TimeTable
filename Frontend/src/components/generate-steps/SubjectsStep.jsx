@@ -24,6 +24,8 @@ export default function SubjectsStep({ data, onDataChange }) {
     practical_duration: "2",
     practical_type: "Specific Lab",
     required_labs: "",
+    subject_type: "regular",
+    elective_group_id: "",
   });
 
   // Load labs only once on mount
@@ -103,6 +105,8 @@ export default function SubjectsStep({ data, onDataChange }) {
       practical_duration: String(subject.practical_duration),
       practical_type: subject.practical_type || "Specific Lab",
       required_labs: subject.required_labs || "",
+      subject_type: subject.subject_type || "regular",
+      elective_group_id: subject.elective_group_id || "",
     });
 
     setEditingId(subjectId);
@@ -122,8 +126,12 @@ export default function SubjectsStep({ data, onDataChange }) {
         hrs_per_week_practical: parseInt(formData.hrs_per_week_practical),
         practical_duration: parseInt(formData.practical_duration),
         practical_type: formData.practical_type,
+        subject_type: formData.subject_type,
         ...(formData.required_labs && {
           required_labs: formData.required_labs,
+        }),
+        ...(formData.subject_type !== "regular" && {
+          elective_group_id: formData.elective_group_id,
         }),
       };
 
@@ -148,6 +156,8 @@ export default function SubjectsStep({ data, onDataChange }) {
         practical_duration: "2",
         practical_type: "Specific Lab",
         required_labs: "",
+        subject_type: "regular",
+        elective_group_id: "",
       });
       setEditingId(null);
       setShowForm(false);
@@ -268,6 +278,8 @@ export default function SubjectsStep({ data, onDataChange }) {
                   practical_duration: "2",
                   practical_type: "Specific Lab",
                   required_labs: "",
+                  subject_type: "regular",
+                  elective_group_id: "",
                 });
               }}
               className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
@@ -337,6 +349,45 @@ export default function SubjectsStep({ data, onDataChange }) {
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Subject Type
+                </label>
+                <select
+                  value={formData.subject_type}
+                  onChange={(e) => handleChange("subject_type", e.target.value)}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
+                >
+                  <option value="regular">Regular</option>
+                  <option value="elective">Elective</option>
+                  <option value="honors">Honors</option>
+                </select>
+              </div>
+
+              {(formData.subject_type === "elective" ||
+                formData.subject_type === "honors") && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Elective Group ID
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.elective_group_id}
+                    onChange={(e) =>
+                      handleChange("elective_group_id", e.target.value)
+                    }
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 transition-shadow outline-none"
+                    placeholder="e.g., ELE-AI-DS-2026"
+                    required={
+                      formData.subject_type === "elective" ||
+                      formData.subject_type === "honors"
+                    }
+                  />
+                </div>
+              )}
             </div>
 
             {parseInt(formData.hrs_per_week_practical) > 0 && (
