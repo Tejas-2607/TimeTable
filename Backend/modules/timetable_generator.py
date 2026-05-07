@@ -107,6 +107,9 @@ class TimetableGenerator:
             # to skip duplicate workload documents
             seen_combos: set = set()
 
+            # Group by subject for parallel batch scheduling
+            subject_groups: dict = {}  # (year, division, subject) -> list of batch dicts
+
             for w in workloads:
                 year         = (w.get('year') or '').strip().upper()
                 division     = w.get('division', 'A')
@@ -151,8 +154,13 @@ class TimetableGenerator:
                     seen_combos.add(combo)
 
                     self._ensure_batch(year, division, batch)
-                    key = (year, division, batch)
-                    assignments.setdefault(key, []).append({
+
+                    # Group by subject for parallel scheduling
+                    subject_key = (year, division, subject)
+                    if subject_key not in subject_groups:
+                        subject_groups[subject_key] = []
+
+                    subject_groups[subject_key].append({
                         'subject':       subject,
                         'subject_full':  subject_full,
                         'batch':         batch,
@@ -165,7 +173,7 @@ class TimetableGenerator:
                         'subject_type':  subject_type,          # NEW
                         'elective_group_id': elective_group_id,  # NEW
                     })
-                    
+
                     # TG-06 FIX: Cache workload metadata for parallel validation
                     cache_key = (year, division, subject)
                     self.workload_cache[cache_key] = {
@@ -174,11 +182,16 @@ class TimetableGenerator:
                         'practical_hrs': practical_hrs,
                     }
 
+            # Convert subject groups to assignments (one entry per subject group)
+            for subject_key, batch_list in subject_groups.items():
+                year, division, subject = subject_key
+                assignments[subject_key] = batch_list
+
             total = sum(len(v) for v in assignments.values())
-            logger.info(f"✓ {len(assignments)} batch-queues, {total} practicals to schedule")
+            logger.info(f"✓ {len(assignments)} subject-groups, {total} practicals to schedule")
             for k in sorted(assignments):
-                logger.info(f"   {k[0]}-{k[1]}-B{k[2]}: "
-                            f"{[p['subject'] for p in assignments[k]]}")
+                batches = [p['batch'] for p in assignments[k]]
+                logger.info(f"   {k[0]}-{k[1]}-{k[2]}: Batches {batches}")
             return assignments
 
         except Exception as e:
@@ -308,39 +321,67 @@ class TimetableGenerator:
             return lab
         return None
 
-    def _can_schedule(self, practical: dict, day: str, slot: str,
-                      used_faculty: set, used_labs: set) -> bool:
-        year, division, batch = practical['year'], practical['division'], practical['batch']
-        faculty, hrs          = practical['faculty'], practical['practical_hrs']
-        subject_type          = practical.get('subject_type', 'regular')
-        elective_group_id     = practical.get('elective_group_id')
+    def _can_schedule_group(self, batch_group: list, day: str, slot: str,
+                           used_faculty: set, used_labs: set) -> tuple[bool, str | None]:
+        """
+        Check if an entire batch group can be scheduled together at the same time.
+        Returns (can_schedule, selected_lab)
+        """
+        if not batch_group:
+            return False, None
 
+        # All batches in group must have same subject properties
+        first_batch = batch_group[0]
+        hrs = first_batch['practical_hrs']
+        required_lab = first_batch.get('required_lab')
+        subject_type = first_batch.get('subject_type', 'regular')
+        elective_group_id = first_batch.get('elective_group_id')
+
+        # Check 2-hour constraint
         if hrs == 2 and slot not in TWO_HR_START_SLOTS:
-            return False
-        
-        # STRICT: Faculty cannot be busy (no parallel exceptions for faculty)
-        if faculty in used_faculty:
-            return False
-        if self._faculty_busy(faculty, day, slot):
-            return False
-        
-        # TG-06 FIX: Batch constraint WITH parallel exception for electives
-        if not self._batch_slot_free_or_parallel(year, division, batch, day, slot,
-                                               subject_type, elective_group_id):
-            return False
-        
-        # 2-hour continuation check WITH parallel exception
-        if hrs == 2:
-            next_slot = NEXT_SLOT[slot]
-            if not self._batch_slot_free_or_parallel(year, division, batch, day, next_slot,
-                                                   subject_type, elective_group_id):
-                return False
-        
-        # STRICT: Lab constraint (no parallel exceptions for labs)
-        if self._select_lab(practical, day, slot, used_labs) is None:
-            return False
-        
-        return True
+            return False, None
+
+        # Collect all faculty and lab requirements
+        group_faculty = set()
+        group_labs = set()
+
+        for batch in batch_group:
+            faculty = batch['faculty']
+            if faculty in used_faculty:
+                return False, None
+            if self._faculty_busy(faculty, day, slot):
+                return False, None
+            group_faculty.add(faculty)
+
+            # Check batch availability with parallel logic
+            if not self._batch_slot_free_or_parallel(
+                batch['year'], batch['division'], batch['batch'], day, slot,
+                subject_type, elective_group_id):
+                return False, None
+
+            # For 2-hour sessions, check continuation slot
+            if hrs == 2:
+                next_slot = NEXT_SLOT[slot]
+                if not self._batch_slot_free_or_parallel(
+                    batch['year'], batch['division'], batch['batch'], day, next_slot,
+                    subject_type, elective_group_id):
+                    return False, None
+
+        # Find a lab that can accommodate all batches
+        candidates = [required_lab] if required_lab else self.labs_list
+        for lab in candidates:
+            if lab in used_labs:
+                continue
+            if not self._lab_slot_free(lab, day, slot):
+                continue
+            if hrs == 2 and not self._lab_slot_free(lab, day, NEXT_SLOT[slot]):
+                continue
+
+            # Check if lab has capacity for all batches (assuming reasonable capacity)
+            # For now, allow multiple batches in same lab if slots are free
+            return True, lab
+
+        return False, None
 
     # ── Write ─────────────────────────────────────────────────────────────────
 
@@ -509,29 +550,29 @@ class TimetableGenerator:
                         used_labs:    set = set()
 
                         for key in ordered_keys:
-                            queue = assignments[key]
-                            if not queue:
+                            batch_group = assignments[key]
+                            if not batch_group:
                                 continue
 
-                            placed_idx = None
-                            for idx, practical in enumerate(queue):
-                                if not self._can_schedule(practical, day, slot,
-                                                          used_faculty, used_labs):
-                                    continue
-                                lab = self._select_lab(practical, day, slot, used_labs)
-                                if lab is None:
-                                    continue
+                            # Try to schedule the entire batch group together
+                            can_schedule, selected_lab = self._can_schedule_group(
+                                batch_group, day, slot, used_faculty, used_labs)
 
+                            if not can_schedule or selected_lab is None:
+                                continue
+
+                            # Schedule all batches in the group
+                            for practical in batch_group:
                                 used_faculty.add(practical['faculty'])
-                                used_labs.add(lab)
-                                self._write_session(practical, day, slot, lab)
+                                self._write_session(practical, day, slot, selected_lab)
                                 scheduled_count += 1
-                                progress = True
-                                placed_idx = idx
-                                break
 
-                            if placed_idx is not None:
-                                queue.pop(placed_idx)
+                            used_labs.add(selected_lab)
+                            progress = True
+
+                            # Remove the entire group from assignments
+                            del assignments[key]
+                            break
 
                 if not progress:
                     logger.info(f"Stable after pass {pass_num + 1}.")
@@ -554,8 +595,8 @@ class TimetableGenerator:
                 logger.info(f"✓ Saved lab: {lab_name}")
 
             leftovers = {
-                f"{y}-{d}-B{b}": [p['subject'] for p in q]
-                for (y, d, b), q in assignments.items() if q
+                f"{y}-{d}-{s}": [f"B{b['batch']}" for b in batch_group]
+                for (y, d, s), batch_group in assignments.items() if batch_group
             }
             if leftovers:
                 logger.warning(f"⚠️  Unscheduled: {leftovers}")

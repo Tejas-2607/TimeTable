@@ -145,6 +145,10 @@ class LectureTimetableGenerator:
                 faculty_id   = str(w.get('faculty_id', ''))
                 faculty_name = fid_to_name.get(faculty_id, faculty_id)
 
+                # Extract elective/honors metadata for parallel scheduling
+                subject_type = str(w.get('subject_type', 'regular')).lower()
+                elective_group_id = w.get('elective_group_id')
+
                 # ── Authoritative theory hours from subjects collection ────
                 subj_doc   = self.subject_map.get(subject, {})
                 theory_hrs = int(subj_doc['hrs_per_week_lec']) if 'hrs_per_week_lec' in subj_doc else 0
@@ -176,7 +180,7 @@ class LectureTimetableGenerator:
 
                 key = (year, division, subject)
                 # Overwrite with the same faculty if duplicate workload entries exist
-                assignments[key] = [
+                lecture_list = [
                     {
                         'subject':        subject,
                         'subject_full':   subject_full,
@@ -186,14 +190,56 @@ class LectureTimetableGenerator:
                         'faculty':        faculty_name,
                         'hours':          1,
                         'lecture_number': n + 1,
+                        'subject_type':   subject_type,          # NEW
+                        'elective_group_id': elective_group_id,  # NEW
                     }
                     for n in range(theory_hrs)
                 ]
+                assignments[key] = lecture_list
+
+            # Group lectures by elective groups for parallel scheduling
+            elective_groups: dict = {}  # group_id -> list of (key, lecture_list)
+            regular_subjects: dict = {}  # key -> lecture_list
+
+            for key, lecture_list in assignments.items():
+                first_lecture = lecture_list[0]
+                subject_type = first_lecture.get('subject_type', 'regular')
+                elective_group_id = first_lecture.get('elective_group_id')
+
+                if subject_type in ['elective', 'honors'] and elective_group_id:
+                    if elective_group_id not in elective_groups:
+                        elective_groups[elective_group_id] = []
+                    elective_groups[elective_group_id].append((key, lecture_list))
+                else:
+                    regular_subjects[key] = lecture_list
+
+            # Convert elective groups to assignments (one entry per group)
+            group_assignments: dict = {}
+            for group_id, subject_list in elective_groups.items():
+                # Create a combined key for the group
+                years = set(k[0] for k, _ in subject_list)
+                divisions = set(k[1] for k, _ in subject_list)
+                if len(years) == 1 and len(divisions) == 1:
+                    group_key = (list(years)[0], list(divisions)[0], f"elective_group_{group_id}")
+                    # Combine all lectures from all subjects in the group
+                    combined_lectures = []
+                    for _, lecture_list in subject_list:
+                        combined_lectures.extend(lecture_list)
+                    group_assignments[group_key] = combined_lectures
+
+            # Add regular subjects
+            group_assignments.update(regular_subjects)
+
+            assignments = group_assignments
 
             total = sum(len(v) for v in assignments.values())
-            logger.info(f"✓ {len(assignments)} subjects, {total} lecture slots to fill")
+            logger.info(f"✓ {len(assignments)} subject/groups, {total} lecture slots to fill")
             for k in sorted(assignments):
-                logger.info(f"   {k[0]}-{k[1]}-{k[2]}: {len(assignments[k])} lectures")
+                if "elective_group" in str(k[2]):
+                    subjects = list(set(l['subject'] for l in assignments[k]))
+                    logger.info(f"   {k[0]}-{k[1]}-{k[2]}: {len(assignments[k])} lectures ({subjects})")
+                else:
+                    logger.info(f"   {k[0]}-{k[1]}-{k[2]}: {len(assignments[k])} lectures")
 
             if unresolved:
                 skipped_labels = [
@@ -259,7 +305,8 @@ class LectureTimetableGenerator:
     }
 
     def _consecutive_ok(self, year: str, division: str, day: str,
-                    slot: str, subject: str, faculty: str) -> bool:
+                    slot: str, subject: str, faculty: str, subject_type: str = 'regular',
+                    elective_group_id=None) -> bool:
         """
         Return True if placing this lecture is acceptable. Blocks:
           1. Same subject already anywhere on this day for this class
@@ -268,6 +315,8 @@ class LectureTimetableGenerator:
              (redundant given rule 1, kept as safety net).
           3. Same faculty in an adjacent slot within this class
              (faculty gets a break between sessions in the same class).
+          4. For electives/honors: Allow multiple subjects from same elective group
+             to share the same slot.
 
         Cross-class faculty adjacency is intentionally NOT blocked — teaching
         different classes in adjacent slots is normal and was the root cause
@@ -286,6 +335,23 @@ class LectureTimetableGenerator:
             for sess in entries:
                 if sess.get('subject') == subject and sess.get('type') == 'lecture':
                     return False  # subject already has a lecture today
+
+        # Rule 4 — For electives/honors, check if slot already has subjects from same group
+        if subject_type in ['elective', 'honors'] and elective_group_id:
+            existing_subjects_in_slot = []
+            for sess in day_schedule.get(slot, []):
+                if sess.get('type') == 'lecture':
+                    existing_subjects_in_slot.append(sess.get('subject'))
+
+            # If slot has subjects, check if they're from the same elective group
+            if existing_subjects_in_slot:
+                # Check if any existing subject is from a different elective group
+                for sess in day_schedule.get(slot, []):
+                    if (sess.get('type') == 'lecture' and
+                        sess.get('elective_group_id') != elective_group_id and
+                        sess.get('subject_type') in ['elective', 'honors']):
+                        return False  # Different elective group in slot
+                # Same group or regular subjects - allow sharing
 
         # Rule 2 & 3 — adjacent slot checks (faculty break within class)
         for adj in self._ADJACENT.get(slot, []):
@@ -309,6 +375,8 @@ class LectureTimetableGenerator:
             'faculty_id':   lecture['faculty_id'],
             'hours':        1,
             'type':         'lecture',
+            'subject_type': lecture.get('subject_type', 'regular'),      # NEW
+            'elective_group_id': lecture.get('elective_group_id'),       # NEW
         })
         logger.debug(f"  ✓ {year}-{division} {lecture['subject']} "
                      f"L#{lecture['lecture_number']} → {day} {slot}")
@@ -367,22 +435,16 @@ class LectureTimetableGenerator:
 
     # ── Apply fixed_time constraints (Phase 0) ────────────────────────────────
 
-    def _apply_fixed_time_constraints(self, assignments: dict) -> tuple[int, list]:
-        """
-        Apply fixed_time constraints BEFORE the main scheduling loop.
-        This is Phase 0 of the lecture generation.
-
-        Returns:
-            (num_placed, unplaced_constraints)
-            where unplaced_constraints are constraints that could not be placed.
-        """
-        constraints = list(constraints_collection.find({
+    def _apply_fixed_time_constraints(self, assignments):
+        # Apply fixed_time constraints BEFORE the main scheduling loop.
+        query = {
             'type': 'fixed_time',
             '$or': [
                 {'status': 'approved'},
                 {'status': {'$exists': False}}
             ]
-        }))
+        }
+        constraints = list(constraints_collection.find(query))
         placed_count = 0
         unplaced = []
 
@@ -525,7 +587,9 @@ class LectureTimetableGenerator:
                             # LG-04 FIX: pass faculty to _consecutive_ok
                             if not self._consecutive_ok(
                                     year, division, day, slot,
-                                    subject, lecture['faculty']):
+                                    subject, lecture['faculty'],
+                                    lecture.get('subject_type', 'regular'),
+                                    lecture.get('elective_group_id')):
                                 continue
 
                             self._place_lecture(year, division, day, slot, lecture)
