@@ -74,6 +74,10 @@ export default function ViewTimetables() {
   }, []);
 
   const loadAllData = async () => {
+    // Local sets to accumulate all unique time slots (lectures + breaks)
+    const slotSet = new Set();
+    const pSlotSet = new Set();
+
     setIsLoading(true);
     setIsPracticalLoading(true);
     setError(null);
@@ -85,21 +89,12 @@ export default function ViewTimetables() {
       setTimetables(data);
 
       // Dynamically extract all unique time slots from the actual schedule data
-      const parseTime = (t) => {
-        const [hh, mm = "0"] = t.split(":");
-        return parseInt(hh) * 60 + parseInt(mm);
-      };
-      const slotSet = new Set();
       data.forEach((tt) => {
         const sched = tt.schedule || {};
         Object.values(sched).forEach((dayObj) => {
           Object.keys(dayObj).forEach((t) => slotSet.add(t));
         });
       });
-      const sorted = Array.from(slotSet).sort(
-        (a, b) => parseTime(a) - parseTime(b),
-      );
-      setTimeSlots(sorted);
     } catch (err) {
       console.error("Error loading class timetables:", err);
       setError(
@@ -120,23 +115,12 @@ export default function ViewTimetables() {
       setPracticalData({ timetables: data });
 
       // Extract practical time slots from master timetable data
-      const parseTime = (t) => {
-        const [hh, mm = "0"] = t.split(":");
-        return parseInt(hh) * 60 + parseInt(mm);
-      };
-      const pSlotSet = new Set();
       data.forEach((tt) => {
         const sched = tt.schedule || {};
         Object.values(sched).forEach((dayObj) => {
           Object.keys(dayObj).forEach((t) => pSlotSet.add(t));
         });
       });
-      if (pSlotSet.size > 0) {
-        const sorted = Array.from(pSlotSet).sort(
-          (a, b) => parseTime(a) - parseTime(b),
-        );
-        setPracticalTimeSlots(sorted);
-      }
     } catch (err) {
       console.warn("Could not load practical data:", err);
       setError(
@@ -155,6 +139,15 @@ export default function ViewTimetables() {
       const timingsRes = await getDepartmentTimings();
       const breaksData = timingsRes.breaks || [];
       setBreaks(breaksData);
+
+      // Include every break start time as its own row in both
+      // class and practical timetables.
+      breaksData.forEach((b) => {
+        if (b.start_time) {
+          slotSet.add(b.start_time);
+          pSlotSet.add(b.start_time);
+        }
+      });
     } catch (err) {
       console.warn("Could not load breaks:", err);
       setError(
@@ -164,6 +157,30 @@ export default function ViewTimetables() {
         ),
       );
       setBreaks([]);
+    }
+
+    // Finally, sort and commit the combined time slot lists
+    const parseTime = (t) => {
+      const [hh, mm = "0"] = String(t).split(":");
+      return parseInt(hh, 10) * 60 + parseInt(mm, 10);
+    };
+
+    if (slotSet.size > 0) {
+      const sorted = Array.from(slotSet).sort(
+        (a, b) => parseTime(a) - parseTime(b),
+      );
+      setTimeSlots(sorted);
+    } else {
+      setTimeSlots([]);
+    }
+
+    if (pSlotSet.size > 0) {
+      const sorted = Array.from(pSlotSet).sort(
+        (a, b) => parseTime(a) - parseTime(b),
+      );
+      setPracticalTimeSlots(sorted);
+    } else {
+      setPracticalTimeSlots([]);
     }
   };
 

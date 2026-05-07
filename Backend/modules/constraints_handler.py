@@ -105,7 +105,55 @@ def add_constraint(data):
             })
 
         if existing:
-            return jsonify({"error": "Constraint already exists"}), 409
+            existing_status = (existing.get("status") or "").strip().lower()
+            existing_id = existing.get("_id")
+
+            # If a constraint was previously rejected, treat the new submit as a resubmission
+            # (so faculty can request approval again without hitting 409).
+            if existing_status == "rejected":
+                update_data = {
+                    "status": "pending" if role == "faculty" else "approved",
+                    "description": data.get("description", existing.get("description", "")),
+                    "review_reason": "",
+                    "reviewed_by_user_id": None,
+                    "reviewed_by_name": None,
+                    "reviewed_at": None,
+                    "requested_by_user_id": user.get("sub"),
+                    "requested_by_role": role,
+                    "created_at": datetime.utcnow(),
+                }
+
+                constraints_collection.update_one(
+                    {"_id": existing_id},
+                    {"$set": update_data},
+                )
+
+                return jsonify(
+                    {
+                        "message": "Constraint request resubmitted"
+                        if role == "faculty"
+                        else "Constraint added",
+                        "id": str(existing_id) if existing_id else None,
+                    }
+                ), 201
+
+            if existing_status == "approved":
+                msg = "Same constraints are already approved."
+            elif existing_status == "pending":
+                msg = "Same constraints are already submitted for approval."
+            else:
+                msg = "Constraint already exists."
+
+            return (
+                jsonify(
+                    {
+                        "error": msg,
+                        "existing_status": existing_status,
+                        "id": str(existing_id) if existing_id else None,
+                    }
+                ),
+                409,
+            )
 
         # CH-01 FIX: use "class" not "year" so lecture_tt_generator can read it
         # Map year → class for new constraints
