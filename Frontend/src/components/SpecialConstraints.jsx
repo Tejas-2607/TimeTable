@@ -7,6 +7,7 @@ import {
   deleteConstraint,
   reviewConstraint,
 } from "../services/constraintsService";
+import { getUserFriendlyErrorMessage } from "../lib/errorMessages";
 import { getFaculties } from "../services/facultyService";
 import { getDepartmentTimings } from "../services/settingsService";
 import { getSubjects } from "../services/subjectService";
@@ -177,7 +178,7 @@ export default function SpecialConstraints() {
         description: "",
       }));
     } catch (err) {
-      setError("Failed to add constraint.");
+      setError(getUserFriendlyErrorMessage(err, "Failed to add constraint."));
     } finally {
       setIsSubmitting(false);
     }

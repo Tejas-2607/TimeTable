@@ -78,10 +78,15 @@ export default function LabTimetables({
         const [hh, mm = "0"] = t.split(".").join(":").split(":");
         return parseInt(hh) * 60 + parseInt(mm);
       };
-      const combinedTimeSlots = Array.from(timeSlotsSet).sort(
-        (a, b) => parseTime(a) - parseTime(b),
-      );
-      setAllTimeSlots(combinedTimeSlots);
+      const commitAllTimeSlots = (setLike) => {
+        const combinedTimeSlots = Array.from(setLike).sort(
+          (a, b) => parseTime(a) - parseTime(b),
+        );
+        setAllTimeSlots(combinedTimeSlots);
+      };
+
+      // Initial commit from schedule times; will be augmented with breaks later.
+      commitAllTimeSlots(timeSlotsSet);
 
       const extractedData = {};
 
@@ -122,6 +127,12 @@ export default function LabTimetables({
         const timingsRes = await getDepartmentTimings();
         const breaksData = timingsRes.breaks || [];
         setBreaks(breaksData);
+
+        // Ensure each break time renders as its own row.
+        breaksData.forEach((b) => {
+          if (b.start_time) timeSlotsSet.add(b.start_time);
+        });
+        commitAllTimeSlots(timeSlotsSet);
       } catch (err) {
         console.warn("Could not load breaks:", err);
         setError(
