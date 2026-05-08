@@ -12,20 +12,15 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 DAYS               = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-ALL_SLOTS          = ['10:15', '11:15', '12:15', '13:15', '14:15', '15:15', '16:20']
+ALL_SLOTS          = ['10:15', '11:15', '12:15', '13:15', '14:15', '15:15', '16:20', '17:20']
 START_SLOTS        = ['11:15', '14:15', '16:20']
-NEXT_SLOT          = {'11:15': '12:15', '14:15': '15:15'}
-TWO_HR_START_SLOTS = ['11:15', '14:15']
+NEXT_SLOT          = {'11:15': '12:15', '14:15': '15:15', '16:20': '17:20'}
+TWO_HR_START_SLOTS = ['11:15', '14:15','16:20']
 
-# TG-02 FIX: follow-on slot → the start slot that "covers" it
-# e.g. a 2-hr session starting at 11:15 occupies 12:15 as well.
-# When checking if faculty is busy at 12:15, we must also look at 11:15.
-COVERS = {'12:15': '11:15', '15:15': '14:15'}
 
-# TG-01 FIX: Round-robin weights per year.
-# Pattern: SY, SY, TY, TY, BE — repeating.
-# This gives SY and TY 2 turns each before BE gets 1 turn,
-# preserving priority while guaranteeing BE is never locked out.
+COVERS = {'12:15': '11:15', '15:15': '14:15', '17:20': '16:20'}
+
+
 ROUND_ROBIN_CYCLE = ['SY', 'SY', 'TY', 'TY', 'BE']
 
 subjects_collection             = db['subjects']
@@ -35,7 +30,6 @@ labs_collection                 = db['labs']
 master_lab_timetable_collection = db['master_lab_timetable']
 
 
-# TG-03 FIX: return None on parse failure instead of silently returning 1
 def _normalise_batch(raw) -> int | None:
     if isinstance(raw, int):
         return raw

@@ -63,7 +63,14 @@ export default function ViewTimetables() {
   const [isPracticalLoading, setIsPracticalLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+  const daysOfWeek = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
   const [timeSlots, setTimeSlots] = useState([]);
   const [practicalTimeSlots, setPracticalTimeSlots] = useState([]);
   const [breaks, setBreaks] = useState([]);
@@ -321,14 +328,16 @@ export default function ViewTimetables() {
       const startPracticals = (daySchedule[time] || []).filter((s) => s.lab);
       if (startPracticals.length === 0) return false;
       const nextKeys = new Set(
-        (daySchedule[nextSlot] || []).filter((s) => s.lab).map(sessionKey)
+        (daySchedule[nextSlot] || []).filter((s) => s.lab).map(sessionKey),
       );
       return startPracticals.some((s) => nextKeys.has(sessionKey(s)));
     };
 
     const isContinuationSlot = (time, daySchedule) => {
       if (!PRACTICAL_CONT_SLOT.has(time)) return false;
-      const startSlot = Object.keys(PRACTICAL_NEXT_SLOT).find((s) => PRACTICAL_NEXT_SLOT[s] === time);
+      const startSlot = Object.keys(PRACTICAL_NEXT_SLOT).find(
+        (s) => PRACTICAL_NEXT_SLOT[s] === time,
+      );
       if (!startSlot) return false;
       return isTwoHourStart(startSlot, daySchedule);
     };
@@ -349,7 +358,7 @@ export default function ViewTimetables() {
     };
 
     const classCtx = { year: classData.class, division: classData.division };
-    
+
     // Determine if an entire row is just continuations (so we can hide it)
     const isAllDaysContinuation = (time) => {
       if (!PRACTICAL_CONT_SLOT.has(time)) return false;
@@ -384,7 +393,7 @@ export default function ViewTimetables() {
                 const isPracticalSlot = practicalTimeSlots.includes(time);
                 const breakInfo = getBreakAtTime(time);
                 const isBreakTime = breakInfo !== undefined;
-                
+
                 if (isAllDaysContinuation(time)) return null;
 
                 return (
@@ -437,20 +446,27 @@ export default function ViewTimetables() {
                     </td>
                     {daysOfWeek.map((day) => {
                       const daySchedule = schedule[day] || {};
-                      
+
                       const isCont = isContinuationSlot(time, daySchedule);
                       const isStart = isTwoHourStart(time, daySchedule);
                       if (isCont) return null;
 
                       const sessions = getMergedSessions(time, daySchedule);
-                      const cellClass = isStart ? "border border-blue-200" : (isBreakTime ? "border-amber-200 bg-amber-50" : "border-slate-300");
+                      const cellClass = isStart
+                        ? "border border-blue-200"
+                        : isBreakTime
+                          ? "border-amber-200 bg-amber-50"
+                          : "border-slate-300";
 
                       return (
                         <td
                           key={`${time}-${day}`}
                           className={`border p-2 align-top ${cellClass}`}
                           rowSpan={
-                            isStart && !isAllDaysContinuation(PRACTICAL_NEXT_SLOT[time]) ? 2 : 1
+                            isStart &&
+                            !isAllDaysContinuation(PRACTICAL_NEXT_SLOT[time])
+                              ? 2
+                              : 1
                           }
                         >
                           {isBreakTime

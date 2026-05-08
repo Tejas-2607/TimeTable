@@ -32,7 +32,14 @@ export default function LabTimetables({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+  const daysOfWeek = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
   const [allTimeSlots, setAllTimeSlots] = useState([]);
 
   useEffect(() => {
@@ -119,7 +126,6 @@ export default function LabTimetables({
 
       setLabData(extractedData);
       setLabNames(Object.keys(extractedData).sort());
-
     } catch (err) {
       console.error("Error extracting lab timetables:", err);
       setError(
@@ -222,7 +228,8 @@ export default function LabTimetables({
                     <td
                       className="border border-slate-300 px-4 py-3 font-semibold sticky left-0 z-10 whitespace-nowrap text-slate-800"
                       style={{
-                        backgroundColor: timeIdx % 2 === 0 ? "white" : "#f8fafc",
+                        backgroundColor:
+                          timeIdx % 2 === 0 ? "white" : "#f8fafc",
                       }}
                     >
                       <div className="flex items-center gap-1.5">

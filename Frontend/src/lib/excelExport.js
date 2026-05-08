@@ -11,7 +11,14 @@
  * - UTF-8 BOM added so Excel opens the file with correct encoding automatically
  */
 
-const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+const DAYS = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
 const LUNCH_SLOT = "13:15";
 const NUM_COLS = 6;
 

@@ -17,20 +17,12 @@ START_SLOTS = {'11:15', '14:15', '16:20'}
 NEXT_SLOT   = {'11:15': '12:15', '14:15': '15:15'}
 
 
-# CH-02 FIX: return int, not string "Batch N".
-# timetable_generator.py stores batches as int (1, 2, 3).
-# class_timetable_handler was returning "Batch 1" — inconsistent across
-# collections.  We normalise to int here so both collections agree on type.
+
 def _normalise_batch(raw) -> int:
-    """
-    Accept any of: int 1, string '1', string 'Batch 1', string 'Batch Batch 1'.
-    Always returns a plain int.  Returns 0 on total parse failure (sentinel
-    value — callers should log/skip 0-batch entries).
-    """
+    
     if isinstance(raw, int):
         return raw
     s = str(raw).strip()
-    # Strip any number of leading 'Batch ' prefixes
     while s.lower().startswith('batch '):
         s = s[len('batch '):].strip()
     try:
@@ -194,8 +186,7 @@ def generate_class_timetables() -> dict:
         timetables_created = 0
         for (class_name, division), schedule in class_schedules.items():
 
-            # CH-03 FIX: Apply parallel session grouping BEFORE storing
-            # This transforms (day, slot) → [entries] into grouped format
+            
             transformed_schedule = {}
             for day in DAYS:
                 transformed_schedule[day] = {}
@@ -207,8 +198,7 @@ def generate_class_timetables() -> dict:
                     else:
                         transformed_schedule[day][slot] = []
 
-            # CH-01 FIX: count only entries that sit in a START_SLOT.
-            # Count both standalone sessions and sessions within parallel containers
+            
             total_practicals = 0
             for day in DAYS:
                 for slot in START_SLOTS:
@@ -220,6 +210,14 @@ def generate_class_timetables() -> dict:
                         else:
                             # Count standalone session
                             total_practicals += 1
+
+            # Add hardcoded Saturday schedule
+            transformed_schedule['Saturday'] = {
+                '10:15': [{
+                    'subject': 'Training & Placement Sessions/ Industry Mentor sessions',
+                    'type': 'special'
+                }]
+            }
 
             doc = {
                 'class':            class_name,

@@ -175,7 +175,12 @@
     },
     {
       "name": "Programming Lab",
-      "used_for": ["PY (SY Div-C)", "AJP (TY Div-C)", "DL (FY Div-B)", "DS (FY Div-B)"]
+      "used_for": [
+        "PY (SY Div-C)",
+        "AJP (TY Div-C)",
+        "DL (FY Div-B)",
+        "DS (FY Div-B)"
+      ]
     },
     {
       "name": "Web Technology Lab",
@@ -203,7 +208,11 @@
     },
     {
       "name": "System Programming Lab",
-      "used_for": ["PEC-I DAV (TY Div-A)", "DAA (TY Div-C)", "PEC-I DAV (TY Div-C)"]
+      "used_for": [
+        "PEC-I DAV (TY Div-A)",
+        "DAA (TY Div-C)",
+        "PEC-I DAV (TY Div-C)"
+      ]
     },
     {
       "name": "Network Engineering Lab",
@@ -211,7 +220,12 @@
     },
     {
       "name": "WT Lab",
-      "used_for": ["DAA (TY Div-B)", "PA (FY Div-A)", "PA (FY Div-B)", "DEV (FY Div-A)"]
+      "used_for": [
+        "DAA (TY Div-B)",
+        "PA (FY Div-A)",
+        "PA (FY Div-B)",
+        "DEV (FY Div-A)"
+      ]
     },
     {
       "name": "NE Lab",
@@ -260,43 +274,154 @@
   ],
 
   "faculties": [
-    { "name": "DR. MRS. S. M. DOL", "subjects": ["DMS (SY Div-A)", "DBE (TY Div-A)"] },
-    { "name": "MR. F. R. SAYYED", "subjects": ["DS (SY Div-A)", "IKS (TY Div-A)", "DAA (TY Div-C)"] },
-    { "name": "MS. S. S. NAZARE", "subjects": ["CG (SY Div-A)", "MDM-I (SY Div-A)", "MDM-I (TY Div-C)"] },
-    { "name": "MR. S. M. METAGAR", "subjects": ["OE-I (SY Div-A)", "DAA (TY Div-A)", "STQA (FY Div-A)"] },
-    { "name": "MR. M. R. PATIL", "subjects": ["ED (SY Div-A)", "PY (SY Div-A)", "ED (SY Div-B)", "PY (SY Div-B)", "ED (SY Div-C)", "DL (FY Div-C)"] },
-    { "name": "MR. D. P. PANDIT", "subjects": ["UHV (SY Div-A)", "CG (SY Div-C)", "UHV (SY Div-C)", "STQA (FY Div-C)"] },
-    { "name": "MR. A. A. BABAR", "subjects": ["PY (SY Div-A) Practical", "IKS (TY Div-B)"] },
-    { "name": "DR. MS. R. K. DIXIT", "subjects": ["DMS (SY Div-B)", "DAA (TY Div-B)", "DAA (TY Div-C)"] },
-    { "name": "MR. N. S. GAJJAM", "subjects": ["DS (SY Div-B)", "AJP (TY Div-B)", "DS (FY Div-B)"] },
-    { "name": "MR. V. D. CHAVAN", "subjects": ["CG (SY Div-B)", "PA (FY Div-A)", "PA (FY Div-C)"] },
-    { "name": "MR. D. S. MANE", "subjects": ["OE-I (SY Div-B)", "CG (SY Div-C)", "PE-II (FY Div-B)"] },
-    { "name": "MR. S. RADDI", "subjects": ["MDM-I (SY Div-B)", "MDM-I (TY Div-C)", "STQA (FY Div-B)"] },
-    { "name": "MR. D. P. PANDIT / MR. M. A. MAHANT", "subjects": ["UHV (SY Div-B)"] },
-    { "name": "MR. V. V. KULKARNI", "subjects": ["DMS (SY Div-C)", "OS (TY Div-C)", "OS (TY Div-C) Practical"] },
-    { "name": "MR. M. A. MAHANT", "subjects": ["OE-I (SY Div-C)", "UHV (SY Div-C)", "IKS (TY Div-C)"] },
-    { "name": "MRS. P. M. CHANNAPATTAN", "subjects": ["PY (SY Div-C)", "IKS (TY Div-C)", "DEV (FY Div-C)"] },
-    { "name": "DR. MRS. A. M. PUJAR", "subjects": ["OS (TY Div-A)", "DS (FY Div-A)"] },
-    { "name": "MR. B. R. SOLUNKE", "subjects": ["PEC-I ML (TY Div-A)", "PEC-I ML (TY Div-B)", "DL (FY Div-A)", "DL (FY Div-B)", "DL (FY Div-C)"] },
-    { "name": "MRS. K. A. KHEDIKAR", "subjects": ["PEC-I DAV (TY Div-A)", "PEC-I DAV (TY Div-B)", "PEC-I DAV (TY Div-C)"] },
-    { "name": "DR. MRS. P. C. KALADEEP", "subjects": ["AJP (TY Div-A)", "PE-III (FY Div-B)"] },
-    { "name": "MR. S. T. PATEL", "subjects": ["MDM-III (TY Div-B)", "OS (TY Div-B)", "MDM-III (TY Div-C)", "DEV (FY Div-B)"] },
-    { "name": "DR. R. V. ARGIDDI", "subjects": ["DBE (TY Div-B)", "PE-II (FY Div-A)"] },
+    {
+      "name": "DR. MRS. S. M. DOL",
+      "subjects": ["DMS (SY Div-A)", "DBE (TY Div-A)"]
+    },
+    {
+      "name": "MR. F. R. SAYYED",
+      "subjects": ["DS (SY Div-A)", "IKS (TY Div-A)", "DAA (TY Div-C)"]
+    },
+    {
+      "name": "MS. S. S. NAZARE",
+      "subjects": ["CG (SY Div-A)", "MDM-I (SY Div-A)", "MDM-I (TY Div-C)"]
+    },
+    {
+      "name": "MR. S. M. METAGAR",
+      "subjects": ["OE-I (SY Div-A)", "DAA (TY Div-A)", "STQA (FY Div-A)"]
+    },
+    {
+      "name": "MR. M. R. PATIL",
+      "subjects": [
+        "ED (SY Div-A)",
+        "PY (SY Div-A)",
+        "ED (SY Div-B)",
+        "PY (SY Div-B)",
+        "ED (SY Div-C)",
+        "DL (FY Div-C)"
+      ]
+    },
+    {
+      "name": "MR. D. P. PANDIT",
+      "subjects": [
+        "UHV (SY Div-A)",
+        "CG (SY Div-C)",
+        "UHV (SY Div-C)",
+        "STQA (FY Div-C)"
+      ]
+    },
+    {
+      "name": "MR. A. A. BABAR",
+      "subjects": ["PY (SY Div-A) Practical", "IKS (TY Div-B)"]
+    },
+    {
+      "name": "DR. MS. R. K. DIXIT",
+      "subjects": ["DMS (SY Div-B)", "DAA (TY Div-B)", "DAA (TY Div-C)"]
+    },
+    {
+      "name": "MR. N. S. GAJJAM",
+      "subjects": ["DS (SY Div-B)", "AJP (TY Div-B)", "DS (FY Div-B)"]
+    },
+    {
+      "name": "MR. V. D. CHAVAN",
+      "subjects": ["CG (SY Div-B)", "PA (FY Div-A)", "PA (FY Div-C)"]
+    },
+    {
+      "name": "MR. D. S. MANE",
+      "subjects": ["OE-I (SY Div-B)", "CG (SY Div-C)", "PE-II (FY Div-B)"]
+    },
+    {
+      "name": "MR. S. RADDI",
+      "subjects": ["MDM-I (SY Div-B)", "MDM-I (TY Div-C)", "STQA (FY Div-B)"]
+    },
+    {
+      "name": "MR. D. P. PANDIT / MR. M. A. MAHANT",
+      "subjects": ["UHV (SY Div-B)"]
+    },
+    {
+      "name": "MR. V. V. KULKARNI",
+      "subjects": ["DMS (SY Div-C)", "OS (TY Div-C)", "OS (TY Div-C) Practical"]
+    },
+    {
+      "name": "MR. M. A. MAHANT",
+      "subjects": ["OE-I (SY Div-C)", "UHV (SY Div-C)", "IKS (TY Div-C)"]
+    },
+    {
+      "name": "MRS. P. M. CHANNAPATTAN",
+      "subjects": ["PY (SY Div-C)", "IKS (TY Div-C)", "DEV (FY Div-C)"]
+    },
+    {
+      "name": "DR. MRS. A. M. PUJAR",
+      "subjects": ["OS (TY Div-A)", "DS (FY Div-A)"]
+    },
+    {
+      "name": "MR. B. R. SOLUNKE",
+      "subjects": [
+        "PEC-I ML (TY Div-A)",
+        "PEC-I ML (TY Div-B)",
+        "DL (FY Div-A)",
+        "DL (FY Div-B)",
+        "DL (FY Div-C)"
+      ]
+    },
+    {
+      "name": "MRS. K. A. KHEDIKAR",
+      "subjects": [
+        "PEC-I DAV (TY Div-A)",
+        "PEC-I DAV (TY Div-B)",
+        "PEC-I DAV (TY Div-C)"
+      ]
+    },
+    {
+      "name": "DR. MRS. P. C. KALADEEP",
+      "subjects": ["AJP (TY Div-A)", "PE-III (FY Div-B)"]
+    },
+    {
+      "name": "MR. S. T. PATEL",
+      "subjects": [
+        "MDM-III (TY Div-B)",
+        "OS (TY Div-B)",
+        "MDM-III (TY Div-C)",
+        "DEV (FY Div-B)"
+      ]
+    },
+    {
+      "name": "DR. R. V. ARGIDDI",
+      "subjects": ["DBE (TY Div-B)", "PE-II (FY Div-A)"]
+    },
     { "name": "MRS. S. S. AMBARKAR", "subjects": ["DBE (TY Div-C)"] },
-    { "name": "MR. A. R. CHINCHAWADE", "subjects": ["AJP (TY Div-C)", "DS (FY Div-C)"] },
+    {
+      "name": "MR. A. R. CHINCHAWADE",
+      "subjects": ["AJP (TY Div-C)", "DS (FY Div-C)"]
+    },
     { "name": "MRS. P. M. CHANNAPATTAN", "subjects": ["IKS (TY Div-C)"] },
     { "name": "MR. S. M. METAGAR", "subjects": ["MDM-III (TY Div-A)"] },
-    { "name": "MR. V. D. CHAVAN", "subjects": ["PA (FY Div-A)", "PA (FY Div-C)"] },
-    { "name": "MR. B. R. SOLUNKE / MRS. K. R. PARDESHI", "subjects": ["PEC-I ML (TY Div-B)", "PEC-I ML (TY Div-C)"] },
+    {
+      "name": "MR. V. D. CHAVAN",
+      "subjects": ["PA (FY Div-A)", "PA (FY Div-C)"]
+    },
+    {
+      "name": "MR. B. R. SOLUNKE / MRS. K. R. PARDESHI",
+      "subjects": ["PEC-I ML (TY Div-B)", "PEC-I ML (TY Div-C)"]
+    },
     { "name": "MRS. K. R. PARDESHI", "subjects": ["PE-III (FY Div-C)"] },
-    { "name": "MRS. P. D. JADHAV", "subjects": ["MDM-III (TY Div-C)", "DEV (FY Div-A)"] },
+    {
+      "name": "MRS. P. D. JADHAV",
+      "subjects": ["MDM-III (TY Div-C)", "DEV (FY Div-A)"]
+    },
     { "name": "MRS. P. C. KALADEEP", "subjects": ["PE-III (FY Div-B)"] },
     { "name": "MRS. K. R. PARDESHI", "subjects": ["PEC-I ML (TY Div-C)"] },
     { "name": "MR. M. A. MAHANT", "subjects": ["PE-II (FY Div-C)"] },
     { "name": "MR. D. S. MANE", "subjects": ["PE-II (FY Div-B)"] },
-    { "name": "MR. D. P. PANDIT", "subjects": ["STQA (FY Div-C)", "DS (FY Div-C) Practical"] },
+    {
+      "name": "MR. D. P. PANDIT",
+      "subjects": ["STQA (FY Div-C)", "DS (FY Div-C) Practical"]
+    },
     { "name": "MRS. P. D. JADHAV", "subjects": ["DEV (FY Div-A)"] },
-    { "name": "MR. S. RADDI / MR. N. S. GAJJAM", "subjects": ["DS (FY Div-B)"] },
+    {
+      "name": "MR. S. RADDI / MR. N. S. GAJJAM",
+      "subjects": ["DS (FY Div-B)"]
+    },
     { "name": "MRS. P. M. CHANNAPATTAN", "subjects": ["DEV (FY Div-C)"] }
   ],
 
@@ -306,30 +431,150 @@
       "year": "Second Year",
       "venue": "New Classroom No-3 (L315)",
       "periods": [
-        { "period": 1, "time": "10:15", "MON": "", "TUE": "", "WED": "", "THURS": "PY", "FRI": "DMS", "SAT": "Alumni/Industry Interaction Session" },
-        { "period": 2, "time": "11:15", "MON": "SA1-DS(P), SA2-CG(P)", "TUE": "SA1-ED/OE-I(T), SA2-PY(P)", "WED": "OB-I", "THURS": "DS", "FRI": "CG", "SAT": "" },
-        { "period": 3, "time": "12:15", "MON": "SA3-PY(P)", "TUE": "SA3-CG(P)", "WED": "DMS", "THURS": "DMS", "FRI": "OB-I", "SAT": "" },
-        { "period": 4, "time": "2:15", "MON": "ED", "TUE": "CG", "WED": "SA1-PY(P), SA2-DS(P)", "THURS": "SA1-FP(P), SA2-FP(P)", "FRI": "SA1-FP(P), SA2-FP(P)", "SAT": "" },
-        { "period": 5, "time": "3:15", "MON": "UHV", "TUE": "UHV", "WED": "SA3-OE-I/ED(T)", "THURS": "SA3-FP(P)", "FRI": "SA3-FP(P)", "SAT": "" },
-        { "period": 6, "time": "4:20", "MON": "MDM-I", "TUE": "MDM-I", "WED": "DS", "THURS": "SA1-CG(P), SA2-ED/OE-I(T)", "FRI": "", "SAT": "" },
-        { "period": 7, "time": "5:20", "MON": "", "TUE": "", "WED": "", "THURS": "SA3-DS(P)", "FRI": "", "SAT": "" }
+        {
+          "period": 1,
+          "time": "10:15",
+          "MON": "",
+          "TUE": "",
+          "WED": "",
+          "THURS": "PY",
+          "FRI": "DMS",
+          "SAT": "Alumni/Industry Interaction Session"
+        },
+        {
+          "period": 2,
+          "time": "11:15",
+          "MON": "SA1-DS(P), SA2-CG(P)",
+          "TUE": "SA1-ED/OE-I(T), SA2-PY(P)",
+          "WED": "OB-I",
+          "THURS": "DS",
+          "FRI": "CG",
+          "SAT": ""
+        },
+        {
+          "period": 3,
+          "time": "12:15",
+          "MON": "SA3-PY(P)",
+          "TUE": "SA3-CG(P)",
+          "WED": "DMS",
+          "THURS": "DMS",
+          "FRI": "OB-I",
+          "SAT": ""
+        },
+        {
+          "period": 4,
+          "time": "2:15",
+          "MON": "ED",
+          "TUE": "CG",
+          "WED": "SA1-PY(P), SA2-DS(P)",
+          "THURS": "SA1-FP(P), SA2-FP(P)",
+          "FRI": "SA1-FP(P), SA2-FP(P)",
+          "SAT": ""
+        },
+        {
+          "period": 5,
+          "time": "3:15",
+          "MON": "UHV",
+          "TUE": "UHV",
+          "WED": "SA3-OE-I/ED(T)",
+          "THURS": "SA3-FP(P)",
+          "FRI": "SA3-FP(P)",
+          "SAT": ""
+        },
+        {
+          "period": 6,
+          "time": "4:20",
+          "MON": "MDM-I",
+          "TUE": "MDM-I",
+          "WED": "DS",
+          "THURS": "SA1-CG(P), SA2-ED/OE-I(T)",
+          "FRI": "",
+          "SAT": ""
+        },
+        {
+          "period": 7,
+          "time": "5:20",
+          "MON": "",
+          "TUE": "",
+          "WED": "",
+          "THURS": "SA3-DS(P)",
+          "FRI": "",
+          "SAT": ""
+        }
       ],
       "theory_subjects": [
-        { "abbr": "DMS", "full_name": "Discrete Mathematical Structures", "faculty": "DR. MRS. S. M. DOL" },
-        { "abbr": "DS", "full_name": "Data Structures", "faculty": "MR. F. R. SAYYED" },
-        { "abbr": "CG", "full_name": "Computer Graphics", "faculty": "MS. S. S. NAZARE" },
-        { "abbr": "OE-I", "full_name": "Open Elective-I: Management Information System", "faculty": "MR. S. M. METAGAR" },
-        { "abbr": "ED", "full_name": "Entrepreneurship Development", "faculty": "MR. M. R. PATIL" },
-        { "abbr": "MDM-I", "full_name": "Multidisciplinary Minor-I: Operating System", "faculty": "MS. S. S. NAZARE" },
-        { "abbr": "UHV", "full_name": "Universal Human Values", "faculty": "MR. D. P. PANDIT" },
-        { "abbr": "PY", "full_name": "Python Programming", "faculty": "MR. M. R. PATIL" }
+        {
+          "abbr": "DMS",
+          "full_name": "Discrete Mathematical Structures",
+          "faculty": "DR. MRS. S. M. DOL"
+        },
+        {
+          "abbr": "DS",
+          "full_name": "Data Structures",
+          "faculty": "MR. F. R. SAYYED"
+        },
+        {
+          "abbr": "CG",
+          "full_name": "Computer Graphics",
+          "faculty": "MS. S. S. NAZARE"
+        },
+        {
+          "abbr": "OE-I",
+          "full_name": "Open Elective-I: Management Information System",
+          "faculty": "MR. S. M. METAGAR"
+        },
+        {
+          "abbr": "ED",
+          "full_name": "Entrepreneurship Development",
+          "faculty": "MR. M. R. PATIL"
+        },
+        {
+          "abbr": "MDM-I",
+          "full_name": "Multidisciplinary Minor-I: Operating System",
+          "faculty": "MS. S. S. NAZARE"
+        },
+        {
+          "abbr": "UHV",
+          "full_name": "Universal Human Values",
+          "faculty": "MR. D. P. PANDIT"
+        },
+        {
+          "abbr": "PY",
+          "full_name": "Python Programming",
+          "faculty": "MR. M. R. PATIL"
+        }
       ],
       "practicals": [
-        { "subject": "DS", "batches": ["SA1", "SA2", "SA3"], "faculty": "MR. F. R. SAYYED", "venue": "System Programming Lab" },
-        { "subject": "CG", "batches": ["SA1", "SA2", "SA3"], "faculty": "MS. S. S. NAZARE", "venue": "Network Engineering Lab" },
-        { "subject": "OE-I", "batches": ["SA1", "SA2", "SA3"], "faculty": "MR. S. M. METAGAR", "venue": "New Classroom No-3 (L315)" },
-        { "subject": "ED", "batches": ["SA1", "SA2", "SA3"], "faculty": "MR. M. R. PATIL", "venue": "New Classroom No-3 (L315)" },
-        { "subject": "PY", "batches": ["SA1", "SA2", "SA3"], "faculty": "MR. A. A. BABAR", "venue": "Project Lab" }
+        {
+          "subject": "DS",
+          "batches": ["SA1", "SA2", "SA3"],
+          "faculty": "MR. F. R. SAYYED",
+          "venue": "System Programming Lab"
+        },
+        {
+          "subject": "CG",
+          "batches": ["SA1", "SA2", "SA3"],
+          "faculty": "MS. S. S. NAZARE",
+          "venue": "Network Engineering Lab"
+        },
+        {
+          "subject": "OE-I",
+          "batches": ["SA1", "SA2", "SA3"],
+          "faculty": "MR. S. M. METAGAR",
+          "venue": "New Classroom No-3 (L315)"
+        },
+        {
+          "subject": "ED",
+          "batches": ["SA1", "SA2", "SA3"],
+          "faculty": "MR. M. R. PATIL",
+          "venue": "New Classroom No-3 (L315)"
+        },
+        {
+          "subject": "PY",
+          "batches": ["SA1", "SA2", "SA3"],
+          "faculty": "MR. A. A. BABAR",
+          "venue": "Project Lab"
+        }
       ]
     },
     {
@@ -337,30 +582,159 @@
       "year": "Second Year",
       "venue": "New Classroom No-1 (L302)",
       "periods": [
-        { "period": 1, "time": "10:15", "MON": "", "TUE": "", "WED": "DMS", "THURS": "CG", "FRI": "DMS", "SAT": "Alumni/Industry Interaction Session" },
-        { "period": 2, "time": "11:15", "MON": "SB1-PY(P), SB2-CG(P)", "TUE": "SB1-OE-I/ED(T), SB2-PY(P)", "WED": "DS", "THURS": "DMS", "FRI": "OE-I", "SAT": "" },
-        { "period": 3, "time": "12:15", "MON": "SB3-DS(P)", "TUE": "SB3-CG(P)", "WED": "PY", "THURS": "DS", "FRI": "CG", "SAT": "" },
-        { "period": 4, "time": "2:15", "MON": "OE-I", "TUE": "ED", "WED": "SB1-DS(P), SB2-ED/OE-I(T)", "THURS": "SB1-FP(P), SB2-FP(P)", "FRI": "SB1-FP(P), SB2-FP(P)", "SAT": "" },
-        { "period": 5, "time": "3:15", "MON": "UHV", "TUE": "UHV", "WED": "SB3-PY(P)", "THURS": "SB3-FP(P)", "FRI": "SB3-FP(P)", "SAT": "" },
-        { "period": 6, "time": "4:20", "MON": "MDM-I", "TUE": "MDM-I", "WED": "", "THURS": "SB1-CG(P), SB2-DS(P)", "FRI": "", "SAT": "" },
-        { "period": 7, "time": "5:20", "MON": "", "TUE": "", "WED": "", "THURS": "SB3-OE-I/ED(T)", "FRI": "", "SAT": "" }
+        {
+          "period": 1,
+          "time": "10:15",
+          "MON": "",
+          "TUE": "",
+          "WED": "DMS",
+          "THURS": "CG",
+          "FRI": "DMS",
+          "SAT": "Alumni/Industry Interaction Session"
+        },
+        {
+          "period": 2,
+          "time": "11:15",
+          "MON": "SB1-PY(P), SB2-CG(P)",
+          "TUE": "SB1-OE-I/ED(T), SB2-PY(P)",
+          "WED": "DS",
+          "THURS": "DMS",
+          "FRI": "OE-I",
+          "SAT": ""
+        },
+        {
+          "period": 3,
+          "time": "12:15",
+          "MON": "SB3-DS(P)",
+          "TUE": "SB3-CG(P)",
+          "WED": "PY",
+          "THURS": "DS",
+          "FRI": "CG",
+          "SAT": ""
+        },
+        {
+          "period": 4,
+          "time": "2:15",
+          "MON": "OE-I",
+          "TUE": "ED",
+          "WED": "SB1-DS(P), SB2-ED/OE-I(T)",
+          "THURS": "SB1-FP(P), SB2-FP(P)",
+          "FRI": "SB1-FP(P), SB2-FP(P)",
+          "SAT": ""
+        },
+        {
+          "period": 5,
+          "time": "3:15",
+          "MON": "UHV",
+          "TUE": "UHV",
+          "WED": "SB3-PY(P)",
+          "THURS": "SB3-FP(P)",
+          "FRI": "SB3-FP(P)",
+          "SAT": ""
+        },
+        {
+          "period": 6,
+          "time": "4:20",
+          "MON": "MDM-I",
+          "TUE": "MDM-I",
+          "WED": "",
+          "THURS": "SB1-CG(P), SB2-DS(P)",
+          "FRI": "",
+          "SAT": ""
+        },
+        {
+          "period": 7,
+          "time": "5:20",
+          "MON": "",
+          "TUE": "",
+          "WED": "",
+          "THURS": "SB3-OE-I/ED(T)",
+          "FRI": "",
+          "SAT": ""
+        }
       ],
       "theory_subjects": [
-        { "abbr": "DMS", "full_name": "Discrete Mathematical Structures", "faculty": "DR. MS. R. K. DIXIT" },
-        { "abbr": "DS", "full_name": "Data Structures", "faculty": "MR. N. S. GAJJAM" },
-        { "abbr": "CG", "full_name": "Computer Graphics", "faculty": "MR. V. D. CHAVAN" },
-        { "abbr": "OE-I", "full_name": "Open Elective-I: Management Information System", "faculty": "MR. D. S. MANE" },
-        { "abbr": "ED", "full_name": "Entrepreneurship Development", "faculty": "MR. M. R. PATIL" },
-        { "abbr": "MDM-I", "full_name": "Multidisciplinary Minor-I: Operating System", "faculty": "MR. S. RADDI" },
-        { "abbr": "UHV", "full_name": "Universal Human Values", "faculty": "MR. D. P. PANDIT / MR. M. A. MAHANT" },
-        { "abbr": "PY", "full_name": "Python Programming", "faculty": "MR. M. R. PATIL" }
+        {
+          "abbr": "DMS",
+          "full_name": "Discrete Mathematical Structures",
+          "faculty": "DR. MS. R. K. DIXIT"
+        },
+        {
+          "abbr": "DS",
+          "full_name": "Data Structures",
+          "faculty": "MR. N. S. GAJJAM"
+        },
+        {
+          "abbr": "CG",
+          "full_name": "Computer Graphics",
+          "faculty": "MR. V. D. CHAVAN"
+        },
+        {
+          "abbr": "OE-I",
+          "full_name": "Open Elective-I: Management Information System",
+          "faculty": "MR. D. S. MANE"
+        },
+        {
+          "abbr": "ED",
+          "full_name": "Entrepreneurship Development",
+          "faculty": "MR. M. R. PATIL"
+        },
+        {
+          "abbr": "MDM-I",
+          "full_name": "Multidisciplinary Minor-I: Operating System",
+          "faculty": "MR. S. RADDI"
+        },
+        {
+          "abbr": "UHV",
+          "full_name": "Universal Human Values",
+          "faculty": "MR. D. P. PANDIT / MR. M. A. MAHANT"
+        },
+        {
+          "abbr": "PY",
+          "full_name": "Python Programming",
+          "faculty": "MR. M. R. PATIL"
+        }
       ],
       "practicals": [
-        { "subject": "DS", "batches": ["SB1", "SB2", "SB3"], "faculty": "MR. N. S. GAJJAM", "venue": "Advanced Programming Lab" },
-        { "subject": "CG", "batch_faculties": [{"batch": "SB1", "faculty": "VDC"}, {"batch": "SB2", "faculty": "VDC"}, {"batch": "SB3", "faculty": "MAM"}], "venue": "Operating System Lab" },
-        { "subject": "OE-I", "batches": ["SB1", "SB2", "SB3"], "faculty": "MR. D. S. MANE", "venue": "New Classroom No-1 (L302)" },
-        { "subject": "ED", "batch_faculties": [{"batch": "SB1", "faculty": "VDC"}, {"batch": "SB2", "faculty": "VDC"}, {"batch": "SB3", "faculty": "AAB"}], "venue": "New Classroom No-1 (L302)" },
-        { "subject": "PY", "batch_faculties": [{"batch": "SB1", "faculty": "MRP"}, {"batch": "SB2", "faculty": "SSM"}, {"batch": "SB3", "faculty": "SSM"}], "venue": "Software Lab-1" }
+        {
+          "subject": "DS",
+          "batches": ["SB1", "SB2", "SB3"],
+          "faculty": "MR. N. S. GAJJAM",
+          "venue": "Advanced Programming Lab"
+        },
+        {
+          "subject": "CG",
+          "batch_faculties": [
+            { "batch": "SB1", "faculty": "VDC" },
+            { "batch": "SB2", "faculty": "VDC" },
+            { "batch": "SB3", "faculty": "MAM" }
+          ],
+          "venue": "Operating System Lab"
+        },
+        {
+          "subject": "OE-I",
+          "batches": ["SB1", "SB2", "SB3"],
+          "faculty": "MR. D. S. MANE",
+          "venue": "New Classroom No-1 (L302)"
+        },
+        {
+          "subject": "ED",
+          "batch_faculties": [
+            { "batch": "SB1", "faculty": "VDC" },
+            { "batch": "SB2", "faculty": "VDC" },
+            { "batch": "SB3", "faculty": "AAB" }
+          ],
+          "venue": "New Classroom No-1 (L302)"
+        },
+        {
+          "subject": "PY",
+          "batch_faculties": [
+            { "batch": "SB1", "faculty": "MRP" },
+            { "batch": "SB2", "faculty": "SSM" },
+            { "batch": "SB3", "faculty": "SSM" }
+          ],
+          "venue": "Software Lab-1"
+        }
       ]
     },
     {
@@ -368,30 +742,156 @@
       "year": "Second Year",
       "venue": "Classroom No-1 (M330)",
       "periods": [
-        { "period": 1, "time": "10:15", "MON": "", "TUE": "", "WED": "", "THURS": "DS", "FRI": "ED", "SAT": "Alumni/Industry Interaction Session" },
-        { "period": 2, "time": "11:15", "MON": "SC1-ED/OE-I(T), SC2-DS(P)", "TUE": "SC1-DS(P), SC2-CG(P)", "WED": "DS", "THURS": "OE-I", "FRI": "DMS", "SAT": "" },
-        { "period": 3, "time": "12:15", "MON": "SC3-CG(P)", "TUE": "SC3-PY(P)", "WED": "OE-I", "THURS": "CG", "FRI": "CG", "SAT": "" },
-        { "period": 4, "time": "2:15", "MON": "DMS", "TUE": "PY", "WED": "SC1-CG(P), SC2-PY(P)", "THURS": "SC1-FP(P), SC2-FP(P)", "FRI": "SC1-FP(P), SC2-FP(P)", "SAT": "" },
-        { "period": 5, "time": "3:15", "MON": "UHV", "TUE": "UHV", "WED": "SC3-ED/OE-I(T)", "THURS": "SC3-FP(P)", "FRI": "SC3-FP(P)", "SAT": "" },
-        { "period": 6, "time": "4:20", "MON": "MDM-I", "TUE": "MDM-I", "WED": "DMS", "THURS": "SC1-PY(P), SC2-OE-I/ED(T)", "FRI": "", "SAT": "" },
-        { "period": 7, "time": "5:20", "MON": "", "TUE": "", "WED": "", "THURS": "SC3-DS(P)", "FRI": "", "SAT": "" }
+        {
+          "period": 1,
+          "time": "10:15",
+          "MON": "",
+          "TUE": "",
+          "WED": "",
+          "THURS": "DS",
+          "FRI": "ED",
+          "SAT": "Alumni/Industry Interaction Session"
+        },
+        {
+          "period": 2,
+          "time": "11:15",
+          "MON": "SC1-ED/OE-I(T), SC2-DS(P)",
+          "TUE": "SC1-DS(P), SC2-CG(P)",
+          "WED": "DS",
+          "THURS": "OE-I",
+          "FRI": "DMS",
+          "SAT": ""
+        },
+        {
+          "period": 3,
+          "time": "12:15",
+          "MON": "SC3-CG(P)",
+          "TUE": "SC3-PY(P)",
+          "WED": "OE-I",
+          "THURS": "CG",
+          "FRI": "CG",
+          "SAT": ""
+        },
+        {
+          "period": 4,
+          "time": "2:15",
+          "MON": "DMS",
+          "TUE": "PY",
+          "WED": "SC1-CG(P), SC2-PY(P)",
+          "THURS": "SC1-FP(P), SC2-FP(P)",
+          "FRI": "SC1-FP(P), SC2-FP(P)",
+          "SAT": ""
+        },
+        {
+          "period": 5,
+          "time": "3:15",
+          "MON": "UHV",
+          "TUE": "UHV",
+          "WED": "SC3-ED/OE-I(T)",
+          "THURS": "SC3-FP(P)",
+          "FRI": "SC3-FP(P)",
+          "SAT": ""
+        },
+        {
+          "period": 6,
+          "time": "4:20",
+          "MON": "MDM-I",
+          "TUE": "MDM-I",
+          "WED": "DMS",
+          "THURS": "SC1-PY(P), SC2-OE-I/ED(T)",
+          "FRI": "",
+          "SAT": ""
+        },
+        {
+          "period": 7,
+          "time": "5:20",
+          "MON": "",
+          "TUE": "",
+          "WED": "",
+          "THURS": "SC3-DS(P)",
+          "FRI": "",
+          "SAT": ""
+        }
       ],
       "theory_subjects": [
-        { "abbr": "DMS", "full_name": "Discrete Mathematical Structures", "faculty": "MR. V. V. KULKARNI" },
-        { "abbr": "DS", "full_name": "Data Structures", "faculty": "MR. D. S. MANE" },
-        { "abbr": "CG", "full_name": "Computer Graphics", "faculty": "MR. D. P. PANDIT" },
-        { "abbr": "OE-I", "full_name": "Open Elective-I: Management Information System", "faculty": "MR. M. A. MAHANT" },
-        { "abbr": "ED", "full_name": "Entrepreneurship Development", "faculty": "MR. M. R. PATIL" },
-        { "abbr": "MDM-I", "full_name": "Multidisciplinary Minor-I: Operating System", "faculty": "MS. S. S. NAZARE / MR. S. RADDI" },
-        { "abbr": "UHV", "full_name": "Universal Human Values", "faculty": "MR. M. A. MAHANT" },
-        { "abbr": "PY", "full_name": "Python Programming", "faculty": "MRS. P. M. CHANNAPATTAN" }
+        {
+          "abbr": "DMS",
+          "full_name": "Discrete Mathematical Structures",
+          "faculty": "MR. V. V. KULKARNI"
+        },
+        {
+          "abbr": "DS",
+          "full_name": "Data Structures",
+          "faculty": "MR. D. S. MANE"
+        },
+        {
+          "abbr": "CG",
+          "full_name": "Computer Graphics",
+          "faculty": "MR. D. P. PANDIT"
+        },
+        {
+          "abbr": "OE-I",
+          "full_name": "Open Elective-I: Management Information System",
+          "faculty": "MR. M. A. MAHANT"
+        },
+        {
+          "abbr": "ED",
+          "full_name": "Entrepreneurship Development",
+          "faculty": "MR. M. R. PATIL"
+        },
+        {
+          "abbr": "MDM-I",
+          "full_name": "Multidisciplinary Minor-I: Operating System",
+          "faculty": "MS. S. S. NAZARE / MR. S. RADDI"
+        },
+        {
+          "abbr": "UHV",
+          "full_name": "Universal Human Values",
+          "faculty": "MR. M. A. MAHANT"
+        },
+        {
+          "abbr": "PY",
+          "full_name": "Python Programming",
+          "faculty": "MRS. P. M. CHANNAPATTAN"
+        }
       ],
       "practicals": [
-        { "subject": "DS", "batch_faculties": [{"batch": "SC1", "faculty": "KAK"}, {"batch": "SC2", "faculty": "DSM"}, {"batch": "SC3", "faculty": "SSM"}], "venue": "Software Lab-2" },
-        { "subject": "CG", "batches": ["SC1", "SC2", "SC3"], "faculty": "MR. D. P. PANDIT", "venue": "Distributed System Lab" },
-        { "subject": "OE-I", "batches": ["SC1", "SC2", "SC3"], "faculty": "MR. M. A. MAHANT", "venue": "Classroom No-1 (M330)" },
-        { "subject": "ED", "batches": ["SC1", "SC2", "SC3"], "faculty": "MR. V. V. KULKARNI", "venue": "Classroom No-1 (M330)" },
-        { "subject": "PY", "batch_faculties": [{"batch": "SC1", "faculty": "DBN"}, {"batch": "SC2", "faculty": "PMC"}, {"batch": "SC3", "faculty": "PMC"}], "venue": "Programming Lab" }
+        {
+          "subject": "DS",
+          "batch_faculties": [
+            { "batch": "SC1", "faculty": "KAK" },
+            { "batch": "SC2", "faculty": "DSM" },
+            { "batch": "SC3", "faculty": "SSM" }
+          ],
+          "venue": "Software Lab-2"
+        },
+        {
+          "subject": "CG",
+          "batches": ["SC1", "SC2", "SC3"],
+          "faculty": "MR. D. P. PANDIT",
+          "venue": "Distributed System Lab"
+        },
+        {
+          "subject": "OE-I",
+          "batches": ["SC1", "SC2", "SC3"],
+          "faculty": "MR. M. A. MAHANT",
+          "venue": "Classroom No-1 (M330)"
+        },
+        {
+          "subject": "ED",
+          "batches": ["SC1", "SC2", "SC3"],
+          "faculty": "MR. V. V. KULKARNI",
+          "venue": "Classroom No-1 (M330)"
+        },
+        {
+          "subject": "PY",
+          "batch_faculties": [
+            { "batch": "SC1", "faculty": "DBN" },
+            { "batch": "SC2", "faculty": "PMC" },
+            { "batch": "SC3", "faculty": "PMC" }
+          ],
+          "venue": "Programming Lab"
+        }
       ]
     },
     {
@@ -399,32 +899,166 @@
       "year": "Third Year",
       "venue": "Classroom No-2 (M329)",
       "periods": [
-        { "period": 1, "time": "10:15", "MON": "DBE", "TUE": "", "WED": "", "THURS": "DBE", "FRI": "PEC-I", "SAT": "Alumni/Industry Interaction Session" },
-        { "period": 2, "time": "11:15", "MON": "PEC-I", "TUE": "DBE", "WED": "TA1-AJP(P), TA2-PEC-I(P)", "THURS": "DAA", "FRI": "IKS", "SAT": "" },
-        { "period": 3, "time": "12:15", "MON": "AJP", "TUE": "OS", "WED": "TA3-DAA(P)", "THURS": "IKS", "FRI": "OE-III", "SAT": "" },
-        { "period": 4, "time": "2:15", "MON": "TA1-DBE(P), TA2-DAA(P)", "TUE": "TA1-DAA(P), TA2-DBE(P)", "WED": "PEC-I", "THURS": "TA1-PEC-I(P), TA2-OS(P)", "FRI": "TA1-OS(P), TA2-AJP(P)", "SAT": "" },
-        { "period": 5, "time": "3:15", "MON": "TA3-OS(P)", "TUE": "TA3-AJP(P)", "WED": "OS", "THURS": "TA3-DBE(P)", "FRI": "TA3-PEC-I(P)", "SAT": "" },
-        { "period": 6, "time": "4:20", "MON": "OE-III", "TUE": "DAA", "WED": "MDM-III", "THURS": "MDM-III", "FRI": "MDM-III", "SAT": "" },
-        { "period": 7, "time": "5:20", "MON": "", "TUE": "", "WED": "", "THURS": "", "FRI": "", "SAT": "" }
+        {
+          "period": 1,
+          "time": "10:15",
+          "MON": "DBE",
+          "TUE": "",
+          "WED": "",
+          "THURS": "DBE",
+          "FRI": "PEC-I",
+          "SAT": "Alumni/Industry Interaction Session"
+        },
+        {
+          "period": 2,
+          "time": "11:15",
+          "MON": "PEC-I",
+          "TUE": "DBE",
+          "WED": "TA1-AJP(P), TA2-PEC-I(P)",
+          "THURS": "DAA",
+          "FRI": "IKS",
+          "SAT": ""
+        },
+        {
+          "period": 3,
+          "time": "12:15",
+          "MON": "AJP",
+          "TUE": "OS",
+          "WED": "TA3-DAA(P)",
+          "THURS": "IKS",
+          "FRI": "OE-III",
+          "SAT": ""
+        },
+        {
+          "period": 4,
+          "time": "2:15",
+          "MON": "TA1-DBE(P), TA2-DAA(P)",
+          "TUE": "TA1-DAA(P), TA2-DBE(P)",
+          "WED": "PEC-I",
+          "THURS": "TA1-PEC-I(P), TA2-OS(P)",
+          "FRI": "TA1-OS(P), TA2-AJP(P)",
+          "SAT": ""
+        },
+        {
+          "period": 5,
+          "time": "3:15",
+          "MON": "TA3-OS(P)",
+          "TUE": "TA3-AJP(P)",
+          "WED": "OS",
+          "THURS": "TA3-DBE(P)",
+          "FRI": "TA3-PEC-I(P)",
+          "SAT": ""
+        },
+        {
+          "period": 6,
+          "time": "4:20",
+          "MON": "OE-III",
+          "TUE": "DAA",
+          "WED": "MDM-III",
+          "THURS": "MDM-III",
+          "FRI": "MDM-III",
+          "SAT": ""
+        },
+        {
+          "period": 7,
+          "time": "5:20",
+          "MON": "",
+          "TUE": "",
+          "WED": "",
+          "THURS": "",
+          "FRI": "",
+          "SAT": ""
+        }
       ],
       "theory_subjects": [
-        { "abbr": "DBE", "full_name": "Database Engineering", "faculty": "DR. MRS. S. M. DOL" },
-        { "abbr": "DAA", "full_name": "Design and Analysis of Algorithm", "faculty": "MR. S. M. METAGAR" },
-        { "abbr": "OS", "full_name": "Operating Systems", "faculty": "DR. MRS. A. M. PUJAR" },
-        { "abbr": "PEC-I (ML)", "full_name": "Professional Elective Course-I: Machine Learning", "faculty": "MR. B. R. SOLUNKE" },
-        { "abbr": "PEC-I (DAV)", "full_name": "Professional Elective Course-I: Data Analysis and Visualization", "faculty": "MRS. K. A. KHEDIKAR" },
-        { "abbr": "AJP", "full_name": "Advanced Java Programming", "faculty": "DR. MRS. P. C. KALADEEP" },
-        { "abbr": "IKS", "full_name": "Indian Knowledge System", "faculty": "MR. F. R. SAYYED" },
+        {
+          "abbr": "DBE",
+          "full_name": "Database Engineering",
+          "faculty": "DR. MRS. S. M. DOL"
+        },
+        {
+          "abbr": "DAA",
+          "full_name": "Design and Analysis of Algorithm",
+          "faculty": "MR. S. M. METAGAR"
+        },
+        {
+          "abbr": "OS",
+          "full_name": "Operating Systems",
+          "faculty": "DR. MRS. A. M. PUJAR"
+        },
+        {
+          "abbr": "PEC-I (ML)",
+          "full_name": "Professional Elective Course-I: Machine Learning",
+          "faculty": "MR. B. R. SOLUNKE"
+        },
+        {
+          "abbr": "PEC-I (DAV)",
+          "full_name": "Professional Elective Course-I: Data Analysis and Visualization",
+          "faculty": "MRS. K. A. KHEDIKAR"
+        },
+        {
+          "abbr": "AJP",
+          "full_name": "Advanced Java Programming",
+          "faculty": "DR. MRS. P. C. KALADEEP"
+        },
+        {
+          "abbr": "IKS",
+          "full_name": "Indian Knowledge System",
+          "faculty": "MR. F. R. SAYYED"
+        },
         { "abbr": "OE-III", "full_name": "Open Elective-III", "faculty": "-" },
-        { "abbr": "MDM-III", "full_name": "Multidisciplinary Minor-III: Operating Systems", "faculty": "MR. S. T. PATEL" }
+        {
+          "abbr": "MDM-III",
+          "full_name": "Multidisciplinary Minor-III: Operating Systems",
+          "faculty": "MR. S. T. PATEL"
+        }
       ],
       "practicals": [
-        { "subject": "DBE", "batches": ["TA1", "TA2", "TA3"], "faculty": "DR. MRS. S. M. DOL", "venue": "Web Technology Lab" },
-        { "subject": "DAA", "batch_faculties": [{"batch": "TA1", "faculty": "SMM"}, {"batch": "TA2", "faculty": "SMM"}, {"batch": "TA3", "faculty": "AAB"}], "venue": "Project Lab" },
-        { "subject": "OS", "batch_faculties": [{"batch": "TA1", "faculty": "AMP"}, {"batch": "TA2", "faculty": "DBN"}, {"batch": "TA3", "faculty": "DBN"}], "venues": {"TA1": "DS Lab", "TA2": "DS Lab", "TA3": "OS Lab"} },
-        { "subject": "PEC-I (ML)", "batches": ["TA1", "TA2", "TA3"], "faculty": "MR. B. R. SOLUNKE", "venue": "Software Lab-I" },
-        { "subject": "PEC-I (DAV)", "batches": ["TA1", "TA2", "TA3"], "faculty": "MRS. K. A. KHEDIKAR", "venue": "System Programming Lab" },
-        { "subject": "AJP", "batch_faculties": [{"batch": "TA1", "faculty": "DBN"}, {"batch": "TA2", "faculty": "DBN"}, {"batch": "TA3", "faculty": "PCK"}], "venues": {"TA1": "SP Lab", "TA2": "AP Lab", "TA3": "Prog. Lab"} }
+        {
+          "subject": "DBE",
+          "batches": ["TA1", "TA2", "TA3"],
+          "faculty": "DR. MRS. S. M. DOL",
+          "venue": "Web Technology Lab"
+        },
+        {
+          "subject": "DAA",
+          "batch_faculties": [
+            { "batch": "TA1", "faculty": "SMM" },
+            { "batch": "TA2", "faculty": "SMM" },
+            { "batch": "TA3", "faculty": "AAB" }
+          ],
+          "venue": "Project Lab"
+        },
+        {
+          "subject": "OS",
+          "batch_faculties": [
+            { "batch": "TA1", "faculty": "AMP" },
+            { "batch": "TA2", "faculty": "DBN" },
+            { "batch": "TA3", "faculty": "DBN" }
+          ],
+          "venues": { "TA1": "DS Lab", "TA2": "DS Lab", "TA3": "OS Lab" }
+        },
+        {
+          "subject": "PEC-I (ML)",
+          "batches": ["TA1", "TA2", "TA3"],
+          "faculty": "MR. B. R. SOLUNKE",
+          "venue": "Software Lab-I"
+        },
+        {
+          "subject": "PEC-I (DAV)",
+          "batches": ["TA1", "TA2", "TA3"],
+          "faculty": "MRS. K. A. KHEDIKAR",
+          "venue": "System Programming Lab"
+        },
+        {
+          "subject": "AJP",
+          "batch_faculties": [
+            { "batch": "TA1", "faculty": "DBN" },
+            { "batch": "TA2", "faculty": "DBN" },
+            { "batch": "TA3", "faculty": "PCK" }
+          ],
+          "venues": { "TA1": "SP Lab", "TA2": "AP Lab", "TA3": "Prog. Lab" }
+        }
       ]
     },
     {
@@ -432,32 +1066,169 @@
       "year": "Third Year",
       "venue": "New Classroom No-2 (L303)",
       "periods": [
-        { "period": 1, "time": "10:15", "MON": "", "TUE": "DBE", "WED": "", "THURS": "OS", "FRI": "PEC-I", "SAT": "Alumni/Industry Interaction Session" },
-        { "period": 2, "time": "11:15", "MON": "PEC-I", "TUE": "DAA", "WED": "TB1-AJP(P), TB2-PEC-I(P)", "THURS": "IKS", "FRI": "AJP", "SAT": "" },
-        { "period": 3, "time": "12:15", "MON": "DBE", "TUE": "OS", "WED": "TB3-DAA(P)", "THURS": "DAA", "FRI": "IKS", "SAT": "" },
-        { "period": 4, "time": "2:15", "MON": "TB1-DBE(P), TB2-AJP(P)", "TUE": "TB1-OS(P), TB2-DBE(P)", "WED": "PEC-I", "THURS": "TB1-PEC-I(P), TB2-DAA(P)", "FRI": "TB1-DAA(P), TB2-OS(P)", "SAT": "" },
-        { "period": 5, "time": "3:15", "MON": "TB3-OS(P)", "TUE": "TB3-AJP(P)", "WED": "DBE", "THURS": "TB3-DBE(P)", "FRI": "TB3-PEC-I(P)", "SAT": "" },
-        { "period": 6, "time": "4:20", "MON": "OE-III", "TUE": "OE-III", "WED": "MDM-III", "THURS": "MDM-III", "FRI": "MDM-III", "SAT": "" },
-        { "period": 7, "time": "5:20", "MON": "", "TUE": "", "WED": "", "THURS": "", "FRI": "", "SAT": "" }
+        {
+          "period": 1,
+          "time": "10:15",
+          "MON": "",
+          "TUE": "DBE",
+          "WED": "",
+          "THURS": "OS",
+          "FRI": "PEC-I",
+          "SAT": "Alumni/Industry Interaction Session"
+        },
+        {
+          "period": 2,
+          "time": "11:15",
+          "MON": "PEC-I",
+          "TUE": "DAA",
+          "WED": "TB1-AJP(P), TB2-PEC-I(P)",
+          "THURS": "IKS",
+          "FRI": "AJP",
+          "SAT": ""
+        },
+        {
+          "period": 3,
+          "time": "12:15",
+          "MON": "DBE",
+          "TUE": "OS",
+          "WED": "TB3-DAA(P)",
+          "THURS": "DAA",
+          "FRI": "IKS",
+          "SAT": ""
+        },
+        {
+          "period": 4,
+          "time": "2:15",
+          "MON": "TB1-DBE(P), TB2-AJP(P)",
+          "TUE": "TB1-OS(P), TB2-DBE(P)",
+          "WED": "PEC-I",
+          "THURS": "TB1-PEC-I(P), TB2-DAA(P)",
+          "FRI": "TB1-DAA(P), TB2-OS(P)",
+          "SAT": ""
+        },
+        {
+          "period": 5,
+          "time": "3:15",
+          "MON": "TB3-OS(P)",
+          "TUE": "TB3-AJP(P)",
+          "WED": "DBE",
+          "THURS": "TB3-DBE(P)",
+          "FRI": "TB3-PEC-I(P)",
+          "SAT": ""
+        },
+        {
+          "period": 6,
+          "time": "4:20",
+          "MON": "OE-III",
+          "TUE": "OE-III",
+          "WED": "MDM-III",
+          "THURS": "MDM-III",
+          "FRI": "MDM-III",
+          "SAT": ""
+        },
+        {
+          "period": 7,
+          "time": "5:20",
+          "MON": "",
+          "TUE": "",
+          "WED": "",
+          "THURS": "",
+          "FRI": "",
+          "SAT": ""
+        }
       ],
       "theory_subjects": [
-        { "abbr": "DBE", "full_name": "Database Engineering", "faculty": "DR. R. V. ARGIDDI" },
-        { "abbr": "DAA", "full_name": "Design and Analysis of Algorithm", "faculty": "DR. MS. R. K. DIXIT" },
-        { "abbr": "OS", "full_name": "Operating Systems", "faculty": "MR. S. T. PATEL" },
-        { "abbr": "PEC-I (ML)", "full_name": "Professional Elective Course-I: Machine Learning", "faculty": "MR. B. R. SOLUNKE / MRS. K. R. PARDESHI" },
-        { "abbr": "PEC-I (DAV)", "full_name": "Professional Elective Course-I: Data Analysis and Visualization", "faculty": "MRS. K. A. KHEDIKAR" },
-        { "abbr": "AJP", "full_name": "Advanced Java Programming", "faculty": "MR. N. S. GAJJAM" },
-        { "abbr": "IKS", "full_name": "Indian Knowledge System", "faculty": "MR. A. A. BABAR" },
+        {
+          "abbr": "DBE",
+          "full_name": "Database Engineering",
+          "faculty": "DR. R. V. ARGIDDI"
+        },
+        {
+          "abbr": "DAA",
+          "full_name": "Design and Analysis of Algorithm",
+          "faculty": "DR. MS. R. K. DIXIT"
+        },
+        {
+          "abbr": "OS",
+          "full_name": "Operating Systems",
+          "faculty": "MR. S. T. PATEL"
+        },
+        {
+          "abbr": "PEC-I (ML)",
+          "full_name": "Professional Elective Course-I: Machine Learning",
+          "faculty": "MR. B. R. SOLUNKE / MRS. K. R. PARDESHI"
+        },
+        {
+          "abbr": "PEC-I (DAV)",
+          "full_name": "Professional Elective Course-I: Data Analysis and Visualization",
+          "faculty": "MRS. K. A. KHEDIKAR"
+        },
+        {
+          "abbr": "AJP",
+          "full_name": "Advanced Java Programming",
+          "faculty": "MR. N. S. GAJJAM"
+        },
+        {
+          "abbr": "IKS",
+          "full_name": "Indian Knowledge System",
+          "faculty": "MR. A. A. BABAR"
+        },
         { "abbr": "OE-III", "full_name": "Open Elective-III", "faculty": "-" },
-        { "abbr": "MDM-III", "full_name": "Multidisciplinary Minor-III: Operating Systems", "faculty": "MRS. P. D. JADHAV" }
+        {
+          "abbr": "MDM-III",
+          "full_name": "Multidisciplinary Minor-III: Operating Systems",
+          "faculty": "MRS. P. D. JADHAV"
+        }
       ],
       "practicals": [
-        { "subject": "DBE", "batches": ["TB1", "TB2", "TB3"], "faculty": "DR. R. V. ARGIDDI", "venue": "Network Engineering Lab" },
-        { "subject": "DAA", "batch_faculties": [{"batch": "TB1", "faculty": "WT LAB"}, {"batch": "TB2", "faculty": "SP LAB"}, {"batch": "TB3", "faculty": "WT LAB"}], "venue": "varies per batch" },
-        { "subject": "OS", "batch_faculties": [{"batch": "TB1", "faculty": "STP"}, {"batch": "TB2", "faculty": "SSM"}, {"batch": "TB3", "faculty": "STP"}], "venue": "DS Lab / NE Lab" },
-        { "subject": "PEC-I (ML)", "batch_faculties": [{"batch": "TB1", "faculty": "BRS"}, {"batch": "TB2", "faculty": "BRS/KRP"}, {"batch": "TB3", "faculty": "KRP"}], "venue": "Software Lab-1 / Software Lab-2" },
-        { "subject": "PEC-I (DAV)", "batches": ["TB1", "TB2", "TB3"], "faculty": "MRS. K. A. KHEDIKAR", "venue": "System Programming Lab" },
-        { "subject": "AJP", "batch_faculties": [{"batch": "TB1", "faculty": "SR"}, {"batch": "TB2", "faculty": "SR"}, {"batch": "TB3", "faculty": "NSG"}], "venue": "Advanced Programming Lab" }
+        {
+          "subject": "DBE",
+          "batches": ["TB1", "TB2", "TB3"],
+          "faculty": "DR. R. V. ARGIDDI",
+          "venue": "Network Engineering Lab"
+        },
+        {
+          "subject": "DAA",
+          "batch_faculties": [
+            { "batch": "TB1", "faculty": "WT LAB" },
+            { "batch": "TB2", "faculty": "SP LAB" },
+            { "batch": "TB3", "faculty": "WT LAB" }
+          ],
+          "venue": "varies per batch"
+        },
+        {
+          "subject": "OS",
+          "batch_faculties": [
+            { "batch": "TB1", "faculty": "STP" },
+            { "batch": "TB2", "faculty": "SSM" },
+            { "batch": "TB3", "faculty": "STP" }
+          ],
+          "venue": "DS Lab / NE Lab"
+        },
+        {
+          "subject": "PEC-I (ML)",
+          "batch_faculties": [
+            { "batch": "TB1", "faculty": "BRS" },
+            { "batch": "TB2", "faculty": "BRS/KRP" },
+            { "batch": "TB3", "faculty": "KRP" }
+          ],
+          "venue": "Software Lab-1 / Software Lab-2"
+        },
+        {
+          "subject": "PEC-I (DAV)",
+          "batches": ["TB1", "TB2", "TB3"],
+          "faculty": "MRS. K. A. KHEDIKAR",
+          "venue": "System Programming Lab"
+        },
+        {
+          "subject": "AJP",
+          "batch_faculties": [
+            { "batch": "TB1", "faculty": "SR" },
+            { "batch": "TB2", "faculty": "SR" },
+            { "batch": "TB3", "faculty": "NSG" }
+          ],
+          "venue": "Advanced Programming Lab"
+        }
       ]
     },
     {
@@ -465,32 +1236,164 @@
       "year": "Third Year",
       "venue": "Smart Classroom (L419)",
       "periods": [
-        { "period": 1, "time": "10:15", "MON": "", "TUE": "", "WED": "", "THURS": "IKS", "FRI": "PEC-I", "SAT": "Alumni/Industry Interaction Session" },
-        { "period": 2, "time": "11:15", "MON": "PEC-I", "TUE": "DBE", "WED": "TC1-OS(P), TC2-PEC-I(P)", "THURS": "OS", "FRI": "AJP", "SAT": "" },
-        { "period": 3, "time": "12:15", "MON": "IKS", "TUE": "DBE", "WED": "TC3-AJP(P)", "THURS": "DBE", "FRI": "OE-III", "SAT": "" },
-        { "period": 4, "time": "2:15", "MON": "TC1-DBE(P), TC2-AJP(P)", "TUE": "TC1-DAA(P), TC2-OS(P)", "WED": "PEC-I", "THURS": "TC1-PEC-I(P), TC2-DBE(P)", "FRI": "TC1-AJP(P), TC2-DAA(P)", "SAT": "" },
-        { "period": 5, "time": "3:15", "MON": "TC3-DAA(P)", "TUE": "TC3-DBE(P)", "WED": "OE-III", "THURS": "TC3-OS(P)", "FRI": "TC3-PEC-I(P)", "SAT": "" },
-        { "period": 6, "time": "4:20", "MON": "DAA", "TUE": "OS", "WED": "MDM-III", "THURS": "MDM-III", "FRI": "MDM-III", "SAT": "" },
-        { "period": 7, "time": "5:20", "MON": "", "TUE": "DAA", "WED": "", "THURS": "", "FRI": "", "SAT": "" }
+        {
+          "period": 1,
+          "time": "10:15",
+          "MON": "",
+          "TUE": "",
+          "WED": "",
+          "THURS": "IKS",
+          "FRI": "PEC-I",
+          "SAT": "Alumni/Industry Interaction Session"
+        },
+        {
+          "period": 2,
+          "time": "11:15",
+          "MON": "PEC-I",
+          "TUE": "DBE",
+          "WED": "TC1-OS(P), TC2-PEC-I(P)",
+          "THURS": "OS",
+          "FRI": "AJP",
+          "SAT": ""
+        },
+        {
+          "period": 3,
+          "time": "12:15",
+          "MON": "IKS",
+          "TUE": "DBE",
+          "WED": "TC3-AJP(P)",
+          "THURS": "DBE",
+          "FRI": "OE-III",
+          "SAT": ""
+        },
+        {
+          "period": 4,
+          "time": "2:15",
+          "MON": "TC1-DBE(P), TC2-AJP(P)",
+          "TUE": "TC1-DAA(P), TC2-OS(P)",
+          "WED": "PEC-I",
+          "THURS": "TC1-PEC-I(P), TC2-DBE(P)",
+          "FRI": "TC1-AJP(P), TC2-DAA(P)",
+          "SAT": ""
+        },
+        {
+          "period": 5,
+          "time": "3:15",
+          "MON": "TC3-DAA(P)",
+          "TUE": "TC3-DBE(P)",
+          "WED": "OE-III",
+          "THURS": "TC3-OS(P)",
+          "FRI": "TC3-PEC-I(P)",
+          "SAT": ""
+        },
+        {
+          "period": 6,
+          "time": "4:20",
+          "MON": "DAA",
+          "TUE": "OS",
+          "WED": "MDM-III",
+          "THURS": "MDM-III",
+          "FRI": "MDM-III",
+          "SAT": ""
+        },
+        {
+          "period": 7,
+          "time": "5:20",
+          "MON": "",
+          "TUE": "DAA",
+          "WED": "",
+          "THURS": "",
+          "FRI": "",
+          "SAT": ""
+        }
       ],
       "theory_subjects": [
-        { "abbr": "DBE", "full_name": "Database Engineering", "faculty": "MRS. S. S. AMBARKAR" },
-        { "abbr": "DAA", "full_name": "Design and Analysis of Algorithm", "faculty": "MR. F. R. SAYYED" },
-        { "abbr": "OS", "full_name": "Operating Systems", "faculty": "MR. V. V. KULKARNI" },
-        { "abbr": "PEC-I (ML)", "full_name": "Professional Elective Course-I: Machine Learning", "faculty": "MR. B. R. SOLUNKE / MRS. K. R. PARDESHI" },
-        { "abbr": "PEC-I (DAV)", "full_name": "Professional Elective Course-I: Data Analysis and Visualization", "faculty": "MRS. K. A. KHEDIKAR" },
-        { "abbr": "AJP", "full_name": "Advanced Java Programming", "faculty": "MR. A. R. CHINCHAWADE" },
-        { "abbr": "IKS", "full_name": "Indian Knowledge System", "faculty": "MRS. P. M. CHANNAPATTAN" },
+        {
+          "abbr": "DBE",
+          "full_name": "Database Engineering",
+          "faculty": "MRS. S. S. AMBARKAR"
+        },
+        {
+          "abbr": "DAA",
+          "full_name": "Design and Analysis of Algorithm",
+          "faculty": "MR. F. R. SAYYED"
+        },
+        {
+          "abbr": "OS",
+          "full_name": "Operating Systems",
+          "faculty": "MR. V. V. KULKARNI"
+        },
+        {
+          "abbr": "PEC-I (ML)",
+          "full_name": "Professional Elective Course-I: Machine Learning",
+          "faculty": "MR. B. R. SOLUNKE / MRS. K. R. PARDESHI"
+        },
+        {
+          "abbr": "PEC-I (DAV)",
+          "full_name": "Professional Elective Course-I: Data Analysis and Visualization",
+          "faculty": "MRS. K. A. KHEDIKAR"
+        },
+        {
+          "abbr": "AJP",
+          "full_name": "Advanced Java Programming",
+          "faculty": "MR. A. R. CHINCHAWADE"
+        },
+        {
+          "abbr": "IKS",
+          "full_name": "Indian Knowledge System",
+          "faculty": "MRS. P. M. CHANNAPATTAN"
+        },
         { "abbr": "OE-III", "full_name": "Open Elective-III", "faculty": "-" },
-        { "abbr": "MDM-III", "full_name": "Multidisciplinary Minor-III: Operating Systems", "faculty": "MR. S. T. PATEL / MRS. P. D. JADHAV" }
+        {
+          "abbr": "MDM-III",
+          "full_name": "Multidisciplinary Minor-III: Operating Systems",
+          "faculty": "MR. S. T. PATEL / MRS. P. D. JADHAV"
+        }
       ],
       "practicals": [
-        { "subject": "DBE", "batch_faculties": [{"batch": "TC1", "faculty": "RKD"}, {"batch": "TC2", "faculty": "SSA"}, {"batch": "TC3", "faculty": "RKD"}], "venues": {"TC1": "Software Lab-II-1", "TC2": "AP Lab", "TC3": "Software Lab-II-2"} },
-        { "subject": "DAA", "batches": ["TC1", "TC2", "TC3"], "faculty": "MR. F. R. SAYYED", "venue": "System Programming Lab" },
-        { "subject": "OS", "batches": ["TC1", "TC2", "TC3"], "faculty": "MR. V. V. KULKARNI", "venues": {"TC1": "DS Lab", "TC2": "OS Lab", "TC3": "Prog. Lab"} },
-        { "subject": "PEC-I (ML)", "batches": ["TC1", "TC2", "TC3"], "faculty": "MRS. K. R. PARDESHI", "venue": "Software Lab-2" },
-        { "subject": "PEC-I (DAV)", "batches": ["TC1", "TC2", "TC3"], "faculty": "MRS. K. A. KHEDIKAR", "venue": "System Programming Lab" },
-        { "subject": "AJP", "batches": ["TC1", "TC2", "TC3"], "faculty": "MR. A. R. CHINCHAWADE", "venue": "Programming Lab" }
+        {
+          "subject": "DBE",
+          "batch_faculties": [
+            { "batch": "TC1", "faculty": "RKD" },
+            { "batch": "TC2", "faculty": "SSA" },
+            { "batch": "TC3", "faculty": "RKD" }
+          ],
+          "venues": {
+            "TC1": "Software Lab-II-1",
+            "TC2": "AP Lab",
+            "TC3": "Software Lab-II-2"
+          }
+        },
+        {
+          "subject": "DAA",
+          "batches": ["TC1", "TC2", "TC3"],
+          "faculty": "MR. F. R. SAYYED",
+          "venue": "System Programming Lab"
+        },
+        {
+          "subject": "OS",
+          "batches": ["TC1", "TC2", "TC3"],
+          "faculty": "MR. V. V. KULKARNI",
+          "venues": { "TC1": "DS Lab", "TC2": "OS Lab", "TC3": "Prog. Lab" }
+        },
+        {
+          "subject": "PEC-I (ML)",
+          "batches": ["TC1", "TC2", "TC3"],
+          "faculty": "MRS. K. R. PARDESHI",
+          "venue": "Software Lab-2"
+        },
+        {
+          "subject": "PEC-I (DAV)",
+          "batches": ["TC1", "TC2", "TC3"],
+          "faculty": "MRS. K. A. KHEDIKAR",
+          "venue": "System Programming Lab"
+        },
+        {
+          "subject": "AJP",
+          "batches": ["TC1", "TC2", "TC3"],
+          "faculty": "MR. A. R. CHINCHAWADE",
+          "venue": "Programming Lab"
+        }
       ]
     },
     {
@@ -498,31 +1401,170 @@
       "year": "Final Year",
       "venue": "Seminar Hall (M331)",
       "periods": [
-        { "period": 1, "time": "10:15", "MON": "BA3-STQA(T)", "TUE": "BA1-STQA(T)", "WED": "DL/PA", "THURS": "PE-III", "FRI": "BA4-STQA(T)", "SAT": "Alumni/Industry Interaction Session" },
-        { "period": 2, "time": "11:15", "MON": "DS", "TUE": "DL/PA", "WED": "PE-II", "THURS": "BA1-PE-III(P), BA2-DS(P)", "FRI": "BA1-DEV(P), BA2-PE-III(P)", "SAT": "" },
-        { "period": 3, "time": "12:15", "MON": "STQA", "TUE": "PE-II", "WED": "DS", "THURS": "BA3-DL/PA(P), BA4-DEV(P)", "FRI": "BA3-DS(P), BA4-DL/PA(P)", "SAT": "" },
-        { "period": 4, "time": "2:15", "MON": "DL/PA", "TUE": "PE-III", "WED": "DEV", "THURS": "STQA", "FRI": "DEV", "SAT": "" },
-        { "period": 5, "time": "3:15", "MON": "PE-III", "TUE": "DS", "WED": "STQA", "THURS": "BA2-STQA(T)", "FRI": "PE-II", "SAT": "" },
-        { "period": 6, "time": "4:20", "MON": "BA1-DL/PA(P)", "TUE": "BA1-PRJ", "WED": "BA1-DS(P)", "THURS": "", "FRI": "BA1-PRJ", "SAT": "" },
-        { "period": 7, "time": "5:20", "MON": "BA2-DEV(P), BA3-PRJ", "TUE": "BA2-DL/PA(P)", "WED": "BA2-PRJ", "THURS": "", "FRI": "BA2-PRJ", "SAT": "" },
-        { "extra": "BA3-PRJ, BA4-PE-III(P) Mon P7", "extra2": "BA4-DS(P) Tue P7", "extra3": "BA3-PE-III(P) Thurs P2", "extra4": "BA4-PRJ Wed, Fri" }
+        {
+          "period": 1,
+          "time": "10:15",
+          "MON": "BA3-STQA(T)",
+          "TUE": "BA1-STQA(T)",
+          "WED": "DL/PA",
+          "THURS": "PE-III",
+          "FRI": "BA4-STQA(T)",
+          "SAT": "Alumni/Industry Interaction Session"
+        },
+        {
+          "period": 2,
+          "time": "11:15",
+          "MON": "DS",
+          "TUE": "DL/PA",
+          "WED": "PE-II",
+          "THURS": "BA1-PE-III(P), BA2-DS(P)",
+          "FRI": "BA1-DEV(P), BA2-PE-III(P)",
+          "SAT": ""
+        },
+        {
+          "period": 3,
+          "time": "12:15",
+          "MON": "STQA",
+          "TUE": "PE-II",
+          "WED": "DS",
+          "THURS": "BA3-DL/PA(P), BA4-DEV(P)",
+          "FRI": "BA3-DS(P), BA4-DL/PA(P)",
+          "SAT": ""
+        },
+        {
+          "period": 4,
+          "time": "2:15",
+          "MON": "DL/PA",
+          "TUE": "PE-III",
+          "WED": "DEV",
+          "THURS": "STQA",
+          "FRI": "DEV",
+          "SAT": ""
+        },
+        {
+          "period": 5,
+          "time": "3:15",
+          "MON": "PE-III",
+          "TUE": "DS",
+          "WED": "STQA",
+          "THURS": "BA2-STQA(T)",
+          "FRI": "PE-II",
+          "SAT": ""
+        },
+        {
+          "period": 6,
+          "time": "4:20",
+          "MON": "BA1-DL/PA(P)",
+          "TUE": "BA1-PRJ",
+          "WED": "BA1-DS(P)",
+          "THURS": "",
+          "FRI": "BA1-PRJ",
+          "SAT": ""
+        },
+        {
+          "period": 7,
+          "time": "5:20",
+          "MON": "BA2-DEV(P), BA3-PRJ",
+          "TUE": "BA2-DL/PA(P)",
+          "WED": "BA2-PRJ",
+          "THURS": "",
+          "FRI": "BA2-PRJ",
+          "SAT": ""
+        },
+        {
+          "extra": "BA3-PRJ, BA4-PE-III(P) Mon P7",
+          "extra2": "BA4-DS(P) Tue P7",
+          "extra3": "BA3-PE-III(P) Thurs P2",
+          "extra4": "BA4-PRJ Wed, Fri"
+        }
       ],
       "theory_subjects": [
-        { "abbr": "STQA", "full_name": "Software Testing and Quality Assurance", "faculty": "MR. S. M. METAGAR" },
-        { "abbr": "DS", "full_name": "Distributed Systems", "faculty": "DR. MRS. A. M. PUJAR" },
-        { "abbr": "PE-II", "full_name": "Professional Elective-II: Business Intelligence", "faculty": "DR. R. V. ARGIDDI" },
-        { "abbr": "PE-III", "full_name": "Professional Elective-III: Big Data Analytics", "faculty": "MRS. K. A. KHEDIKAR" },
-        { "abbr": "DEV", "full_name": "DevOps", "faculty": "MRS. P. D. JADHAV" },
-        { "abbr": "DL", "full_name": "Deep Learning", "faculty": "MR. B. R. SOLUNKE" },
-        { "abbr": "PA", "full_name": "Predictive Analytics", "faculty": "MR. V. D. CHAVAN" }
+        {
+          "abbr": "STQA",
+          "full_name": "Software Testing and Quality Assurance",
+          "faculty": "MR. S. M. METAGAR"
+        },
+        {
+          "abbr": "DS",
+          "full_name": "Distributed Systems",
+          "faculty": "DR. MRS. A. M. PUJAR"
+        },
+        {
+          "abbr": "PE-II",
+          "full_name": "Professional Elective-II: Business Intelligence",
+          "faculty": "DR. R. V. ARGIDDI"
+        },
+        {
+          "abbr": "PE-III",
+          "full_name": "Professional Elective-III: Big Data Analytics",
+          "faculty": "MRS. K. A. KHEDIKAR"
+        },
+        {
+          "abbr": "DEV",
+          "full_name": "DevOps",
+          "faculty": "MRS. P. D. JADHAV"
+        },
+        {
+          "abbr": "DL",
+          "full_name": "Deep Learning",
+          "faculty": "MR. B. R. SOLUNKE"
+        },
+        {
+          "abbr": "PA",
+          "full_name": "Predictive Analytics",
+          "faculty": "MR. V. D. CHAVAN"
+        }
       ],
       "practicals": [
-        { "subject": "STQA", "batches": ["BA1", "BA2", "BA3", "BA4"], "faculty": "MR. S. M. METAGAR", "venue": "Seminar Hall (M331)" },
-        { "subject": "DS", "batches": ["BA1", "BA2", "BA3", "BA4"], "faculty": "DR. MRS. A. M. PUJAR", "venue": "Distributed System Lab" },
-        { "subject": "PE-III", "batch_faculties": [{"batch": "BA1", "faculty": "KAK"}, {"batch": "BA2", "faculty": "SMD"}, {"batch": "BA3", "faculty": "SMD"}, {"batch": "BA4", "faculty": "SMD"}], "venue": "Software Lab-1" },
-        { "subject": "DEV", "batches": ["BA1", "BA2", "BA3", "BA4"], "faculty": "MRS. P. D. JADHAV", "venues": {"BA1": "WT Lab", "BA2": "DS Lab", "BA3": "Software Lab-1", "BA4": "WT Lab"} },
-        { "subject": "DL", "batches": ["BA1", "BA2", "BA3", "BA4"], "faculty": "MR. B. R. SOLUNKE", "venue": "Programming Lab" },
-        { "subject": "PA", "batch_faculties": [{"batch": "BA1", "faculty": "VDC"}, {"batch": "BA2", "faculty": "VDC"}, {"batch": "BA3", "faculty": "RVA"}, {"batch": "BA4", "faculty": "RVA"}], "venue": "System Programming Lab" }
+        {
+          "subject": "STQA",
+          "batches": ["BA1", "BA2", "BA3", "BA4"],
+          "faculty": "MR. S. M. METAGAR",
+          "venue": "Seminar Hall (M331)"
+        },
+        {
+          "subject": "DS",
+          "batches": ["BA1", "BA2", "BA3", "BA4"],
+          "faculty": "DR. MRS. A. M. PUJAR",
+          "venue": "Distributed System Lab"
+        },
+        {
+          "subject": "PE-III",
+          "batch_faculties": [
+            { "batch": "BA1", "faculty": "KAK" },
+            { "batch": "BA2", "faculty": "SMD" },
+            { "batch": "BA3", "faculty": "SMD" },
+            { "batch": "BA4", "faculty": "SMD" }
+          ],
+          "venue": "Software Lab-1"
+        },
+        {
+          "subject": "DEV",
+          "batches": ["BA1", "BA2", "BA3", "BA4"],
+          "faculty": "MRS. P. D. JADHAV",
+          "venues": {
+            "BA1": "WT Lab",
+            "BA2": "DS Lab",
+            "BA3": "Software Lab-1",
+            "BA4": "WT Lab"
+          }
+        },
+        {
+          "subject": "DL",
+          "batches": ["BA1", "BA2", "BA3", "BA4"],
+          "faculty": "MR. B. R. SOLUNKE",
+          "venue": "Programming Lab"
+        },
+        {
+          "subject": "PA",
+          "batch_faculties": [
+            { "batch": "BA1", "faculty": "VDC" },
+            { "batch": "BA2", "faculty": "VDC" },
+            { "batch": "BA3", "faculty": "RVA" },
+            { "batch": "BA4", "faculty": "RVA" }
+          ],
+          "venue": "System Programming Lab"
+        }
       ]
     },
     {
@@ -530,31 +1572,169 @@
       "year": "Final Year",
       "venue": "New Classroom No-4 (L402)",
       "periods": [
-        { "period": 1, "time": "10:15", "MON": "BB1-STQA(T)", "TUE": "BB2-STQA(T)", "WED": "DL/PA", "THURS": "", "FRI": "BB4-STQA(T)", "SAT": "Alumni/Industry Interaction Session" },
-        { "period": 2, "time": "11:15", "MON": "DEV", "TUE": "DL/PA", "WED": "PE-III", "THURS": "BB1-PE-III(P), BB2-DS(P)", "FRI": "BB1-DEV(P), BB2-PE-III(P)", "SAT": "" },
-        { "period": 3, "time": "12:15", "MON": "STQA", "TUE": "DS", "WED": "DEV", "THURS": "BB3-DL/PA(P), BB4-DEV(P)", "FRI": "BB3-DS(P), BB4-DL/PA(P)", "SAT": "" },
-        { "period": 4, "time": "2:15", "MON": "DL/PA", "TUE": "STQA", "WED": "PE-II", "THURS": "PE-III", "FRI": "PE-II", "SAT": "" },
-        { "period": 5, "time": "3:15", "MON": "DS", "TUE": "PE-II", "WED": "STQA", "THURS": "DS", "FRI": "PE-III", "SAT": "" },
-        { "period": 6, "time": "4:20", "MON": "BB1-DL/PA(P)", "TUE": "BB1-DS(P)", "WED": "BB1-PRJ", "THURS": "BB3-STQA(T)", "FRI": "BB1-PRJ", "SAT": "" },
-        { "period": 7, "time": "5:20", "MON": "BB2-DEV(P), BB3-PE-III(P)", "TUE": "BB2-DL/PA(P)", "WED": "BB2-PRJ", "THURS": "", "FRI": "BB2-PRJ", "SAT": "" },
-        { "extra": "BB3-DEV(P) Mon P7, BB4-DS(P) Mon P7", "extra2": "BB3-PRJ, BB4-PRJ Wed, Fri", "extra3": "BB4-PE-III(P) Tue P7" }
+        {
+          "period": 1,
+          "time": "10:15",
+          "MON": "BB1-STQA(T)",
+          "TUE": "BB2-STQA(T)",
+          "WED": "DL/PA",
+          "THURS": "",
+          "FRI": "BB4-STQA(T)",
+          "SAT": "Alumni/Industry Interaction Session"
+        },
+        {
+          "period": 2,
+          "time": "11:15",
+          "MON": "DEV",
+          "TUE": "DL/PA",
+          "WED": "PE-III",
+          "THURS": "BB1-PE-III(P), BB2-DS(P)",
+          "FRI": "BB1-DEV(P), BB2-PE-III(P)",
+          "SAT": ""
+        },
+        {
+          "period": 3,
+          "time": "12:15",
+          "MON": "STQA",
+          "TUE": "DS",
+          "WED": "DEV",
+          "THURS": "BB3-DL/PA(P), BB4-DEV(P)",
+          "FRI": "BB3-DS(P), BB4-DL/PA(P)",
+          "SAT": ""
+        },
+        {
+          "period": 4,
+          "time": "2:15",
+          "MON": "DL/PA",
+          "TUE": "STQA",
+          "WED": "PE-II",
+          "THURS": "PE-III",
+          "FRI": "PE-II",
+          "SAT": ""
+        },
+        {
+          "period": 5,
+          "time": "3:15",
+          "MON": "DS",
+          "TUE": "PE-II",
+          "WED": "STQA",
+          "THURS": "DS",
+          "FRI": "PE-III",
+          "SAT": ""
+        },
+        {
+          "period": 6,
+          "time": "4:20",
+          "MON": "BB1-DL/PA(P)",
+          "TUE": "BB1-DS(P)",
+          "WED": "BB1-PRJ",
+          "THURS": "BB3-STQA(T)",
+          "FRI": "BB1-PRJ",
+          "SAT": ""
+        },
+        {
+          "period": 7,
+          "time": "5:20",
+          "MON": "BB2-DEV(P), BB3-PE-III(P)",
+          "TUE": "BB2-DL/PA(P)",
+          "WED": "BB2-PRJ",
+          "THURS": "",
+          "FRI": "BB2-PRJ",
+          "SAT": ""
+        },
+        {
+          "extra": "BB3-DEV(P) Mon P7, BB4-DS(P) Mon P7",
+          "extra2": "BB3-PRJ, BB4-PRJ Wed, Fri",
+          "extra3": "BB4-PE-III(P) Tue P7"
+        }
       ],
       "theory_subjects": [
-        { "abbr": "STQA", "full_name": "Software Testing and Quality Assurance", "faculty": "MR. S. RADDI" },
-        { "abbr": "DS", "full_name": "Distributed Systems", "faculty": "MR. N. S. GAJJAM" },
-        { "abbr": "PE-II", "full_name": "Professional Elective-II: Business Intelligence", "faculty": "MR. D. S. MANE" },
-        { "abbr": "PE-III", "full_name": "Professional Elective-III: Big Data Analytics", "faculty": "DR. MRS. P. C. KALADEEP" },
+        {
+          "abbr": "STQA",
+          "full_name": "Software Testing and Quality Assurance",
+          "faculty": "MR. S. RADDI"
+        },
+        {
+          "abbr": "DS",
+          "full_name": "Distributed Systems",
+          "faculty": "MR. N. S. GAJJAM"
+        },
+        {
+          "abbr": "PE-II",
+          "full_name": "Professional Elective-II: Business Intelligence",
+          "faculty": "MR. D. S. MANE"
+        },
+        {
+          "abbr": "PE-III",
+          "full_name": "Professional Elective-III: Big Data Analytics",
+          "faculty": "DR. MRS. P. C. KALADEEP"
+        },
         { "abbr": "DEV", "full_name": "DevOps", "faculty": "MR. S. T. PATEL" },
-        { "abbr": "DL", "full_name": "Deep Learning", "faculty": "MR. B. R. SOLUNKE" },
-        { "abbr": "PA", "full_name": "Predictive Analytics", "faculty": "MR. V. D. CHAVAN" }
+        {
+          "abbr": "DL",
+          "full_name": "Deep Learning",
+          "faculty": "MR. B. R. SOLUNKE"
+        },
+        {
+          "abbr": "PA",
+          "full_name": "Predictive Analytics",
+          "faculty": "MR. V. D. CHAVAN"
+        }
       ],
       "practicals": [
-        { "subject": "STQA", "batches": ["BB1", "BB2", "BB3", "BB4"], "faculty": "MR. S. RADDI", "venue": "New Classroom No-4 (L402)" },
-        { "subject": "DS", "batch_faculties": [{"batch": "BB1", "faculty": "NSG"}, {"batch": "BB2", "faculty": "SR"}, {"batch": "BB3", "faculty": "SR"}, {"batch": "BB4", "faculty": "NSG"}], "venue": "Network Engineering Lab" },
-        { "subject": "PE-III", "batches": ["BB1", "BB2", "BB3", "BB4"], "faculty": "DR. MRS. P. C. KALADEEP", "venue": "PG Lab" },
-        { "subject": "DEV", "batches": ["BB1", "BB2", "BB3", "BB4"], "faculty": "MR. S. T. PATEL", "venue": "Project Lab" },
-        { "subject": "DL", "batch_faculties": [{"batch": "BB1", "faculty": "BRS"}, {"batch": "BB2", "faculty": "BRS"}, {"batch": "BB3", "faculty": "MRP"}, {"batch": "BB4", "faculty": "MRP"}], "venues": {"BB1": "Prog. Lab", "BB2": "Prog. Lab", "BB3": "OS Lab", "BB4": "OS Lab"} },
-        { "subject": "PA", "batch_faculties": [{"batch": "BB1", "faculty": "VDC"}, {"batch": "BB2", "faculty": "VDC"}, {"batch": "BB3", "faculty": "RVA"}, {"batch": "BB4", "faculty": "RVA"}], "venue": "System Programming Lab" }
+        {
+          "subject": "STQA",
+          "batches": ["BB1", "BB2", "BB3", "BB4"],
+          "faculty": "MR. S. RADDI",
+          "venue": "New Classroom No-4 (L402)"
+        },
+        {
+          "subject": "DS",
+          "batch_faculties": [
+            { "batch": "BB1", "faculty": "NSG" },
+            { "batch": "BB2", "faculty": "SR" },
+            { "batch": "BB3", "faculty": "SR" },
+            { "batch": "BB4", "faculty": "NSG" }
+          ],
+          "venue": "Network Engineering Lab"
+        },
+        {
+          "subject": "PE-III",
+          "batches": ["BB1", "BB2", "BB3", "BB4"],
+          "faculty": "DR. MRS. P. C. KALADEEP",
+          "venue": "PG Lab"
+        },
+        {
+          "subject": "DEV",
+          "batches": ["BB1", "BB2", "BB3", "BB4"],
+          "faculty": "MR. S. T. PATEL",
+          "venue": "Project Lab"
+        },
+        {
+          "subject": "DL",
+          "batch_faculties": [
+            { "batch": "BB1", "faculty": "BRS" },
+            { "batch": "BB2", "faculty": "BRS" },
+            { "batch": "BB3", "faculty": "MRP" },
+            { "batch": "BB4", "faculty": "MRP" }
+          ],
+          "venues": {
+            "BB1": "Prog. Lab",
+            "BB2": "Prog. Lab",
+            "BB3": "OS Lab",
+            "BB4": "OS Lab"
+          }
+        },
+        {
+          "subject": "PA",
+          "batch_faculties": [
+            { "batch": "BB1", "faculty": "VDC" },
+            { "batch": "BB2", "faculty": "VDC" },
+            { "batch": "BB3", "faculty": "RVA" },
+            { "batch": "BB4", "faculty": "RVA" }
+          ],
+          "venue": "System Programming Lab"
+        }
       ]
     },
     {
@@ -562,31 +1742,160 @@
       "year": "Final Year",
       "venue": "New Classroom No-5 (L403)",
       "periods": [
-        { "period": 1, "time": "10:15", "MON": "BC1-STQA(T)", "TUE": "BC2-STQA(T)", "WED": "DL/PA", "THURS": "PE-III", "FRI": "BC4-STQA(T)", "SAT": "Alumni/Industry Interaction Session" },
-        { "period": 2, "time": "11:15", "MON": "PE-II", "TUE": "DL/PA", "WED": "DEV", "THURS": "BC1-PE-III(P), BC2-PRJ", "FRI": "BC1-PRJ", "SAT": "" },
-        { "period": 3, "time": "12:15", "MON": "DS", "TUE": "PE-III", "WED": "STQA", "THURS": "BC3-DL/PA(P), BC4-DEV(P)", "FRI": "BC3-DEV(P), BC4-DL/PA(P)", "SAT": "" },
-        { "period": 4, "time": "2:15", "MON": "DL/PA", "TUE": "PE-II", "WED": "DS", "THURS": "STQA", "FRI": "DEV", "SAT": "" },
-        { "period": 5, "time": "3:15", "MON": "PE-III", "TUE": "DS", "WED": "PE-II", "THURS": "BC3-STQA(T)", "FRI": "STQA", "SAT": "" },
-        { "period": 6, "time": "4:20", "MON": "BC1-DL/PA(P)", "TUE": "BC1-DEV(P)", "WED": "BC1-DS(P)", "THURS": "", "FRI": "BC1-PRJ", "SAT": "" },
-        { "period": 7, "time": "5:20", "MON": "BC2-DEV(P), BC3-PE-III(P)", "TUE": "BC2-DL/PA(P)", "WED": "BC2-PE-III(P)", "THURS": "", "FRI": "BC2-DS(P)", "SAT": "" },
-        { "extra": "BC3-DS(P) Mon P7, BC4-DS(P) Mon P7", "extra2": "BC4-PE-III(P) Tue P7", "extra3": "BC3-PRJ, BC4-PRJ Fri" }
+        {
+          "period": 1,
+          "time": "10:15",
+          "MON": "BC1-STQA(T)",
+          "TUE": "BC2-STQA(T)",
+          "WED": "DL/PA",
+          "THURS": "PE-III",
+          "FRI": "BC4-STQA(T)",
+          "SAT": "Alumni/Industry Interaction Session"
+        },
+        {
+          "period": 2,
+          "time": "11:15",
+          "MON": "PE-II",
+          "TUE": "DL/PA",
+          "WED": "DEV",
+          "THURS": "BC1-PE-III(P), BC2-PRJ",
+          "FRI": "BC1-PRJ",
+          "SAT": ""
+        },
+        {
+          "period": 3,
+          "time": "12:15",
+          "MON": "DS",
+          "TUE": "PE-III",
+          "WED": "STQA",
+          "THURS": "BC3-DL/PA(P), BC4-DEV(P)",
+          "FRI": "BC3-DEV(P), BC4-DL/PA(P)",
+          "SAT": ""
+        },
+        {
+          "period": 4,
+          "time": "2:15",
+          "MON": "DL/PA",
+          "TUE": "PE-II",
+          "WED": "DS",
+          "THURS": "STQA",
+          "FRI": "DEV",
+          "SAT": ""
+        },
+        {
+          "period": 5,
+          "time": "3:15",
+          "MON": "PE-III",
+          "TUE": "DS",
+          "WED": "PE-II",
+          "THURS": "BC3-STQA(T)",
+          "FRI": "STQA",
+          "SAT": ""
+        },
+        {
+          "period": 6,
+          "time": "4:20",
+          "MON": "BC1-DL/PA(P)",
+          "TUE": "BC1-DEV(P)",
+          "WED": "BC1-DS(P)",
+          "THURS": "",
+          "FRI": "BC1-PRJ",
+          "SAT": ""
+        },
+        {
+          "period": 7,
+          "time": "5:20",
+          "MON": "BC2-DEV(P), BC3-PE-III(P)",
+          "TUE": "BC2-DL/PA(P)",
+          "WED": "BC2-PE-III(P)",
+          "THURS": "",
+          "FRI": "BC2-DS(P)",
+          "SAT": ""
+        },
+        {
+          "extra": "BC3-DS(P) Mon P7, BC4-DS(P) Mon P7",
+          "extra2": "BC4-PE-III(P) Tue P7",
+          "extra3": "BC3-PRJ, BC4-PRJ Fri"
+        }
       ],
       "theory_subjects": [
-        { "abbr": "STQA", "full_name": "Software Testing and Quality Assurance", "faculty": "MR. D. P. PANDIT" },
-        { "abbr": "DS", "full_name": "Distributed Systems", "faculty": "MR. A. R. CHINCHAWADE" },
-        { "abbr": "PE-II", "full_name": "Professional Elective-II: Business Intelligence", "faculty": "MR. M. A. MAHANT" },
-        { "abbr": "PE-III", "full_name": "Professional Elective-III: Big Data Analytics", "faculty": "MRS. K. R. PARDESHI" },
-        { "abbr": "DEV", "full_name": "DevOps", "faculty": "MRS. P. M. CHANNAPATTAN" },
-        { "abbr": "DL", "full_name": "Deep Learning", "faculty": "MR. B. R. SOLUNKE" },
-        { "abbr": "PA", "full_name": "Predictive Analytics", "faculty": "MR. V. D. CHAVAN" }
+        {
+          "abbr": "STQA",
+          "full_name": "Software Testing and Quality Assurance",
+          "faculty": "MR. D. P. PANDIT"
+        },
+        {
+          "abbr": "DS",
+          "full_name": "Distributed Systems",
+          "faculty": "MR. A. R. CHINCHAWADE"
+        },
+        {
+          "abbr": "PE-II",
+          "full_name": "Professional Elective-II: Business Intelligence",
+          "faculty": "MR. M. A. MAHANT"
+        },
+        {
+          "abbr": "PE-III",
+          "full_name": "Professional Elective-III: Big Data Analytics",
+          "faculty": "MRS. K. R. PARDESHI"
+        },
+        {
+          "abbr": "DEV",
+          "full_name": "DevOps",
+          "faculty": "MRS. P. M. CHANNAPATTAN"
+        },
+        {
+          "abbr": "DL",
+          "full_name": "Deep Learning",
+          "faculty": "MR. B. R. SOLUNKE"
+        },
+        {
+          "abbr": "PA",
+          "full_name": "Predictive Analytics",
+          "faculty": "MR. V. D. CHAVAN"
+        }
       ],
       "practicals": [
-        { "subject": "STQA", "batches": ["BC1", "BC2", "BC3", "BC4"], "faculty": "MR. D. P. PANDIT", "venue": "New Classroom No-5 (L403)" },
-        { "subject": "DS", "batches": ["BC1", "BC2", "BC3", "BC4"], "faculty": "MR. A. R. CHINCHAWADE", "venue": "Web Technology Lab" },
-        { "subject": "PE-III", "batches": ["BC1", "BC2", "BC3", "BC4"], "faculty": "MRS. K. R. PARDESHI", "venue": "Software Lab-2" },
-        { "subject": "DEV", "batches": ["BC1", "BC2", "BC3", "BC4"], "faculty": "MRS. P. M. CHANNAPATTAN", "venue": "Advanced Programming Lab" },
-        { "subject": "DL", "batches": ["BC1", "BC2", "BC3", "BC4"], "faculty": "MR. B. R. SOLUNKE", "venue": "Operating System Lab" },
-        { "subject": "PA", "batch_faculties": [{"batch": "BC1", "faculty": "VDC"}, {"batch": "BC2", "faculty": "VDC"}, {"batch": "BC3", "faculty": "RVA"}, {"batch": "BC4", "faculty": "RVA"}], "venue": "System Programming Lab" }
+        {
+          "subject": "STQA",
+          "batches": ["BC1", "BC2", "BC3", "BC4"],
+          "faculty": "MR. D. P. PANDIT",
+          "venue": "New Classroom No-5 (L403)"
+        },
+        {
+          "subject": "DS",
+          "batches": ["BC1", "BC2", "BC3", "BC4"],
+          "faculty": "MR. A. R. CHINCHAWADE",
+          "venue": "Web Technology Lab"
+        },
+        {
+          "subject": "PE-III",
+          "batches": ["BC1", "BC2", "BC3", "BC4"],
+          "faculty": "MRS. K. R. PARDESHI",
+          "venue": "Software Lab-2"
+        },
+        {
+          "subject": "DEV",
+          "batches": ["BC1", "BC2", "BC3", "BC4"],
+          "faculty": "MRS. P. M. CHANNAPATTAN",
+          "venue": "Advanced Programming Lab"
+        },
+        {
+          "subject": "DL",
+          "batches": ["BC1", "BC2", "BC3", "BC4"],
+          "faculty": "MR. B. R. SOLUNKE",
+          "venue": "Operating System Lab"
+        },
+        {
+          "subject": "PA",
+          "batch_faculties": [
+            { "batch": "BC1", "faculty": "VDC" },
+            { "batch": "BC2", "faculty": "VDC" },
+            { "batch": "BC3", "faculty": "RVA" },
+            { "batch": "BC4", "faculty": "RVA" }
+          ],
+          "venue": "System Programming Lab"
+        }
       ]
     }
   ],
